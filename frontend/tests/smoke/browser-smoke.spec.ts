@@ -886,7 +886,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
     expect(createdExpense?.receiptPath).toMatch(/^\/uploads\/finance-/);
 
     await page.goto('/finance/expenses');
-    await expect(page.getByRole('heading', { name: '费用列表' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '费用列表', exact: true })).toBeVisible();
     await page.getByPlaceholder('经办人/明细...').fill(detail);
     const row = page.locator('tr', { hasText: handler });
     await expect(row).toBeVisible();
@@ -921,6 +921,164 @@ test.describe('browser smoke: authenticated core navigation', () => {
 
     await page.screenshot({
       path: '../docs/smoke-evidence/财务备用金费用CRUD上传.png',
+      fullPage: true,
+    });
+  });
+
+  test('enterprise user can complete finance invoice receipt pnl import export CRUD', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const stamp = Date.now();
+    const invoiceNo = `FP-${stamp}`;
+    const editedInvoiceNo = `${invoiceNo}-EDIT`;
+    const payerName = `浏览器付款方-${stamp}`;
+    const editedPayerName = `${payerName}-已编辑`;
+    const transactionNo = `BANK-${stamp}`;
+    const importHandler = `浏览器导入经办-${stamp}`;
+    const importDetail = `真实浏览器台账导入-${stamp}`;
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+
+    await page.goto('/finance/invoices');
+    await expect(page.getByRole('heading', { name: '开票记录', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: '新增发票' }).click();
+    await page.locator('select').filter({ hasText: '请选择合同' }).selectOption({ label: 'XX市政道路改造工程' });
+    await page.getByPlaceholder('请输入发票号码').fill(invoiceNo);
+    await page.getByPlaceholder('0.00').first().fill('888.88');
+    await page.getByPlaceholder('请输入购买方公司名称').fill(`浏览器购买方-${stamp}`);
+    await page.getByPlaceholder('请输入备注信息（可选）').fill(`真实浏览器发票-${stamp}`);
+    await page.getByRole('button', { name: '保存发票' }).click();
+    await expect(page.getByText('发票录入成功')).toBeVisible();
+    await expect(page.getByText(invoiceNo)).toBeVisible();
+
+    const invoiceResponse = await page.request.get(`/api/finance/invoices?pageSize=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(invoiceResponse.status()).toBe(200);
+    const invoiceBody = await readJson(invoiceResponse);
+    const createdInvoice = (invoiceBody?.data || []).find((item: any) => item.invoiceNumber === invoiceNo);
+    expect(createdInvoice?.id).toBeTruthy();
+
+    await page.goto('/finance/receipts');
+    await expect(page.getByRole('heading', { name: '收款记录', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: '新增收款' }).click();
+    await page.locator('select').filter({ hasText: '请选择合同' }).selectOption({ label: 'XX市政道路改造工程' });
+    const invoiceSelect = page.locator('select').filter({ hasText: '不关联发票' });
+    await expect(invoiceSelect.locator('option', { hasText: invoiceNo })).toHaveCount(1, { timeout: 10000 });
+    const invoiceOptionValue = await invoiceSelect.locator('option', { hasText: invoiceNo }).first().getAttribute('value');
+    expect(invoiceOptionValue).toBeTruthy();
+    await invoiceSelect.selectOption(invoiceOptionValue!);
+    await page.getByPlaceholder('0.00').first().fill('388.88');
+    await page.getByPlaceholder('请输入付款方公司或人员名称').fill(payerName);
+    await page.getByPlaceholder('请输入收款账户名称或账号').fill('浏览器测试收款账户');
+    await page.getByPlaceholder('请输入银行流水号或交易凭证号').fill(transactionNo);
+    await page.getByPlaceholder('请输入备注信息（可选）').fill(`真实浏览器收款-${stamp}`);
+    await page.getByRole('button', { name: '保存收款' }).click();
+    await expect(page.getByText('收款记录录入成功')).toBeVisible();
+    await page.getByPlaceholder('付款方/流水号...').fill(transactionNo);
+    const receiptRow = page.locator('tr', { hasText: transactionNo });
+    await expect(receiptRow).toBeVisible();
+    await expect(receiptRow).toContainText(invoiceNo);
+
+    const receiptResponse = await page.request.get(`/api/finance/receipts?keyword=${encodeURIComponent(transactionNo)}&pageSize=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(receiptResponse.status()).toBe(200);
+    const receiptBody = await readJson(receiptResponse);
+    const createdReceipt = (receiptBody?.data || []).find((item: any) => item.transactionNo === transactionNo);
+    expect(createdReceipt?.id).toBeTruthy();
+    expect(createdReceipt?.invoiceNumber).toBe(invoiceNo);
+
+    await receiptRow.locator('button[title="编辑"]').click();
+    await expect(page.getByRole('heading', { name: '编辑收款' })).toBeVisible();
+    await page.getByPlaceholder('请输入付款方公司或人员名称').fill(editedPayerName);
+    await page.getByRole('button', { name: '更新收款' }).click();
+    await expect(page.getByText('收款记录更新成功')).toBeVisible();
+    await page.getByPlaceholder('付款方/流水号...').fill(editedPayerName);
+    const editedReceiptRow = page.locator('tr', { hasText: editedPayerName });
+    await expect(editedReceiptRow).toBeVisible();
+
+    await page.goto('/finance/invoices');
+    const invoiceRow = page.locator('tr', { hasText: invoiceNo });
+    await expect(invoiceRow).toBeVisible();
+    await invoiceRow.click();
+    await expect(page.getByText('关联收款明细')).toBeVisible();
+    await expect(page.getByText(editedPayerName)).toBeVisible();
+    await invoiceRow.locator('button[title="编辑"]').click();
+    await expect(page.getByRole('heading', { name: '编辑发票' })).toBeVisible();
+    await page.getByPlaceholder('请输入发票号码').fill(editedInvoiceNo);
+    await page.getByRole('button', { name: '更新发票' }).click();
+    await expect(page.getByText('发票更新成功')).toBeVisible();
+    await expect(page.getByText(editedInvoiceNo)).toBeVisible();
+
+    const pnlResponse = await page.request.get(`/api/finance/contract/${createdInvoice.contractId}/pnl`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(pnlResponse.status()).toBe(200);
+    const pnlBody = await readJson(pnlResponse);
+    expect(Number(pnlBody?.data?.invoiceTotal || 0)).toBeGreaterThanOrEqual(888.88);
+    expect(Number(pnlBody?.data?.receiptTotal || 0)).toBeGreaterThanOrEqual(388.88);
+    await page.goto('/finance/contract-pnl');
+    await expect(page.getByRole('heading', { name: '合同盈利分析' })).toBeVisible();
+    await expect(page.getByText('XX市政道路改造工程')).toBeVisible();
+
+    await page.goto('/finance/import');
+    await expect(page.getByRole('heading', { name: '费用导入', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: '文件导入' }).click();
+    const templateDownload = page.waitForEvent('download');
+    await page.getByRole('button', { name: '下载模板' }).click();
+    expect((await templateDownload).suggestedFilename()).toBe('费用导入模板.csv');
+
+    const csvPath = path.resolve(process.cwd(), `tests/.tmp-finance-import-${stamp}.csv`);
+    fs.writeFileSync(
+      csvPath,
+      `日期,经办人,费用大类,费用子类,金额,支付方式,支付人,详情\n2026-06-22,${importHandler},材料费,,66.66,公司直付,浏览器导入付款方,${importDetail}\n`,
+      'utf8',
+    );
+    try {
+      await page.locator('#csv-file-input').setInputFiles(csvPath);
+      await expect(page.getByText(importHandler)).toBeVisible();
+      await page.getByRole('button', { name: /确认导入/ }).click();
+      await expect(page.getByRole('heading', { name: '导入结果' })).toBeVisible();
+      await expect(page.getByText('成功导入')).toBeVisible();
+      await page.getByRole('button', { name: '确定' }).click();
+    } finally {
+      fs.rmSync(csvPath, { force: true });
+    }
+
+    await page.goto('/finance/expenses');
+    await expect(page.getByRole('heading', { name: '费用列表', exact: true })).toBeVisible();
+    await page.getByPlaceholder('经办人/明细...').fill(importDetail);
+    await expect(page.locator('tr', { hasText: importHandler })).toBeVisible();
+
+    await page.goto('/finance/import');
+    const ledgerDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出费用台账' }).click();
+    expect((await ledgerDownloadPromise).suggestedFilename()).toBe('费用台账.xlsx');
+    await expect(page.getByText('费用台账已导出')).toBeVisible();
+    const summaryDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出财务汇总' }).click();
+    expect((await summaryDownloadPromise).suggestedFilename()).toBe('财务汇总.xlsx');
+    await expect(page.getByText('财务汇总已导出')).toBeVisible();
+
+    await page.goto('/finance/receipts');
+    await page.getByPlaceholder('付款方/流水号...').fill(editedPayerName);
+    const rowForDelete = page.locator('tr', { hasText: editedPayerName });
+    await expect(rowForDelete).toBeVisible();
+    await rowForDelete.locator('button[title="删除"]').click();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('收款记录已删除')).toBeVisible();
+
+    await page.goto('/finance/invoices');
+    const invoiceRowForDelete = page.locator('tr', { hasText: editedInvoiceNo });
+    await expect(invoiceRowForDelete).toBeVisible();
+    await invoiceRowForDelete.locator('button[title="删除"]').click();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('发票已删除')).toBeVisible();
+    await expect(page.locator('tr', { hasText: editedInvoiceNo })).toHaveCount(0);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/财务发票收款盈亏导入导出.png',
       fullPage: true,
     });
   });

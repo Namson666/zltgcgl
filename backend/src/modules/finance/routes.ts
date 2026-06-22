@@ -8,6 +8,7 @@ import { Router, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
+import ExcelJS from 'exceljs';
 import { authenticate, requireUser } from '../../common/middleware/auth';
 import { requirePermission } from '../../common/middleware/permission';
 import { AuthenticatedRequest, ApiResponse, PaginatedResponse } from '../../common/types';
@@ -42,6 +43,11 @@ const upload = multer({
     }
     cb(new Error('INVALID_FILE_TYPE'));
   },
+});
+
+const importUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 // ============================================
@@ -128,6 +134,30 @@ function asPaginated(data: any, total: number, page: number, pageSize: number) {
 
 function asApi(data: any) {
   return { success: true, data } as unknown as ApiResponse;
+}
+
+async function exportRowsToExcel(rows: Record<string, any>[], sheetName: string): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet(sheetName || 'Sheet1');
+  if (rows.length > 0) {
+    const columns = Object.keys(rows[0]).map(key => ({
+      header: key,
+      key,
+      width: Math.max(String(key).length * 2 + 4, 12),
+    }));
+    sheet.columns = columns;
+    rows.forEach(row => sheet.addRow(row));
+    sheet.getRow(1).font = { bold: true };
+  } else {
+    sheet.addRow(['暂无数据']);
+  }
+  return Buffer.from(await workbook.xlsx.writeBuffer());
+}
+
+function sendExcel(res: Response, buffer: Buffer, filename: string) {
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+  res.send(buffer);
 }
 
 function parseExpenseBody(req: AuthenticatedRequest) {
@@ -731,7 +761,8 @@ invoiceRouter.get('/', wrapHandler(async (req, res) => {
 
 // 获取单张发票详情
 invoiceRouter.get('/:id', wrapHandler(async (req, res) => {
-  const invoice = await finance.getInvoiceDetail(req.params.id);
+  const tenantId = getTenantId(req);
+  const invoice = await finance.getInvoiceDetail(tenantId, req.params.id);
   res.json(asApi(invoice));
 }));
 
@@ -757,7 +788,7 @@ invoiceRouter.post('/', requirePermission('canFinanceInvoice'), wrapHandler(asyn
   const invoice = await finance.createInvoice({
     tenantId,
     contractId: req.body.contractId,
-    invoiceNo: req.body.invoiceNo,
+    invoiceNo: req.body.invoiceNo || req.body.invoiceNumber,
     invoiceType: req.body.invoiceType,
     invoiceDate: req.body.invoiceDate,
     amount: req.body.amount,
@@ -785,9 +816,9 @@ invoiceRouter.post('/', requirePermission('canFinanceInvoice'), wrapHandler(asyn
 invoiceRouter.put('/:id', requirePermission('canFinanceInvoice'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
 
-  const invoice = await finance.updateInvoice(req.params.id, {
+  const invoice = await finance.updateInvoice(tenantId, req.params.id, {
     contractId: req.body.contractId,
-    invoiceNo: req.body.invoiceNo,
+    invoiceNo: req.body.invoiceNo || req.body.invoiceNumber,
     invoiceType: req.body.invoiceType,
     invoiceDate: req.body.invoiceDate,
     amount: req.body.amount,
@@ -815,7 +846,7 @@ invoiceRouter.put('/:id', requirePermission('canFinanceInvoice'), wrapHandler(as
 invoiceRouter.delete('/:id', requirePermission('canFinanceInvoice'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
 
-  await finance.deleteInvoice(req.params.id);
+  await finance.deleteInvoice(tenantId, req.params.id);
 
   await createLog({
     tenantId,
@@ -839,7 +870,7 @@ const receiptRouter = Router();
 // 获取收款记录列表（分页 + 多条件筛选）
 receiptRouter.get('/', wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
-  const { contractId, invoiceId, startDate, endDate, page, pageSize } = req.query as any;
+  const { contractId, invoiceId, startDate, endDate, keyword, page, pageSize } = req.query as any;
 
   const result = await finance.listReceipts({
     tenantId,
@@ -847,6 +878,7 @@ receiptRouter.get('/', wrapHandler(async (req, res) => {
     invoiceId: invoiceId as string | undefined,
     startDate: startDate as string | undefined,
     endDate: endDate as string | undefined,
+    keyword: keyword as string | undefined,
     page: page ? parseInt(page as string) : 1,
     pageSize: pageSize ? parseInt(pageSize as string) : 20,
   });
@@ -868,6 +900,13 @@ receiptRouter.get('/overdue', wrapHandler(async (req, res) => {
   res.json(asApi(overdue));
 }));
 
+// 获取单笔收款详情
+receiptRouter.get('/:id', wrapHandler(async (req, res) => {
+  const tenantId = getTenantId(req);
+  const receipt = await finance.getReceiptDetail(tenantId, req.params.id);
+  res.json(asApi(receipt));
+}));
+
 // 创建收款记录
 receiptRouter.post('/', requirePermission('canFinanceReceipt'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
@@ -881,10 +920,10 @@ receiptRouter.post('/', requirePermission('canFinanceReceipt'), wrapHandler(asyn
     receiptDate: req.body.receiptDate,
     paymentMethod: req.body.paymentMethod,
     payerName: req.body.payerName,
-    bankAccount: req.body.bankAccount,
+    bankAccount: req.body.bankAccount || req.body.accountName,
     transactionNo: req.body.transactionNo,
     enteredBy,
-    remark: req.body.remark,
+    remark: req.body.remark || req.body.description,
   });
 
   await createLog({
@@ -904,16 +943,16 @@ receiptRouter.post('/', requirePermission('canFinanceReceipt'), wrapHandler(asyn
 receiptRouter.put('/:id', requirePermission('canFinanceReceipt'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
 
-  const receipt = await finance.updateReceipt(req.params.id, {
+  const receipt = await finance.updateReceipt(tenantId, req.params.id, {
     contractId: req.body.contractId,
     invoiceId: req.body.invoiceId,
     amount: req.body.amount,
     receiptDate: req.body.receiptDate,
     paymentMethod: req.body.paymentMethod,
     payerName: req.body.payerName,
-    bankAccount: req.body.bankAccount,
+    bankAccount: req.body.bankAccount || req.body.accountName,
     transactionNo: req.body.transactionNo,
-    remark: req.body.remark,
+    remark: req.body.remark || req.body.description,
   });
 
   await createLog({
@@ -933,7 +972,7 @@ receiptRouter.put('/:id', requirePermission('canFinanceReceipt'), wrapHandler(as
 receiptRouter.delete('/:id', requirePermission('canFinanceReceipt'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
 
-  await finance.deleteReceipt(req.params.id);
+  await finance.deleteReceipt(tenantId, req.params.id);
 
   await createLog({
     tenantId,
@@ -952,11 +991,18 @@ receiptRouter.delete('/:id', requirePermission('canFinanceReceipt'), wrapHandler
 // 八、导入导出（/import, /export, /export-summary）
 // ============================================
 
-// POST /import - import expenses from JSON (frontend parses Excel first)
-router.post('/import', authenticate, requireUser, requirePermission('canFinanceView'), wrapHandler(async (req, res) => {
+// POST /import - import expenses from JSON or multipart JSON file (frontend parses Excel first)
+router.post('/import', authenticate, requireUser, requirePermission('canFinanceView'), importUpload.single('file'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
   const userId = getEffectiveUserId(req) ?? 'system';
-  const { rows } = req.body;
+  let rows = req.body?.rows;
+  if (!rows && req.file?.buffer) {
+    try {
+      rows = JSON.parse(req.file.buffer.toString('utf8'));
+    } catch {
+      throw { status: 400, code: 'INVALID_IMPORT_FILE', message: '导入文件不是有效 JSON 数据' };
+    }
+  }
   if (!rows || !Array.isArray(rows)) {
     throw { status: 400, code: 'INVALID_IMPORT_DATA', message: '请提供导入数据' };
   }
@@ -977,7 +1023,8 @@ router.post('/import', authenticate, requireUser, requirePermission('canFinanceV
 router.get('/export', authenticate, requireUser, wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
   const data = await finance.exportExpensesData(tenantId, req.query as any);
-  res.json(asApi(data));
+  const buffer = await exportRowsToExcel(data, '费用台账');
+  sendExcel(res, buffer, `费用台账_${Date.now()}.xlsx`);
 }));
 
 // GET /export-summary - export summary
@@ -987,7 +1034,22 @@ router.get('/export-summary', authenticate, requireUser, wrapHandler(async (req,
     finance.getCategoryBreakdown(tenantId),
     finance.getMonthlyTrend(tenantId, 12),
   ]);
-  res.json(asApi({ categories, monthlyTrend: trend }));
+  const rows = [
+    ...categories.map((item: any) => ({
+      类型: '费用分类汇总',
+      名称: item.categoryName || item.name || '',
+      金额: item.totalAmount ?? item.total ?? 0,
+      月份: '',
+    })),
+    ...trend.map((item: any) => ({
+      类型: '月度趋势',
+      名称: '',
+      金额: item.totalAmount ?? item.amount ?? 0,
+      月份: item.month || `${item.year || ''}-${item.monthNum || ''}`,
+    })),
+  ];
+  const buffer = await exportRowsToExcel(rows, '财务汇总');
+  sendExcel(res, buffer, `财务汇总_${Date.now()}.xlsx`);
 }));
 
 // ============================================

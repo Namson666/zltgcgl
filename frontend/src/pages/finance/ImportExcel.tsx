@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { financeApi } from '../../api';
+import { downloadBlob, financeApi } from '../../api';
 import { EmptyState, formatMoney, formatDate } from '../../components/ui/Common';
 import {
   Upload,
@@ -223,6 +223,7 @@ const ImportExcel: React.FC = () => {
   /* ---------- 手动录入状态 ---------- */
   const [manualRows, setManualRows] = useState<ManualRow[]>([emptyManualRow()]);
   const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState<'ledger' | 'summary' | null>(null);
 
   /* ---------- 文件导入状态 ---------- */
   const [parsedData, setParsedData] = useState<ParsedExcelRow[]>([]);
@@ -547,6 +548,32 @@ const ImportExcel: React.FC = () => {
       setShowResult(true);
     } finally {
       setImporting(false);
+    }
+  };
+
+  const handleExportLedger = async () => {
+    setExporting('ledger');
+    try {
+      const res = await financeApi.exportExcel();
+      downloadBlob(res.data as Blob, '费用台账.xlsx');
+      toast.success('费用台账已导出');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || '导出费用台账失败');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const handleExportSummary = async () => {
+    setExporting('summary');
+    try {
+      const res = await financeApi.exportSummary();
+      downloadBlob(res.data as Blob, '财务汇总.xlsx');
+      toast.success('财务汇总已导出');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || '导出财务汇总失败');
+    } finally {
+      setExporting(null);
     }
   };
 
@@ -1150,6 +1177,24 @@ const ImportExcel: React.FC = () => {
         <div>
           <h1 className="page-title">费用导入</h1>
           <p className="page-subtitle">手动录入或批量导入费用报账数据</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            className="btn-outline flex items-center gap-1.5"
+            onClick={handleExportLedger}
+            disabled={exporting !== null}
+          >
+            {exporting === 'ledger' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            导出费用台账
+          </button>
+          <button
+            className="btn-outline flex items-center gap-1.5"
+            onClick={handleExportSummary}
+            disabled={exporting !== null}
+          >
+            {exporting === 'summary' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            导出财务汇总
+          </button>
         </div>
       </div>
 

@@ -1,13 +1,55 @@
 {
-  "status": "finance_petty_cash_voucher_browser_verified_pushed",
+  "status": "finance_invoice_receipt_import_export_browser_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_exports_inventory_alert_removed_wms_main_flow_finance_voucher",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "finance_invoice_receipt_pnl_import_export_flow",
+      "command": "bash scripts/verify.sh; rm -rf backend/uploads docs/smoke-evidence/test-results && bash scripts/browser-smoke.sh; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/finance-invoice-receipt-import-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00; code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified",
+      "result": "财务发票/收款/盈亏/导入导出切片已通过真实 Chrome：发票新建/编辑/删除，收款新建/搜索/详情/编辑/删除，发票展开查看收款，合同盈亏 API/页面，模板下载，导入文件上传，费用台账 xlsx 导出，财务汇总 xlsx 导出。后端补齐 invoiceNumber/accountName/description 兼容映射、发票/收款详情与更新删除 tenantId 隔离、发票与合同同租户/同合同校验、导入 multipart JSON、真实 Excel 导出。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/财务发票收款盈亏导入导出.png",
+        ".ai/workers/20260622T175646Z-audit_worker.result.md"
+      ]
+    },
+    {
+      "type": "unified_verify",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 5 files / 33 tests passed; backend TypeScript build passed; frontend tests 2 files / 36 tests passed; frontend production build passed after finance invoice/receipt/import/export fixes."
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "rm -rf backend/uploads docs/smoke-evidence/test-results && bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "11 Playwright smoke tests passed in system Google Chrome, including the new finance invoice/receipt/P&L/import/export CRUD/upload/download flow plus existing route matrix, WMS, labor, admin, module entitlement, independent portal, and finance voucher coverage.",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/财务发票收款盈亏导入导出.png"
+      ]
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/finance-invoice-receipt-import-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "PASS; Claude reported no blockers for tenant isolation, invoice/receipt associations, real downloads/uploads, permissions, or fake-completion risk. Non-blocking notes remain around uniform P&L tenant filters where related models support it, import MIME filtering, import error-message polish, and inactive-contract policy.",
+      "evidence_file": ".ai/workers/20260622T175646Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 135 files / 1520 nodes / 18441 edges. detect-changes risk score 0.50. Function-level unit gaps remain for small helpers such as exportRowsToExcel/sendExcel and mapping/assert helpers, while the changed finance product journey is covered by real Chrome."
+    },
     {
       "type": "finance_petty_cash_voucher_flow",
       "command": "bash scripts/verify.sh; bash scripts/browser-smoke.sh; Claude audit; code-review-graph",
@@ -650,8 +692,9 @@
     "Full route matrix is now covered in real Chrome, but deep CRUD/upload/download regression for every page is still incomplete.",
     "Supplier/work-team CRUD has real Chrome create/edit/delete/search coverage; basic admin roles/users/departments now also have real Chrome deep CRUD/state-change coverage. Remaining historical business pages still need equivalent deep CRUD/upload/download where business rules support it.",
     "Inventory alert product feature has been removed per user request; historical Prisma alertThreshold column remains only for compatibility.",
-    "Labor report export still writes the existing fixed workbook sheets; attendance/social preview is supported but adding those sheets to workbook export remains a non-blocking follow-up."
+    "Labor report export still writes the existing fixed workbook sheets; attendance/social preview is supported but adding those sheets to workbook export remains a non-blocking follow-up.",
+    "Finance invoice/receipt/P&L/import/export has real Chrome CRUD/upload/download coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow evidence."
   ],
-  "notes": "Inventory alert remains removed from active WMS product requirements. Basic admin roles/users/departments deep CRUD/state-change coverage is now included in real Chrome. Real Chrome now passes 8 tests. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-22T16:25:00Z"
+  "notes": "Inventory alert remains removed from active WMS product requirements. Finance invoice/receipt/P&L/import/export is now included in real Chrome CRUD/upload/download coverage. Real Chrome now passes 11 tests. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
+  "updated_at": "2026-06-22T18:01:20Z"
 }

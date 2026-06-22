@@ -965,6 +965,46 @@ export interface CreateInvoiceData {
   imagePath?: string;
 }
 
+function mapInvoiceForClient(inv: any) {
+  return {
+    ...inv,
+    invoiceNumber: inv.invoiceNo,
+  };
+}
+
+function mapReceiptForClient(receipt: any, contractNameById?: Map<string, string>) {
+  const contractName = receipt.contractName ?? contractNameById?.get(receipt.contractId) ?? undefined;
+  return {
+    ...receipt,
+    contractName,
+    invoice: receipt.invoice ? mapInvoiceForClient(receipt.invoice) : receipt.invoice,
+    invoiceNumber: receipt.invoice?.invoiceNo ?? receipt.invoiceNumber,
+    accountName: receipt.bankAccount,
+    description: receipt.remark,
+  };
+}
+
+async function assertFinanceContractBelongsToTenant(tenantId: string, contractId?: string | null) {
+  if (!contractId) return;
+  const contract = await prisma.contract.findFirst({
+    where: { id: contractId, tenantId },
+    select: { id: true },
+  });
+  if (!contract) throw { status: 404, code: 'CONTRACT_NOT_FOUND', message: '合同不存在' };
+}
+
+async function assertInvoiceBelongsToTenant(tenantId: string, invoiceId?: string | null, contractId?: string | null) {
+  if (!invoiceId) return;
+  const invoice = await prisma.finInvoice.findFirst({
+    where: { id: invoiceId, tenantId },
+    select: { id: true, contractId: true },
+  });
+  if (!invoice) throw { status: 404, code: 'INVOICE_NOT_FOUND', message: '发票不存在' };
+  if (contractId && invoice.contractId && invoice.contractId !== contractId) {
+    throw { status: 400, code: 'INVOICE_CONTRACT_MISMATCH', message: '发票与所选合同不一致' };
+  }
+}
+
 export async function listInvoices(params: { tenantId: string; contractId?: string; status?: string; startDate?: string; endDate?: string; page?: number; pageSize?: number }) {
   const { tenantId, contractId, status, startDate, endDate, page = 1, pageSize = 20 } = params;
   const where: any = { tenantId };
@@ -990,14 +1030,15 @@ export async function listInvoices(params: { tenantId: string; contractId?: stri
   // Calculate received/outstanding for each invoice
   const enriched = items.map(inv => {
     const totalReceived = inv.receipts.reduce((sum, r) => sum + r.amount, 0);
-    return { ...inv, totalReceived, outstanding: inv.amount - totalReceived };
+    return mapInvoiceForClient({ ...inv, totalReceived, outstanding: inv.amount - totalReceived });
   });
 
   return { items: enriched, total, page, pageSize };
 }
 
 export async function createInvoice(data: CreateInvoiceData) {
-  return prisma.finInvoice.create({
+  await assertFinanceContractBelongsToTenant(data.tenantId, data.contractId);
+  const invoice = await prisma.finInvoice.create({
     data: {
       tenantId: data.tenantId,
       contractId: data.contractId ?? null,
@@ -1012,9 +1053,15 @@ export async function createInvoice(data: CreateInvoiceData) {
       imagePath: data.imagePath ?? null,
     },
   });
+  return mapInvoiceForClient(invoice);
 }
 
-export async function updateInvoice(id: string, data: Partial<CreateInvoiceData>) {
+export async function updateInvoice(tenantId: string, id: string, data: Partial<CreateInvoiceData>) {
+  const existing = await prisma.finInvoice.findFirst({ where: { id, tenantId } });
+  if (!existing) throw { status: 404, code: 'INVOICE_NOT_FOUND', message: '发票不存在' };
+  if (data.contractId !== undefined) {
+    await assertFinanceContractBelongsToTenant(tenantId, data.contractId);
+  }
   const updateData: any = {};
   if (data.contractId !== undefined) updateData.contractId = data.contractId ?? null;
   if (data.invoiceNo !== undefined) updateData.invoiceNo = data.invoiceNo;
@@ -1026,23 +1073,26 @@ export async function updateInvoice(id: string, data: Partial<CreateInvoiceData>
   if (data.buyerName !== undefined) updateData.buyerName = data.buyerName ?? null;
   if (data.description !== undefined) updateData.description = data.description ?? null;
   if (data.imagePath !== undefined) updateData.imagePath = data.imagePath ?? null;
-  return prisma.finInvoice.update({ where: { id }, data: updateData });
+  const invoice = await prisma.finInvoice.update({ where: { id }, data: updateData });
+  return mapInvoiceForClient(invoice);
 }
 
-export async function deleteInvoice(id: string) {
+export async function deleteInvoice(tenantId: string, id: string) {
+  const existing = await prisma.finInvoice.findFirst({ where: { id, tenantId } });
+  if (!existing) throw { status: 404, code: 'INVOICE_NOT_FOUND', message: '发票不存在' };
   return prisma.finInvoice.delete({ where: { id } });
 }
 
-export async function getInvoiceDetail(id: string) {
-  const invoice = await prisma.finInvoice.findUnique({
-    where: { id },
+export async function getInvoiceDetail(tenantId: string, id: string) {
+  const invoice = await prisma.finInvoice.findFirst({
+    where: { id, tenantId },
     include: {
       receipts: { orderBy: { receiptDate: 'desc' } },
     },
   });
   if (!invoice) throw { status: 404, code: 'INVOICE_NOT_FOUND', message: '发票不存在' };
   const totalReceived = invoice.receipts.reduce((sum, r) => sum + r.amount, 0);
-  return { ...invoice, totalReceived, outstanding: invoice.amount - totalReceived };
+  return mapInvoiceForClient({ ...invoice, totalReceived, outstanding: invoice.amount - totalReceived });
 }
 
 // ============================================
@@ -1063,11 +1113,19 @@ export interface CreateReceiptData {
   remark?: string;
 }
 
-export async function listReceipts(params: { tenantId: string; contractId?: string; invoiceId?: string; startDate?: string; endDate?: string; page?: number; pageSize?: number }) {
-  const { tenantId, contractId, invoiceId, startDate, endDate, page = 1, pageSize = 20 } = params;
+export async function listReceipts(params: { tenantId: string; contractId?: string; invoiceId?: string; startDate?: string; endDate?: string; keyword?: string; page?: number; pageSize?: number }) {
+  const { tenantId, contractId, invoiceId, startDate, endDate, keyword, page = 1, pageSize = 20 } = params;
   const where: any = { tenantId };
   if (contractId) where.contractId = contractId;
   if (invoiceId) where.invoiceId = invoiceId;
+  if (keyword) {
+    where.OR = [
+      { payerName: { contains: keyword } },
+      { transactionNo: { contains: keyword } },
+      { bankAccount: { contains: keyword } },
+      { remark: { contains: keyword } },
+    ];
+  }
   if (startDate || endDate) {
     where.receiptDate = {};
     if (startDate) where.receiptDate.gte = startDate;
@@ -1084,11 +1142,18 @@ export async function listReceipts(params: { tenantId: string; contractId?: stri
     }),
     prisma.finReceipt.count({ where }),
   ]);
-  return { items, total, page, pageSize };
+  const contractIds = Array.from(new Set(items.map(item => item.contractId).filter(Boolean)));
+  const contracts = contractIds.length > 0
+    ? await prisma.contract.findMany({ where: { tenantId, id: { in: contractIds } }, select: { id: true, name: true } })
+    : [];
+  const contractNameById = new Map(contracts.map(contract => [contract.id, contract.name]));
+  return { items: items.map(item => mapReceiptForClient(item, contractNameById)), total, page, pageSize };
 }
 
 export async function createReceipt(data: CreateReceiptData) {
-  return prisma.finReceipt.create({
+  await assertFinanceContractBelongsToTenant(data.tenantId, data.contractId);
+  await assertInvoiceBelongsToTenant(data.tenantId, data.invoiceId, data.contractId);
+  const receipt = await prisma.finReceipt.create({
     data: {
       tenantId: data.tenantId,
       contractId: data.contractId,
@@ -1104,13 +1169,50 @@ export async function createReceipt(data: CreateReceiptData) {
     },
     include: { invoice: true },
   });
+  return mapReceiptForClient(receipt);
 }
 
-export async function updateReceipt(id: string, data: Partial<CreateReceiptData>) {
-  return prisma.finReceipt.update({ where: { id }, data: data as any });
+export async function getReceiptDetail(tenantId: string, id: string) {
+  const receipt = await prisma.finReceipt.findFirst({
+    where: { id, tenantId },
+    include: { invoice: true },
+  });
+  if (!receipt) throw { status: 404, code: 'RECEIPT_NOT_FOUND', message: '收款记录不存在' };
+  const contracts = await prisma.contract.findMany({
+    where: { tenantId, id: receipt.contractId },
+    select: { id: true, name: true },
+  });
+  return mapReceiptForClient(receipt, new Map(contracts.map(contract => [contract.id, contract.name])));
 }
 
-export async function deleteReceipt(id: string) {
+export async function updateReceipt(tenantId: string, id: string, data: Partial<CreateReceiptData>) {
+  const existing = await prisma.finReceipt.findFirst({ where: { id, tenantId } });
+  if (!existing) throw { status: 404, code: 'RECEIPT_NOT_FOUND', message: '收款记录不存在' };
+  const nextContractId = data.contractId ?? existing.contractId;
+  await assertFinanceContractBelongsToTenant(tenantId, nextContractId);
+  await assertInvoiceBelongsToTenant(tenantId, data.invoiceId ?? existing.invoiceId, nextContractId);
+  const updateData: any = {};
+  if (data.contractId !== undefined) updateData.contractId = data.contractId;
+  if (data.invoiceId !== undefined) updateData.invoiceId = data.invoiceId ?? null;
+  if (data.amount !== undefined) updateData.amount = data.amount;
+  if (data.receiptDate !== undefined) updateData.receiptDate = data.receiptDate;
+  if (data.paymentMethod !== undefined) updateData.paymentMethod = data.paymentMethod;
+  if (data.payerName !== undefined) updateData.payerName = data.payerName ?? null;
+  if (data.bankAccount !== undefined) updateData.bankAccount = data.bankAccount ?? null;
+  if (data.transactionNo !== undefined) updateData.transactionNo = data.transactionNo ?? null;
+  if (data.enteredBy !== undefined) updateData.enteredBy = data.enteredBy;
+  if (data.remark !== undefined) updateData.remark = data.remark ?? null;
+  const receipt = await prisma.finReceipt.update({
+    where: { id },
+    data: updateData,
+    include: { invoice: true },
+  });
+  return mapReceiptForClient(receipt);
+}
+
+export async function deleteReceipt(tenantId: string, id: string) {
+  const existing = await prisma.finReceipt.findFirst({ where: { id, tenantId } });
+  if (!existing) throw { status: 404, code: 'RECEIPT_NOT_FOUND', message: '收款记录不存在' };
   return prisma.finReceipt.delete({ where: { id } });
 }
 
@@ -1195,25 +1297,25 @@ export interface ContractPnlSummary {
 }
 
 export async function getContractPnl(contractId: string, tenantId: string): Promise<ContractPnlSummary> {
-  const contract = await prisma.contract.findUnique({ where: { id: contractId } });
+  const contract = await prisma.contract.findFirst({ where: { id: contractId, tenantId } });
   if (!contract) throw { status: 404, code: 'CONTRACT_NOT_FOUND', message: '合同不存在' };
 
   // --- Income ---
   // Invoice total (only issued invoices)
   const invoiceAgg = await prisma.finInvoice.aggregate({
-    where: { contractId, status: 'issued' },
+    where: { tenantId, contractId, status: 'issued' },
     _sum: { amount: true },
   });
 
   // Receipt total
   const receiptAgg = await prisma.finReceipt.aggregate({
-    where: { contractId },
+    where: { tenantId, contractId },
     _sum: { amount: true },
   });
 
   // Progress payment total (existing contract progress collection)
   const progressAgg = await prisma.progressPayment.aggregate({
-    where: { contractId },
+    where: { tenantId, contractId },
     _sum: { amount: true },
   });
 
@@ -1225,7 +1327,7 @@ export async function getContractPnl(contractId: string, tenantId: string): Prom
   // --- Expenses ---
   // FinExpense by category
   const expenses = await prisma.finExpense.findMany({
-    where: { contractId, status: 'approved' },
+    where: { tenantId, contractId, status: 'approved' },
     include: { category: true },
   });
 
@@ -1245,7 +1347,7 @@ export async function getContractPnl(contractId: string, tenantId: string): Prom
 
   // --- Subcontract costs ---
   const subContracts = await prisma.subContract.findMany({
-    where: { contractId, isActive: true },
+    where: { tenantId, contractId, isActive: true },
   });
 
   let subcontractPaid = 0;
@@ -1254,11 +1356,11 @@ export async function getContractPnl(contractId: string, tenantId: string): Prom
   for (const sc of subContracts) {
     const [paidAgg, outputAgg] = await Promise.all([
       prisma.subProgressPayment.aggregate({
-        where: { subContractId: sc.id },
+        where: { tenantId, subContractId: sc.id },
         _sum: { totalAmount: true },
       }),
       prisma.outputValue.aggregate({
-        where: { subContractId: sc.id },
+        where: { tenantId, subContractId: sc.id },
         _sum: { amount: true },
       }),
     ]);
@@ -1269,7 +1371,7 @@ export async function getContractPnl(contractId: string, tenantId: string): Prom
   // --- Worker salary ---
   // Attempt to filter by contract's departments; fall back to tenant-wide if none
   const contractDepartments = await prisma.department.findMany({
-    where: { contractId, isActive: true },
+    where: { tenantId, contractId, isActive: true },
     select: { id: true },
   });
   const departmentIds = contractDepartments.map(d => d.id);
@@ -1278,6 +1380,7 @@ export async function getContractPnl(contractId: string, tenantId: string): Prom
   if (departmentIds.length > 0) {
     const salaryAgg = await prisma.paymentRecord.aggregate({
       where: {
+        tenantId,
         departmentId: { in: departmentIds },
         isConfirmed: true,
       },
@@ -1288,6 +1391,7 @@ export async function getContractPnl(contractId: string, tenantId: string): Prom
     // No departments linked — rough estimate: sum all confirmed payments for tenant
     const salaryAgg = await prisma.paymentRecord.aggregate({
       where: {
+        tenantId,
         isConfirmed: true,
       },
       _sum: { amount: true },

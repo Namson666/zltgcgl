@@ -20,14 +20,16 @@ interface ReceiptRecord {
   receiptDate: string;
   contract?: { id: string; name: string };
   contractName?: string;
-  invoice?: { id: string; invoiceNumber: string };
+  invoice?: { id: string; invoiceNumber?: string; invoiceNo?: string };
   invoiceNumber?: string;
   amount: number;
   payerName?: string;
   paymentMethod?: string;
   transactionNo?: string;
   accountName?: string;
+  bankAccount?: string;
   description?: string;
+  remark?: string;
   createdAt?: string;
 }
 
@@ -218,7 +220,7 @@ const ReceiptList: React.FC = () => {
   };
 
   const getInvoiceNumber = (record: ReceiptRecord): string => {
-    return record.invoice?.invoiceNumber || record.invoiceNumber || '-';
+    return record.invoice?.invoiceNumber || record.invoice?.invoiceNo || record.invoiceNumber || '-';
   };
 
   /* ---------- 渲染 ---------- */

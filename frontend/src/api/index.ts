@@ -1574,6 +1574,10 @@ export const financeApi = {
   getReceipts: (params?: any) =>
     http.get('/finance/receipts', params),
 
+  /** 获取收款记录详情 */
+  getReceiptDetail: (id: string) =>
+    http.get(`/finance/receipts/${id}`),
+
   /** 创建收款记录 */
   createReceipt: (data: any) =>
     http.post('/finance/receipts', data),

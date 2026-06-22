@@ -123,7 +123,7 @@ const InvoiceForm: React.FC = () => {
       const data = body?.data || body || {};
       setForm({
         contractId: data.contractId || data.contract?.id || '',
-        invoiceNumber: data.invoiceNumber || '',
+        invoiceNumber: data.invoiceNumber || data.invoiceNo || '',
         invoiceType: data.invoiceType || 'vat_special',
         invoiceDate: data.invoiceDate ? data.invoiceDate.slice(0, 10) : '',
         amount: data.amount != null ? String(data.amount) : '',

@@ -162,23 +162,9 @@ const ReceiptForm: React.FC = () => {
   const loadReceiptDetail = async (id: string) => {
     setLoadingDetail(true);
     try {
-      const res: any = await financeApi.getReceipts({ pageSize: 1 });
-      /* 尝试通过详情 API 获取，若无则使用列表 API */
-      let data: any = null;
-      try {
-        const detailRes = await financeApi.getReceipts({ id });
-        const detailBody = detailRes.data as any;
-        const listData = detailBody?.data;
-        const items = Array.isArray(listData) ? listData : (listData?.items || []);
-        data = items.length > 0 ? items[0] : null;
-      } catch {
-        /* 回退方案：从列表筛选 */
-        const listRes = await financeApi.getReceipts({ pageSize: 100 });
-        const listBody = listRes.data as any;
-        const listData = listBody?.data;
-        const items = Array.isArray(listData) ? listData : (listData?.items || []);
-        data = items.find((item: any) => item.id === id) || null;
-      }
+      const res: any = await financeApi.getReceiptDetail(id);
+      const body = res.data as any;
+      const data: any = body?.data || body || null;
 
       if (!data) {
         toast.error('未找到该收款记录');
@@ -194,9 +180,9 @@ const ReceiptForm: React.FC = () => {
         receiptDate: data.receiptDate ? data.receiptDate.slice(0, 10) : '',
         paymentMethod: data.paymentMethod || 'bank_transfer',
         payerName: data.payerName || '',
-        accountName: data.accountName || '',
+        accountName: data.accountName || data.bankAccount || '',
         transactionNo: data.transactionNo || '',
-        description: data.description || '',
+        description: data.description || data.remark || '',
       });
 
       /* 加载该合同下的发票列表 */
@@ -242,7 +228,7 @@ const ReceiptForm: React.FC = () => {
       const items = Array.isArray(listData) ? listData : (listData?.items || []);
       setInvoices(items.map((item: any) => ({
         id: item.id,
-        invoiceNumber: item.invoiceNumber || '',
+        invoiceNumber: item.invoiceNumber || item.invoiceNo || '',
         amount: item.amount || 0,
         totalReceived: item.totalReceived || item.total_received || 0,
         status: item.status || 'issued',
