@@ -98,7 +98,6 @@ export interface CreateMaterialData {
   unit: string;
   unitPrice?: number;
   category?: string;
-  alertThreshold?: number;
 }
 
 export async function createMaterial(data: CreateMaterialData) {
@@ -106,7 +105,6 @@ export async function createMaterial(data: CreateMaterialData) {
     data: {
       tenantId: data.tenantId, code: data.code || null, name: data.name,
       unit: data.unit, unitPrice: data.unitPrice || 0, category: data.category,
-      alertThreshold: data.alertThreshold,
     },
   });
 }
@@ -124,7 +122,7 @@ export async function getMaterialsExportData(tenantId: string) {
   return {
     rows: materials.map(m => ({
       '物资编码': m.code, '物资名称': m.name, '单位': m.unit,
-      '单价': m.unitPrice, '分类': m.category || '', '预警阈值': m.alertThreshold ?? '',
+      '单价': m.unitPrice, '分类': m.category || '',
     })),
     count: materials.length,
   };
@@ -260,12 +258,7 @@ export async function listInventory(params: InventoryListParams) {
     prisma.inventory.count({ where }),
   ]);
 
-  const result = items.map((inv) => ({
-    ...inv,
-    isLowStock: inv.material.alertThreshold !== null && inv.quantity <= inv.material.alertThreshold!,
-  }));
-
-  return { items: result, total, page, pageSize };
+  return { items, total, page, pageSize };
 }
 
 export async function getInventoryExportData(tenantId: string, subProjectId?: string) {
@@ -278,7 +271,7 @@ export async function getInventoryExportData(tenantId: string, subProjectId?: st
     '项目名称': inv.projectName || '待分配', '物资名称': inv.material.name,
     '物资编码': inv.material.code, '单位': inv.material.unit,
     '在库数量': inv.quantity, '已出库数量': inv.outQuantity,
-    '单价': inv.material.unitPrice, '预警阈值': inv.material.alertThreshold ?? '未设置',
+    '单价': inv.material.unitPrice,
   }));
   return { rows, count: items.length };
 }
@@ -1479,35 +1472,7 @@ export async function listWorkTeams(params: WorkTeamListParams) {
 }
 
 // ============================================
-// 十、库存预警
-// ============================================
-
-export async function getAlertMaterials(tenantId: string) {
-  return prisma.material.findMany({
-    where: { tenantId },
-    select: { id: true, code: true, name: true, unit: true, alertThreshold: true },
-  });
-}
-
-export async function getAlertToggle(tenantId: string) {
-  const config = await prisma.systemConfig.findUnique({ where: { key: `alert_enabled_${tenantId}` } });
-  return { enabled: config ? config.value === 'true' : true };
-}
-
-export async function setAlertToggle(tenantId: string, enabled: boolean) {
-  return prisma.systemConfig.upsert({
-    where: { key: `alert_enabled_${tenantId}` },
-    create: { key: `alert_enabled_${tenantId}`, value: enabled ? 'true' : 'false', description: '库存预警开关' },
-    update: { value: enabled ? 'true' : 'false' },
-  });
-}
-
-export async function setMaterialAlertThreshold(id: string, threshold: number | null) {
-  return prisma.material.update({ where: { id }, data: { alertThreshold: threshold } });
-}
-
-// ============================================
-// 十一、班组台账
+// 十、班组台账
 // ============================================
 
 export interface WorkTeamLedgerParams {

@@ -16,7 +16,6 @@
  *     /wms/returns          → 退库管理
  *     /wms/transfers        → 物资借调
  *     /wms/ledger           → 班组台账
- *     /wms/alerts           → 库存预警
  *   /labor/*                → 劳资管理页面
  *     /labor/personnel      → 人员管理
  *     /labor/attendance     → 考勤管理
@@ -67,7 +66,6 @@ const WmsOutbound = lazy(() => import('./pages/wms/Outbound'));
 const WmsReturns = lazy(() => import('./pages/wms/Returns'));
 const WmsTransfers = lazy(() => import('./pages/wms/Transfers'));
 const WmsLedger = lazy(() => import('./pages/wms/Ledger'));
-const WmsAlerts = lazy(() => import('./pages/wms/Alerts'));
 
 /* 劳资管理页面（占位组件） */
 const LaborPersonnel = lazy(() => import('./pages/labor/Personnel'));
@@ -171,7 +169,6 @@ const App: React.FC = () => {
           <Route path="/wms/returns" element={<ModuleRoute moduleKey="wms"><WmsReturns /></ModuleRoute>} />
           <Route path="/wms/transfers" element={<ModuleRoute moduleKey="wms"><WmsTransfers /></ModuleRoute>} />
           <Route path="/wms/ledger" element={<ModuleRoute moduleKey="wms"><WmsLedger /></ModuleRoute>} />
-          <Route path="/wms/alerts" element={<ModuleRoute moduleKey="wms"><WmsAlerts /></ModuleRoute>} />
 
           {/* ---------- 劳资管理模块 ---------- */}
           <Route path="/labor/personnel" element={<ModuleRoute moduleKey="labor"><LaborPersonnel /></ModuleRoute>} />

@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { wmsApi } from '../../api';
-import { Download, AlertTriangle, BarChart2, List, Package, Search } from 'lucide-react';
+import { Download, BarChart2, List, Package, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Pagination, EmptyState, formatDate } from '../../components/ui/Common';
 
@@ -17,7 +17,6 @@ interface Material {
   code: string;
   spec?: string | null;
   unitPrice?: number | null;
-  alertThreshold?: number | null;
 }
 
 interface Contract {
@@ -62,7 +61,6 @@ interface InventoryItem {
   materialId: string;
   quantity: number;
   outQuantity: number;
-  isLowStock: boolean;
   material: Material;
   subProject: SubProject | null;
 }
@@ -126,12 +124,10 @@ const Materials: React.FC = () => {
           materialName: inv.material?.name,
           unit: inv.material?.unit,
           quantity: 0,
-          isLowStock: false,
         });
       }
       const entry = map.get(key)!;
       entry.quantity += inv.quantity;
-      if (inv.isLowStock) entry.isLowStock = true;
     }
     return [...map.values()].sort((a, b) => a.contractName.localeCompare(b.contractName));
   }, [items, viewMode, tab]);
@@ -193,16 +189,15 @@ const Materials: React.FC = () => {
                 {loading ? <tr><td colSpan={5} className="table-td text-center py-12 text-gray-400">加载中...</td></tr>
                   : !summaryItems.length ? <tr><td colSpan={5} className="table-td text-center py-12"><EmptyState title="暂无数据" description="当前没有库存记录" /></td></tr>
                   : summaryItems.map((item, i) => (
-                    <tr key={i} className={`border-b border-gray-50 hover:bg-gray-50 ${item.isLowStock ? 'bg-yellow-50' : ''}`}>
+                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
                       <td className="table-td font-medium text-primary-700">{item.contractName}</td>
                       <td className="table-td font-medium">
-                        {item.isLowStock && <AlertTriangle size={13} className="inline mr-1 text-yellow-500" />}
                         {item.materialName}
                       </td>
                       <td className="table-td">{item.unit}</td>
                       <td className="table-td font-bold text-primary-600 text-lg">{item.quantity}</td>
                       <td className="table-td">
-                        {item.isLowStock ? <span className="badge-yellow">库存预警</span> : <span className="badge-green">正常</span>}
+                        <span className="badge-green">正常</span>
                       </td>
                     </tr>
                   ))

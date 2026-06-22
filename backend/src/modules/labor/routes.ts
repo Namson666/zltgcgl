@@ -404,6 +404,57 @@ salaryRouter.get('/summary', authenticate, requireUser, requirePermission('canMa
   }
 });
 
+salaryRouter.get('/export', authenticate, requireUser, requirePermission('canManageSalary'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId!;
+    const { month, departmentId } = req.query as any;
+    if (!month || !laborService.validateMonth(month)) {
+      res.status(400).json({ success: false, error: 'INVALID_PARAMS', message: '月份格式错误，应为 YYYY-MM' } as ApiResponse);
+      return;
+    }
+
+    const accessibleDeptIds = await laborService.getAccessibleDepartmentIds(req);
+    const data = await laborService.listSalaryRecords({
+      tenantId,
+      month,
+      departmentId,
+      page: 1,
+      limit: 10000,
+      accessibleDeptIds,
+    });
+
+    const rows = data.records.map((r: any, i: number) => ({
+      '序号': i + 1,
+      '月份': r.month,
+      '姓名': r.personnel?.name ?? '',
+      '人员类型': r.personnel?.type === 'STAFF' ? '项目部' : '务工人员',
+      '所属单位': r.personnel?.subcontractor?.companyName ?? r.personnel?.subcontractor?.contactName ?? r.personnel?.department?.name ?? '',
+      '出勤天数': Number(r.attendanceDays ?? 0),
+      '加班天数': Number(r.overtimeDays ?? 0),
+      '应发工资': Number(r.totalPayable ?? 0),
+      '社保扣除': Number(r.socialInsuranceDeduction ?? 0),
+      '扣除合计': Number(r.totalDeductions ?? 0),
+      '实发工资': Number(r.totalPaid ?? 0),
+      '欠薪金额': Number(r.arrearsAmount ?? 0),
+      '状态': r.needsRecalculation ? '需重算' : (r.isManuallyEdited ? '已手改' : '正常'),
+    }));
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = '资料通工程管理系统';
+    workbook.created = new Date();
+    addJsonWorksheet(workbook, '工资核算明细', rows);
+    const buf = await workbook.xlsx.writeBuffer();
+
+    await createLog({ tenantId, userId: req.user!.id, action: 'EXPORT', module: '工资核算', description: `导出工资核算报表 ${month}`, detail: { month, count: rows.length }, ip: req.ip, userAgent: req.headers['user-agent'] });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(`${month}工资核算明细`)}.xlsx"`);
+    res.send(buf);
+  } catch (error: any) {
+    console.error('导出工资核算失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '导出工资核算过程中发生服务器错误' } as ApiResponse);
+  }
+});
+
 salaryRouter.get('/:id', authenticate, requireUser, requirePermission('canManageSalary'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const tenantId = req.user!.tenantId!;
@@ -438,6 +489,54 @@ router.use('/salary', salaryRouter);
 // ============================================
 
 const paymentRouter = Router();
+
+paymentRouter.get('/export', authenticate, requireUser, requirePermission('canManagePayment'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId!;
+    const { search, month, personnelId, departmentId, isConfirmed } = req.query as any;
+    const accessibleDeptIds = await laborService.getAccessibleDepartmentIds(req);
+    const data = await laborService.listPayments({
+      tenantId,
+      search,
+      month,
+      personnelId,
+      departmentId,
+      isConfirmed,
+      page: 1,
+      limit: 10000,
+      accessibleDeptIds,
+    });
+
+    const rows = data.records.map((r: any, i: number) => ({
+      '序号': i + 1,
+      '发放月份': r.month ?? '',
+      '收款人': r.recipientName,
+      '身份证号': r.idCardNo ?? '',
+      '人员类型': r.personnel?.type === 'STAFF' ? '项目部' : (r.personnel?.type === 'WORKER' ? '务工' : '外部'),
+      '发放金额': Number(r.amount ?? 0),
+      '银行卡号': r.bankAccount ?? '',
+      '发放日期': r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('zh-CN') : '',
+      '确认状态': r.isConfirmed ? '已确认' : '待确认',
+      '确认时间': r.confirmedAt ? new Date(r.confirmedAt).toLocaleString('zh-CN') : '',
+      '备注': r.remark ?? '',
+    }));
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = '资料通工程管理系统';
+    workbook.created = new Date();
+    addJsonWorksheet(workbook, '工资发放明细', rows);
+    const buf = await workbook.xlsx.writeBuffer();
+
+    await createLog({ tenantId, userId: req.user!.id, action: 'EXPORT', module: '工资发放', description: '导出工资发放明细', detail: { month, search, count: rows.length }, ip: req.ip, userAgent: req.headers['user-agent'] });
+    const suffix = month ? `${month}工资发放明细` : '工资发放明细';
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(suffix)}.xlsx"`);
+    res.send(buf);
+  } catch (error: any) {
+    console.error('导出工资发放失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '导出工资发放过程中发生服务器错误' } as ApiResponse);
+  }
+});
 
 paymentRouter.get('/', authenticate, requireUser, requirePermission('canManagePayment'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -490,7 +589,7 @@ paymentRouter.post('/', authenticate, requireUser, requirePermission('canManageP
 paymentRouter.post('/confirm-batch', authenticate, requireUser, requirePermission('canManagePayment'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const tenantId = req.user!.tenantId!;
-    const { ids } = req.body;
+    const ids = req.body?.ids || req.body?.paymentIds;
     if (!ids?.length) {
       res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '请选择要确认的记录' } as ApiResponse);
       return;
@@ -806,8 +905,25 @@ reportRouter.get('/preview', authenticate, requireUser, requirePermission('canMa
     const tenantId = req.user!.tenantId!;
     const { months, type, departmentId } = req.query as any;
     const monthList: string[] = months ? months.split(',').filter(Boolean) : [];
-    const data = await laborService.getReportPreview({ tenantId, months: monthList, type, departmentId });
-    res.json({ success: true, data } as ApiResponse);
+    const rows = await laborService.getReportPreview({ tenantId, months: monthList, type, departmentId });
+    const headers = [...new Set((rows || []).flatMap((row: Record<string, any>) => Object.keys(row || {})))];
+    const reportLabels: Record<string, string> = {
+      salary: '月度工资汇总表',
+      attendance: '月度考勤汇总表',
+      payment: '工资发放明细表',
+      social: '社保缴纳明细表',
+      arrears: '欠薪统计表',
+      anomaly: '异常人员明细表',
+    };
+    res.json({
+      success: true,
+      data: {
+        title: `${monthList.join('、') || '未选择月份'} ${reportLabels[type] || '劳资报表'}`,
+        headers,
+        rows: (rows || []).map((row: Record<string, any>) => headers.map((header) => row?.[header])),
+        summary: { rowCount: rows?.length || 0 },
+      },
+    } as ApiResponse);
   } catch (error: any) {
     console.error('预览报表失败:', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '预览报表过程中发生服务器错误' } as ApiResponse);

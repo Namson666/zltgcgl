@@ -9,7 +9,7 @@
  * 页面结构：
  * 1. 页面标题区域（含欢迎信息）
  * 2. 顶部统计卡片（4个）：合同数、项目部数、人员数、本月工资发放额
- * 3. 物资管理概览：总入库量、总出库量、当前库存量、低库存预警数
+ * 3. 物资管理概览：总入库量、总出库量、当前库存量
  * 4. 劳资管理概览：在册人员数、本月出勤天数、本月工资总额、异常数
  * 5. 快捷入口：入库管理、出库管理、考勤管理、工资核算
  */
@@ -52,7 +52,6 @@ interface WmsStats {
   totalInbound: number;            /* 总入库量 */
   totalOutbound: number;           /* 总出库量 */
   currentStock: number;            /* 当前库存量 */
-  lowStockAlerts: number;          /* 低库存预警数 */
 }
 
 /** 劳资管理统计接口 */
@@ -120,18 +119,15 @@ const Dashboard: React.FC = () => {
 
         /* 物资管理统计 */
         (async () => {
-          const [inbound, outbound, alerts] = await Promise.all([
+          const [inbound, outbound] = await Promise.all([
             wmsApi.getInbound({ page: 1, pageSize: 1 }),
             wmsApi.getOutbound({ page: 1, pageSize: 1 }),
-            wmsApi.getAlerts({ page: 1, pageSize: 1 }),
           ]);
           const inData = inbound.data || inbound;
           const outData = outbound.data || outbound;
-          const alertData = alerts.data || alerts;
           return {
             totalInbound: inData.total || 0,
             totalOutbound: outData.total || 0,
-            lowStockAlerts: alertData.total || 0,
           };
         })(),
 
@@ -377,17 +373,6 @@ const Dashboard: React.FC = () => {
                   {renderValue(wmsStats?.currentStock)}
                 </p>
                 <p className="text-xs mt-1" style={{ color: 'var(--primary-light)' }}>种物资</p>
-              </div>
-              {/* 低库存预警数 */}
-              <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--warning-bg)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle size={16} style={{ color: 'var(--warning)' }} />
-                  <span className="text-xs font-medium" style={{ color: 'var(--warning)' }}>低库存预警</span>
-                </div>
-                <p className="text-2xl font-bold" style={{ color: 'var(--warning-foreground)' }}>
-                  {renderValue(wmsStats?.lowStockAlerts)}
-                </p>
-                <p className="text-xs mt-1" style={{ color: 'oklch(0.60 0.12 85)' }}>条预警</p>
               </div>
             </div>
           </div>

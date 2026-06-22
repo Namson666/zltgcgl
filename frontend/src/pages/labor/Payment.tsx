@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { laborApi } from '../../api';
+import { laborApi, downloadBlob } from '../../api';
 import { Plus, Search, CheckCircle, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../../components/ui/Modal';
@@ -35,6 +35,7 @@ const Payment: React.FC = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const pageSize = 50;
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -45,7 +46,7 @@ const Payment: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await laborApi.getPayments({ page, pageSize, keyword: search });
+      const res = await laborApi.getPayments({ page, pageSize, search: search || undefined });
       const data = (res.data as any).data;
       setRecords(data.records || []);
       setTotal(data.total || 0);
@@ -107,9 +108,13 @@ const Payment: React.FC = () => {
   };
 
   const handleExport = async () => {
+    setExporting(true);
     try {
-      toast.success('导出功能开发中');
+      const res = await laborApi.exportPayments({ search: search || undefined });
+      downloadBlob(res.data as Blob, '工资发放明细.xlsx');
+      toast.success('工资发放明细已导出');
     } catch { toast.error('导出失败'); }
+    finally { setExporting(false); }
   };
 
   return (
@@ -120,8 +125,8 @@ const Payment: React.FC = () => {
           <p className="page-subtitle">发放记录管理、批量确认</p>
         </div>
         <div className="flex gap-2">
-          <button className="btn-secondary" onClick={handleExport}>
-            <Download size={16} /> 导出
+          <button className="btn-secondary" onClick={handleExport} disabled={exporting}>
+            <Download size={16} /> {exporting ? '导出中...' : '导出'}
           </button>
           <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
             <Plus size={16} /> 新增发放

@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { laborApi } from '../../api';
+import { laborApi, downloadBlob } from '../../api';
 import { Download, Calculator, RefreshCw, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../../components/ui/Modal';
@@ -41,6 +41,7 @@ const Salary: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showCalcModal, setShowCalcModal] = useState(false);
   const [calculating, setCalculating] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const pageSize = 50;
 
   const fetchData = async () => {
@@ -78,9 +79,13 @@ const Salary: React.FC = () => {
   };
 
   const handleExport = async () => {
+    setExporting(true);
     try {
-      toast.success('导出功能开发中');
+      const res = await laborApi.exportSalary(month);
+      downloadBlob(res.data as Blob, `${month}工资核算明细.xlsx`);
+      toast.success('工资核算报表已导出');
     } catch { toast.error('导出失败'); }
+    finally { setExporting(false); }
   };
 
   return (
@@ -91,8 +96,8 @@ const Salary: React.FC = () => {
           <p className="page-subtitle">基于考勤数据自动生成月度工资明细</p>
         </div>
         <div className="flex gap-2">
-          <button className="btn-secondary" onClick={handleExport}>
-            <Download size={16} /> 导出报表
+          <button className="btn-secondary" onClick={handleExport} disabled={exporting}>
+            <Download size={16} /> {exporting ? '导出中...' : '导出报表'}
           </button>
           <button className="btn-primary" onClick={() => setShowCalcModal(true)}>
             <Calculator size={16} /> 工资核算

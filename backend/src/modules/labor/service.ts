@@ -987,6 +987,7 @@ export async function listAnomalies(params: AnomalyListParams) {
   const where: any = { tenantId };
   if (level) where.level = level;
   if (isResolved !== undefined) where.isResolved = isResolved === 'true';
+  if (month) where.createdAt = buildMonthRange(month);
   if (accessibleDeptIds !== null) {
     where.personnel = { departmentId: { in: accessibleDeptIds } };
   }
@@ -1401,6 +1402,30 @@ export async function getMonthlySalaryData(tenantId: string, months: string[], d
   }));
 }
 
+export async function getAttendanceReportData(tenantId: string, months: string[], departmentId?: string) {
+  const rows: Record<string, any>[] = [];
+  const selectedMonths = months.length ? months : [new Date().toISOString().slice(0, 7)];
+  for (const month of selectedMonths) {
+    const summary = await getMonthlyAttendance({
+      tenantId,
+      month,
+      departmentId,
+      accessibleDeptIds: null,
+    });
+    rows.push(...summary.map((r: any, index: number) => ({
+      '序号': rows.length + index + 1,
+      '月份': month,
+      '姓名': r.name,
+      '身份证号': r.idCardNo,
+      '人员类型': r.type === 'STAFF' ? '项目部' : '务工人员',
+      '所属项目部': r.department?.name ?? '',
+      '出勤天数': Number(r.attendanceDays ?? 0),
+      '加班天数': Number(r.overtimeDays ?? 0),
+    })));
+  }
+  return rows;
+}
+
 export async function getArrearsData(tenantId: string, months: string[], departmentId?: string) {
   const where: any = { tenantId, arrearsAmount: { gt: 0 } };
   if (months.length) where.month = months.length === 1 ? months[0] : { in: months };
@@ -1429,7 +1454,15 @@ export async function getArrearsData(tenantId: string, months: string[], departm
 
 export async function getAnomalyData(tenantId: string, months: string[], departmentId?: string) {
   const where: any = { tenantId };
-  if (months.length) where.month = months.length === 1 ? months[0] : { in: months };
+  if (months.length === 1) {
+    where.createdAt = buildMonthRange(months[0]);
+  } else if (months.length > 1) {
+    const sorted = [...months].sort();
+    where.createdAt = {
+      gte: new Date(`${sorted[0]}-01`),
+      lt: new Date(new Date(`${sorted[sorted.length - 1]}-01`).getFullYear(), new Date(`${sorted[sorted.length - 1]}-01`).getMonth() + 1, 1),
+    };
+  }
 
   const anomalies = await prisma.anomaly.findMany({
     where,
@@ -1484,6 +1517,22 @@ export async function getPaymentData(tenantId: string, months: string[], departm
     '发放方式': r.paymentMethod ?? '',
     '所属分包商': r.personnel?.subcontractor?.companyName ?? r.personnel?.subcontractor?.contactName ?? '项目部',
     '来源': r.isAiMatched ? 'AI识别' : '手动录入', '备注': r.remark ?? '',
+  }));
+}
+
+export async function getSocialInsuranceData(tenantId: string, months: string[], departmentId?: string) {
+  const rows = await getMonthlySalaryData(tenantId, months, departmentId);
+  return rows.map((r: any) => ({
+    '月份': r['月份'],
+    '姓名': r['姓名'],
+    '身份证号': r['身份证号'],
+    '联系电话': r['联系电话'],
+    '所属类型': r['所属类型'],
+    '所属项目部': r['所属项目部'],
+    '所属分包商': r['所属分包商'],
+    '社保个人扣除': r['社保个人扣除'],
+    '实发工资': r['实发工资'],
+    '备注': r['备注'],
   }));
 }
 
@@ -1569,9 +1618,11 @@ export async function getReportPreview(params: ReportPreviewParams) {
   const { tenantId, months, type, departmentId } = params;
   switch (type) {
     case 'salary': return getMonthlySalaryData(tenantId, months, departmentId);
+    case 'attendance': return getAttendanceReportData(tenantId, months, departmentId);
     case 'arrears': return getArrearsData(tenantId, months, departmentId);
     case 'anomaly': return getAnomalyData(tenantId, months, departmentId);
     case 'payment': return getPaymentData(tenantId, months, departmentId);
+    case 'social': return getSocialInsuranceData(tenantId, months, departmentId);
     default: return [];
   }
 }

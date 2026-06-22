@@ -1224,39 +1224,7 @@ workTeamsRouter.delete('/:id', requirePermission('canManageSystem'), wrapHandler
 }));
 
 // ============================================
-// 十、库存预警（/alerts）
-// ============================================
-
-const alertsRouter = Router();
-
-alertsRouter.get('/', wrapHandler(async (req, res) => {
-  const tenantId = getTenantId(req);
-  const materials = await wms.getAlertMaterials(tenantId);
-  res.json({ success: true, data: materials } as unknown as ApiResponse);
-}));
-
-alertsRouter.get('/toggle', wrapHandler(async (req, res) => {
-  const tenantId = getTenantId(req);
-  const result = await wms.getAlertToggle(tenantId);
-  res.json({ success: true, data: result } as unknown as ApiResponse);
-}));
-
-alertsRouter.put('/toggle', requirePermission('canManageSystem'), wrapHandler(async (req, res) => {
-  const tenantId = getTenantId(req);
-  const { enabled } = req.body;
-  const result = await wms.setAlertToggle(tenantId, enabled);
-  await createLog({ tenantId, userId: getEffectiveUserId(req), action: 'UPDATE', module: '物资管理', description: `${enabled ? '启用' : '禁用'}库存预警`, ip: req.ip, userAgent: req.headers['user-agent'] });
-  res.json({ success: true, data: result } as unknown as ApiResponse);
-}));
-
-alertsRouter.put('/material/:materialId', requirePermission('canManageSystem'), wrapHandler(async (req, res) => {
-  const { threshold } = req.body;
-  const result = await wms.setMaterialAlertThreshold(req.params.materialId, threshold ?? null);
-  res.json({ success: true, data: result } as unknown as ApiResponse);
-}));
-
-// ============================================
-// 十一、班组台账（/work-team-ledger）
+// 十、班组台账（/work-team-ledger）
 // ============================================
 
 const workTeamLedgerRouter = Router();
@@ -1295,7 +1263,6 @@ router.use('/returns', authenticate, requireUser, returnsRouter);
 router.use('/transfers', authenticate, requireUser, transfersRouter);
 router.use('/suppliers', authenticate, requireUser, suppliersRouter);
 router.use('/work-teams', authenticate, requireUser, workTeamsRouter);
-router.use('/alerts', authenticate, requireUser, alertsRouter);
 router.use('/work-team-ledger', authenticate, requireUser, workTeamLedgerRouter);
 
 // ⚠️ OCR 调试端点（密封，不移动）

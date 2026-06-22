@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { laborApi } from '../../api';
+import { laborApi, downloadBlob } from '../../api';
 import { Download, FileSpreadsheet, Eye, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { EmptyState, formatMonth, formatMoney } from '../../components/ui/Common';
@@ -59,13 +59,7 @@ const Reports: React.FC = () => {
     setExporting(true);
     try {
       const res = await laborApi.exportReport(selectedMonth, reportType);
-      const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${selectedMonth}-${REPORT_TYPES.find(r => r.value === reportType)?.label || reportType}.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(res.data as Blob, `${selectedMonth}-${REPORT_TYPES.find(r => r.value === reportType)?.label || reportType}.xlsx`);
       toast.success('报表导出成功');
     } catch { toast.error('导出失败'); }
     finally { setExporting(false); }

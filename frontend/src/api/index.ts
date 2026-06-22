@@ -808,7 +808,7 @@ export const departmentApi = {
 
 /* ========================================
  * 7. 物资管理模块 API (wmsApi)
- * 仓库物资的入库、出库、退库、借调、预警等
+ * 仓库物资的入库、出库、退库、借调等
  * ======================================== */
 export const wmsApi = {
   /**
@@ -984,33 +984,6 @@ export const wmsApi = {
    */
   getTransferPdf: (id: string) =>
     http.get(`/wms/transfers/${id}/pdf`, {}, { responseType: 'blob' }),
-
-  /**
-   * 获取库存预警列表（所有物资的预警阈值设置）
-   */
-  getAlerts: (params?: PaginationParams) =>
-    http.get('/wms/alerts', params),
-
-  /**
-   * 获取预警开关状态
-   */
-  getAlertToggle: () =>
-    http.get('/wms/alerts/toggle'),
-
-  /**
-   * 设置预警开关状态
-   * @param enabled - 是否开启
-   */
-  setAlertToggle: (enabled: boolean) =>
-    http.put('/wms/alerts/toggle', { enabled }),
-
-  /**
-   * 设置物资预警阈值
-   * @param materialId - 物资ID
-   * @param alertThreshold - 预警阈值（null 表示取消预警）
-   */
-  setAlertThreshold: (materialId: string, alertThreshold: number | null) =>
-    http.put(`/wms/alerts/material/${materialId}`, { alertThreshold }),
 
   /**
    * 获取班组台账
@@ -1191,7 +1164,7 @@ export const laborApi = {
    * @returns 分页的工资明细
    */
   getSalary: (params?: PaginationParams & { month?: string }) =>
-    http.get('/labor/salary', params),
+    http.get('/labor/salary', params ? { ...params, limit: params.pageSize } : params),
 
   /**
    * 更新工资记录（手动调整）
@@ -1209,6 +1182,9 @@ export const laborApi = {
   getSalarySummary: (month: string) =>
     http.get('/labor/salary/summary', { month }),
 
+  exportSalary: (month: string) =>
+    http.get('/labor/salary/export', { month }, { responseType: 'blob' }),
+
   /* ---------- 工资发放 ---------- */
 
   /**
@@ -1216,8 +1192,11 @@ export const laborApi = {
    * @param params - 分页参数
    * @returns 分页的发放记录
    */
-  getPayments: (params?: PaginationParams) =>
-    http.get('/labor/payment', params),
+  getPayments: (params?: PaginationParams & { month?: string; isConfirmed?: boolean }) =>
+    http.get('/labor/payment', params ? { ...params, search: params.search || params.keyword, limit: params.pageSize } : params),
+
+  exportPayments: (params?: { search?: string; keyword?: string; month?: string; isConfirmed?: boolean }) =>
+    http.get('/labor/payment/export', params ? { ...params, search: params.search || params.keyword } : params, { responseType: 'blob' }),
 
   /**
    * 创建工资发放记录
@@ -1231,7 +1210,7 @@ export const laborApi = {
    * @param paymentIds - 发放记录 ID 列表
    */
   confirmBatchPayment: (paymentIds: number[]) =>
-    http.post('/labor/payment/confirm-batch', { paymentIds }),
+    http.post('/labor/payment/confirm-batch', { ids: paymentIds }),
 
   /* ---------- 分包管理 ---------- */
 
@@ -1365,7 +1344,7 @@ export const laborApi = {
    * @returns 报表预览数据
    */
   previewReport: (month: string, reportType: string) =>
-    http.get('/labor/reports/preview', { month, reportType }),
+    http.get('/labor/reports/preview', { months: month, type: reportType }),
 
   /**
    * 导出报表（下载 Excel 文件）
@@ -1374,7 +1353,7 @@ export const laborApi = {
    * @returns 文件下载响应
    */
   exportReport: (month: string, reportType: string) =>
-    http.get('/labor/reports/export', { month, reportType }, { responseType: 'blob' }),
+    http.get('/labor/reports/export', { months: month, type: reportType }, { responseType: 'blob' }),
 
 };
 

@@ -1,9 +1,9 @@
 {
-  "stage": "S7_supplier_workteam_crud_green_pushed",
+  "stage": "S7_inventory_alert_removed_labor_exports_green_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Phase 4 mobile check-in includes production-ready face provider HTTP gateway contract with safe downgrade and verified UI selection. Backend/frontend npm audit are clear. Full route real Chrome matrix covers enterprise 32 routes and developer 15 routes. Supplier/work-team CRUD is now verified in real Chrome with create/edit/delete and work-team leader search. Deep CRUD/upload/download for every remaining page and real third-party face gateway credentials remain Yellow.",
-  "updated_at": "2026-06-22T15:13:00Z"
+  "notes": "Inventory alert / 库存预警 has been removed per user request. Labor salary/payment/report export real downloads are fixed and verified. Real Chrome matrix now passes 6 tests including supplier/work-team CRUD, labor exports, enterprise route matrix without /wms/alerts, and developer route matrix. Deep CRUD/upload/download for every remaining page and real third-party face gateway credentials remain Yellow.",
+  "updated_at": "2026-06-22T15:41:00Z"
 }

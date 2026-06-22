@@ -22,7 +22,6 @@ const enterpriseRouteMatrix = [
   ['退库管理', '/wms/returns'],
   ['物资借调', '/wms/transfers'],
   ['班组台账', '/wms/ledger'],
-  ['库存预警', '/wms/alerts'],
   ['人员管理', '/labor/personnel'],
   ['考勤管理', '/labor/attendance'],
   ['工资核算', '/labor/salary'],
@@ -439,6 +438,61 @@ test.describe('browser smoke: authenticated core navigation', () => {
 
     await page.screenshot({
       path: '../docs/smoke-evidence/供应商班组CRUD.png',
+      fullPage: true,
+    });
+  });
+
+  test('enterprise user can download labor salary payment and report exports', async ({ page }) => {
+    await loginEnterprise(page);
+    const stamp = Date.now();
+    const month = '2026-06';
+    const recipientName = `浏览器发放导出-${stamp}`;
+    const idCardNo = `110101199001${String(stamp).slice(-6)}`;
+
+    await page.goto('/labor/payment');
+    await expect(page.getByRole('heading', { name: '工资发放' })).toBeVisible();
+    await page.getByRole('button', { name: '新增发放' }).click();
+    await page.getByPlaceholder('收款人姓名').fill(recipientName);
+    await page.getByPlaceholder('18位身份证号').fill(idCardNo);
+    await page.getByPlaceholder('0.00').fill('88.66');
+    await page.locator('input[type="month"]').fill(month);
+    await page.getByPlaceholder('银行卡号').fill('6222020202020202020');
+    await page.getByPlaceholder('备注').fill('真实浏览器工资发放导出验收');
+    await page.getByRole('button', { name: '确认发放' }).click();
+    await expect(page.getByText('发放记录创建成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: recipientName })).toBeVisible();
+
+    const paymentDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出', exact: true }).click();
+    const paymentDownload = await paymentDownloadPromise;
+    expect(paymentDownload.suggestedFilename()).toBe('工资发放明细.xlsx');
+    await expect(page.getByText('工资发放明细已导出')).toBeVisible();
+
+    await page.goto('/labor/salary');
+    await expect(page.getByRole('heading', { name: '工资核算' })).toBeVisible();
+    await page.locator('input[type="month"]').fill(month);
+    const salaryDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /导出报表/ }).click();
+    const salaryDownload = await salaryDownloadPromise;
+    expect(salaryDownload.suggestedFilename()).toBe(`${month}工资核算明细.xlsx`);
+    await expect(page.getByText('工资核算报表已导出')).toBeVisible();
+
+    await page.goto('/labor/reports');
+    await expect(page.getByRole('heading', { name: '报表导出' })).toBeVisible();
+    const monthSelect = page.locator('select').first();
+    await expect(monthSelect.locator(`option[value="${month}"]`)).toHaveCount(1, { timeout: 10000 });
+    await monthSelect.selectOption(month);
+    await expect(monthSelect).toHaveValue(month);
+    await page.locator('select').nth(1).selectOption('payment');
+    await expect(page.getByText(new RegExp(`${month} 工资发放明细表`))).toBeVisible();
+    await expect(page.getByText(recipientName)).toBeVisible({ timeout: 10000 });
+    const reportDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /导出 Excel/ }).click();
+    const reportDownload = await reportDownloadPromise;
+    expect(reportDownload.suggestedFilename()).toBe(`${month}-工资发放明细表.xlsx`);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/劳资工资发放导出.png',
       fullPage: true,
     });
   });

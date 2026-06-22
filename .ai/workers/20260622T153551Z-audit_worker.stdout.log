@@ -1,0 +1,63 @@
+## Audit Report
+
+### Overall Verdict: **PASS**
+
+### Scope 1: Inventory Alert Removal (库存预警)
+
+**Complete removal from all product-code surfaces:**
+
+| Surface | Status |
+|---------|--------|
+| `Alerts.tsx` component | Deleted (357 lines) |
+| `App.tsx` route (`/wms/alerts`) | Removed |
+| `Layout.tsx` sidebar menu | Removed |
+| `api/index.ts` 4 API methods | Removed |
+| Backend `alertsRouter` + 4 routes | Removed |
+| Backend service (`getAlertMaterials`, `getAlertToggle`, `setAlertToggle`, `setMaterialAlertThreshold`) | Removed |
+| Backend mount `router.use('/alerts', ...)` | Removed |
+| Dashboard `WmsStats.lowStockAlerts` + card | Removed |
+| `Materials.tsx` `isLowStock`, highlighting, badge | Removed |
+| `CreateMaterialData.alertThreshold` | Removed from interface |
+| `listInventory` `isLowStock` computation | Removed |
+| Materials/Inventory export `预警阈值` columns | Removed |
+| Browser smoke route matrix entry | Removed |
+| Section numbering | Updated (十→九) |
+
+**Intentional remaining references (NOT inventory alerts):**
+- `Risk.tsx`: 风险预警 — labor risk/compliance module
+- `docs/系统介绍.md`: 风险智能预警/合规预警 — labor risk docs
+- `prisma/schema.prisma:481`: `alertThreshold Int?` — historical field, acceptable per requirements
+- `Dashboard.tsx`/`Salary.tsx`: `AlertTriangle` icon — labor anomaly feature, not inventory
+
+### Scope 2: Labor Export / Report Fixes
+
+**New backend endpoints that download real files:**
+- `salaryRouter.get('/export')` — downloads `{month}工资核算明细.xlsx` with proper headers
+- `paymentRouter.get('/export')` — downloads `工资发放明细.xlsx` with proper headers
+
+**Backend fixes:**
+- Report preview now returns structured `{ title, headers, rows, summary }` format
+- Added `getAttendanceReportData()` + `getSocialInsuranceData()` for preview
+- Fixed `confirm-batch` to accept both `ids` and `paymentIds`
+- Anomaly query uses `createdAt` range (not `month` field)
+
+**Frontend improvements:**
+- Salary/Payment export buttons now call real endpoints, stream file via `downloadBlob`, show loading state — no more fake toasts
+- Reports export uses shared `downloadBlob` helper
+- API client aligns parameter names with backend (`search`/`keyword`, `months`/`month`, `type`/`reportType`)
+
+**Access control intact:**
+- All endpoints use `authenticate` + `requireUser` + `requirePermission('canManageSalary'/'canManagePayment'/'canManageReport')`
+- `accessibleDeptIds` preserves tenant/department scoping
+
+### Blocking Issues: NONE
+
+### Non-Blocking Follow-ups
+
+1. **Reports export only includes 4 fixed datasets** (salary/arrears/anomaly/payment) — `attendance` and `social` types are previewable but absent from the multi-sheet export workbook. Pre-existing limitation, not introduced by this diff.
+
+### Evidence
+
+- `bash scripts/verify.sh` passed (Codex-reported)
+- `bash scripts/browser-smoke.sh` passed 6/6 in real Chrome (Codex-reported, results in `docs/smoke-evidence/playwright-results.json`)
+- 60 files changed, 324 insertions, 543 deletions

@@ -1,10 +1,10 @@
 {
-  "status": "supplier_workteam_crud_green_pushed",
+  "status": "inventory_alert_removed_labor_exports_green_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_partial_route_matrix_plus_supplier_workteam_crud",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_crud_labor_exports_inventory_alert_removed",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
@@ -467,6 +467,48 @@
       "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
       "status": "verified_with_yellow_notes",
       "result": "Graph built 136 files / 1505 nodes / 16263 edges; risk score 0.55. Tool reports function-level test gaps, while real Chrome CRUD covers the product paths for this slice."
+    },
+    {
+      "type": "inventory_alert_removal",
+      "command": "implementation + residual rg scan",
+      "status": "verified",
+      "result": "库存预警 removed from frontend route/menu/API client/dashboard/materials UI, backend /api/wms/alerts router/service, browser route matrix, and public docs. Historical Prisma alertThreshold column/migration intentionally retained for compatibility but no longer used by product code."
+    },
+    {
+      "type": "labor_export_fix",
+      "command": "implementation + real Chrome downloads",
+      "status": "verified",
+      "result": "Labor salary export, payment export, and report export now download real backend files; report preview parameter/shape mismatch and anomaly month query bug fixed."
+    },
+    {
+      "type": "verification",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 5 files / 33 tests, backend build, frontend tests 2 files / 36 tests, frontend build passed after inventory alert removal and labor export fixes."
+    },
+    {
+      "type": "browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "Real system Google Chrome smoke passed 6 tests. Inventory alert route removed from matrix; labor salary/payment/report downloads verified; supplier/work-team CRUD and enterprise/developer route matrices still pass.",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/劳资工资发放导出.png"
+      ]
+    },
+    {
+      "type": "claude_worker",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260622T153600Z-remove-alerts-labor-export-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "Claude audit PASS; no blockers. Confirmed inventory alert removal across product surfaces and intact labor export permissions/tenant scoping.",
+      "evidence_file": ".ai/workers/20260622T153551Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 135 files / 1479 nodes / 16333 edges; risk score 0.50. Tool reports function-level unit gaps, while real Chrome covers the changed product paths."
     }
   ],
   "known_yellow_items": [
@@ -481,8 +523,10 @@
     "Backend xlsx high vulnerability removed by replacing labor report export with exceljs.",
     "Backend and frontend npm audit are clear at moderate threshold after xlsx removal and uuid override.",
     "Full route matrix is now covered in real Chrome, but deep CRUD/upload/download regression for every page is still incomplete.",
-    "Supplier/work-team CRUD has real Chrome create/edit/delete/search coverage; remaining admin/master-data pages still need equivalent deep CRUD where business rules support deletion."
+    "Supplier/work-team CRUD has real Chrome create/edit/delete/search coverage; remaining admin/master-data pages still need equivalent deep CRUD where business rules support deletion.",
+    "Inventory alert product feature has been removed per user request; historical Prisma alertThreshold column remains only for compatibility.",
+    "Labor report export still writes the existing fixed workbook sheets; attendance/social preview is supported but adding those sheets to workbook export remains a non-blocking follow-up."
   ],
-  "notes": "Supplier/work-team CRUD slice completed after full route matrix. Real Chrome now covers supplier create/edit/delete and work-team create/search-by-leader/edit/delete. This improves Browser Regression Green but is not full Product Green; deep CRUD/upload/download per page and real third-party face gateway configuration remain Yellow.",
-  "updated_at": "2026-06-22T15:13:00Z"
+  "notes": "Inventory alert feature removed and labor export/report dead paths fixed. Real Chrome now passes 6 tests including labor salary/payment/report downloads, supplier/work-team CRUD, and full enterprise/developer route matrices. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining page and real third-party face gateway credentials are configured.",
+  "updated_at": "2026-06-22T15:41:00Z"
 }

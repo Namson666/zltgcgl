@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "supplier_workteam_crud_green_pushed",
+  "stage": "inventory_alert_removed_labor_exports_green_pending_push",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Phase 4 face provider gateway completed and verified locally: HTTP/cloud/tencent/baidu/aliyun provider adapter, safe downgrade, UI setting, tests, Chrome smoke, Claude audit, and code-review-graph. Backend/frontend npm audit now clear after xlsx removal and uuid override. Full route real Chrome matrix added: enterprise 32 routes and developer 15 routes. Supplier/work-team CRUD slice is now verified in real Chrome with create/edit/delete and work-team leader search. Deep CRUD/upload/download across every remaining page and real third-party face gateway credentials remain Yellow before Product Green.",
+  "notes": "Inventory alert / 库存预警 has been removed per user request from product routes, menus, backend APIs, browser route matrix, and docs while retaining historical DB columns for compatibility. Labor salary/payment/report exports now use real backend downloads and were verified in real Chrome. Full route real Chrome matrix plus supplier/work-team CRUD still passes. Deep CRUD/upload/download across every remaining page and real third-party face gateway credentials remain Yellow before Product Green.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-22T15:13:00Z"
+  "updated_at": "2026-06-22T15:41:00Z"
 }
