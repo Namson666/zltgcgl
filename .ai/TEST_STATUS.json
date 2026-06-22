@@ -1,5 +1,5 @@
 {
-  "status": "inventory_alert_removed_labor_exports_green_pushed",
+  "status": "module_portal_browser_smoke_green_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -509,12 +509,42 @@
       "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
       "status": "verified_with_yellow_notes",
       "result": "Graph built 135 files / 1479 nodes / 16333 edges; risk score 0.50. Tool reports function-level unit gaps, while real Chrome covers the changed product paths."
+    },
+    {
+      "type": "module_portal_browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "Real system Google Chrome smoke passed 7 tests. New coverage registers a temporary tenant, enables only wms, verifies labor/finance menus hidden, direct disabled routes redirect, disabled APIs return 403 MODULE_NOT_ENABLED, wms still works, and independent portal login works without tenant code.",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/模块开通独立登录验收.png"
+      ]
+    },
+    {
+      "type": "verification",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 5 files / 33 tests, backend build, frontend tests 2 files / 36 tests, frontend build passed after adding module entitlement and independent portal smoke coverage."
+    },
+    {
+      "type": "claude_worker",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260622T155000Z-module-portal-smoke-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "Claude audit PASS; no blockers. Confirmed the new smoke test proves module menu hiding, direct route redirect, API 403, enabled wms continuity, and portal login without tenant code.",
+      "evidence_file": ".ai/workers/20260622T155005Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 135 files / 1485 nodes / 16559 edges; risk score 0.55. Test helper functions are reported as gaps, while the added product journey is covered by real Chrome."
     }
   ],
   "known_yellow_items": [
     "Prisma migrate deploy to a temporary SQLite DB previously returned an opaque Schema engine error while direct sqlite3 SQL execution succeeded; keep migration deployment as a Yellow follow-up before production rollout.",
     "Independent login page DNS ownership/resolve verification and logo upload picker are not implemented in Phase 2 MVP.",
-    "Browser E2E for independent-domain portal login and unopen-module 403/menu-hidden matrix is still required before Product Green.",
+    "Browser E2E for independent-domain portal login and unopen-module 403/menu-hidden matrix is now covered locally in real Chrome using 127.0.0.1; production DNS ownership/resolve verification remains Yellow.",
     "Browser smoke harness uses raw SQL migrations because Prisma migrate/db push returns an opaque Schema engine error in this environment.",
     "Browser smoke screenshots use explicit docs/smoke-evidence paths; future full regression should use testInfo/outputDir for richer artifact grouping.",
     "Face recognition provider is currently a local stub adapter; production rollout must choose and configure a real third-party face recognition service or explicitly accept manual/provider_error review.",
@@ -527,6 +557,6 @@
     "Inventory alert product feature has been removed per user request; historical Prisma alertThreshold column remains only for compatibility.",
     "Labor report export still writes the existing fixed workbook sheets; attendance/social preview is supported but adding those sheets to workbook export remains a non-blocking follow-up."
   ],
-  "notes": "Inventory alert feature removed and labor export/report dead paths fixed. Real Chrome now passes 6 tests including labor salary/payment/report downloads, supplier/work-team CRUD, and full enterprise/developer route matrices. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining page and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-22T15:46:00Z"
+  "notes": "Module entitlement and independent portal login smoke coverage added. Real Chrome now passes 7 tests including menu hiding, disabled route redirect, disabled API 403, enabled wms continuity, and portal login without tenant code. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
+  "updated_at": "2026-06-22T15:56:00Z"
 }

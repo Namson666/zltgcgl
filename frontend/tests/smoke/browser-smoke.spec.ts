@@ -83,6 +83,83 @@ async function loginDeveloper(page: any) {
   await expect(page).toHaveURL(/\/dashboard|\/dev/);
 }
 
+async function readJson(response: any) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { raw: text };
+  }
+}
+
+async function createSmokeTenant(page: any, stamp: number) {
+  const password = 'Admin@2024';
+  const username = `portal_admin_${stamp}`;
+  const phone = `136${String(stamp).slice(-8)}`;
+  const response = await page.request.post('/api/auth/register', {
+    data: {
+      companyName: `模块开通验收企业${stamp}`,
+      contactName: '模块开通验收管理员',
+      phone,
+      username,
+      password,
+    },
+  });
+  expect(response.status()).toBe(200);
+  const body = await readJson(response);
+  expect(body?.success).toBe(true);
+  expect(body?.data?.tenant?.id).toBeTruthy();
+  return {
+    tenantId: body.data.tenant.id as string,
+    tenantCode: body.data.tenant.code as string,
+    tenantName: body.data.tenant.name as string,
+    username,
+    password,
+  };
+}
+
+async function getDeveloperToken(page: any) {
+  const response = await page.request.post('/api/auth/developer/login', {
+    data: developerAccount,
+  });
+  expect(response.status()).toBe(200);
+  const body = await readJson(response);
+  expect(body?.data?.token).toBeTruthy();
+  return body.data.token as string;
+}
+
+async function configureTenantModules(page: any, developerToken: string, tenantId: string, enabled: { wms: boolean; labor: boolean; finance: boolean }) {
+  const response = await page.request.put(`/api/developer/tenants/${tenantId}/modules`, {
+    headers: { Authorization: `Bearer ${developerToken}` },
+    data: {
+      modules: [
+        { moduleKey: 'wms', isEnabled: enabled.wms, remark: 'browser smoke module entitlement' },
+        { moduleKey: 'labor', isEnabled: enabled.labor, remark: 'browser smoke module entitlement' },
+        { moduleKey: 'finance', isEnabled: enabled.finance, remark: 'browser smoke module entitlement' },
+      ],
+    },
+  });
+  expect(response.status()).toBe(200);
+  const body = await readJson(response);
+  expect(body?.success).toBe(true);
+}
+
+async function configureTenantPortal(page: any, developerToken: string, tenantId: string, stamp: number) {
+  const response = await page.request.put(`/api/developer/tenants/${tenantId}/portal`, {
+    headers: { Authorization: `Bearer ${developerToken}` },
+    data: {
+      domain: '127.0.0.1',
+      companyName: `独立门户验收企业${stamp}`,
+      loginTitle: `独立门户验收登录${stamp}`,
+      themeColor: '#0ea5e9',
+      isEnabled: true,
+    },
+  });
+  expect(response.status()).toBe(200);
+  const body = await readJson(response);
+  expect(body?.success).toBe(true);
+}
+
 async function expectUsablePage(page: any, label: string, route: string) {
   await page.goto(route);
   await page.waitForLoadState('networkidle');
@@ -509,5 +586,70 @@ test.describe('browser smoke: authenticated core navigation', () => {
     for (const [label, route] of developerRouteMatrix) {
       await expectUsablePage(page, label, route);
     }
+  });
+
+  test('module entitlements hide disabled modules and portal login works without tenant code', async ({ page }) => {
+    const stamp = Date.now();
+    const tenant = await createSmokeTenant(page, stamp);
+    const developerToken = await getDeveloperToken(page);
+    await configureTenantModules(page, developerToken, tenant.tenantId, { wms: true, labor: false, finance: false });
+
+    await page.goto('/login');
+    await page.getByPlaceholder('请输入企业代码').fill(tenant.tenantCode);
+    await page.getByPlaceholder('请输入用户名').fill(tenant.username);
+    await page.getByPlaceholder('请输入密码').fill(tenant.password);
+    await page.getByRole('button', { name: '登 录' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    await expect(page.getByText('物资管理', { exact: true })).toBeVisible();
+    await expect(page.getByText('劳资管理', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('财务管理', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('合同管理', { exact: true }).first()).toBeVisible();
+
+    await page.goto('/labor/personnel');
+    await expect(page).toHaveURL(/\/dashboard/);
+    await page.goto('/finance/dept-entry');
+    await expect(page).toHaveURL(/\/dashboard/);
+    await page.goto('/wms/materials');
+    await expect(page).toHaveURL(/\/wms\/materials/);
+    await expect(page.getByRole('heading', { name: '物资总览' })).toBeVisible();
+
+    const userToken = await page.evaluate(() => window.localStorage.getItem('zlt_token'));
+    expect(userToken).toBeTruthy();
+    const laborResponse = await page.request.get('/api/labor/personnel', {
+      headers: { Authorization: `Bearer ${userToken}` },
+    });
+    expect(laborResponse.status()).toBe(403);
+    const laborBody = await readJson(laborResponse);
+    expect(laborBody?.error || laborBody?.code).toBe('MODULE_NOT_ENABLED');
+    const financeResponse = await page.request.get('/api/finance/expenses', {
+      headers: { Authorization: `Bearer ${userToken}` },
+    });
+    expect(financeResponse.status()).toBe(403);
+    const financeBody = await readJson(financeResponse);
+    expect(financeBody?.error || financeBody?.code).toBe('MODULE_NOT_ENABLED');
+    const wmsResponse = await page.request.get('/api/wms/inventory', {
+      headers: { Authorization: `Bearer ${userToken}` },
+    });
+    expect(wmsResponse.status()).toBe(200);
+
+    await configureTenantPortal(page, developerToken, tenant.tenantId, stamp);
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto('/login');
+    await expect(page.getByText(`独立门户验收登录${stamp}`)).toBeVisible();
+    await expect(page.getByText(`独立门户验收企业${stamp} · 独立登录入口`)).toBeVisible();
+    await expect(page.getByPlaceholder('请输入企业代码')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /开发者登录/ })).toHaveCount(0);
+    await page.getByPlaceholder('请输入用户名').fill(tenant.username);
+    await page.getByPlaceholder('请输入密码').fill(tenant.password);
+    await page.getByRole('button', { name: '登 录' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page.getByText('物资管理', { exact: true })).toBeVisible();
+    await expect(page.getByText('劳资管理', { exact: true })).toHaveCount(0);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/模块开通独立登录验收.png',
+      fullPage: true,
+    });
   });
 });

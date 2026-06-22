@@ -89,7 +89,7 @@
         {
           "title": "browser smoke: authenticated core navigation",
           "file": "browser-smoke.spec.ts",
-          "line": 101,
+          "line": 178,
           "column": 6,
           "specs": [
             {
@@ -108,12 +108,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 18788,
+                      "duration": 18514,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T15:34:13.215Z",
+                      "startTime": "2026-06-22T15:47:48.193Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -123,7 +123,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-37e25edcb70b2214e5ba",
               "file": "browser-smoke.spec.ts",
-              "line": 102,
+              "line": 179,
               "column": 3
             },
             {
@@ -142,12 +142,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2400,
+                      "duration": 2313,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T15:34:32.802Z",
+                      "startTime": "2026-06-22T15:48:07.011Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -157,7 +157,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-e42aafba7f0f51619208",
               "file": "browser-smoke.spec.ts",
-              "line": 347,
+              "line": 424,
               "column": 3
             },
             {
@@ -176,12 +176,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2882,
+                      "duration": 2831,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T15:34:35.209Z",
+                      "startTime": "2026-06-22T15:48:09.330Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -191,7 +191,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-5d839cbb55ba837504d8",
               "file": "browser-smoke.spec.ts",
-              "line": 377,
+              "line": 454,
               "column": 3
             },
             {
@@ -210,12 +210,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2855,
+                      "duration": 2805,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T15:34:38.097Z",
+                      "startTime": "2026-06-22T15:48:12.166Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -225,7 +225,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-5e144c39020d35cac64c",
               "file": "browser-smoke.spec.ts",
-              "line": 445,
+              "line": 522,
               "column": 3
             },
             {
@@ -244,12 +244,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 32210,
+                      "duration": 32412,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T15:34:40.958Z",
+                      "startTime": "2026-06-22T15:48:14.978Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -259,7 +259,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-e982e543af9213ddde17",
               "file": "browser-smoke.spec.ts",
-              "line": 500,
+              "line": 577,
               "column": 3
             },
             {
@@ -278,12 +278,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 16097,
+                      "duration": 16043,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T15:35:13.174Z",
+                      "startTime": "2026-06-22T15:48:47.395Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -293,7 +293,41 @@
               ],
               "id": "5a831c70b3774ee84c9d-d05a0faf5f199fe198ee",
               "file": "browser-smoke.spec.ts",
-              "line": 507,
+              "line": 584,
+              "column": 3
+            },
+            {
+              "title": "module entitlements hide disabled modules and portal login works without tenant code",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2988,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-22T15:49:03.444Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-ebfd38f616fe9a7384f8",
+              "file": "browser-smoke.spec.ts",
+              "line": 591,
               "column": 3
             }
           ]
@@ -303,9 +337,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-06-22T15:34:09.899Z",
-    "duration": 79580.816,
-    "expected": 6,
+    "startTime": "2026-06-22T15:47:44.969Z",
+    "duration": 81641.95,
+    "expected": 7,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
