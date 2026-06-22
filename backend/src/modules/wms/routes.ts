@@ -1234,7 +1234,7 @@ workTeamLedgerRouter.get('/', requirePermission('canViewWorkTeamLedger'), wrapHa
   const q = req.query as any;
   const result = await wms.listWorkTeamLedger({
     tenantId, page: parseInt(q.page) || 1, pageSize: parseInt(q.pageSize) || 20,
-    workTeamId: q.workTeamId, subProjectId: q.subProjectId,
+    workTeamId: q.workTeamId, subProjectId: q.subProjectId, keyword: q.keyword,
     startDate: q.startDate, endDate: q.endDate,
   });
   res.json({ success: true, data: result.items, meta: { total: result.total, page: result.page, limit: result.pageSize } } as unknown as PaginatedResponse<any>);

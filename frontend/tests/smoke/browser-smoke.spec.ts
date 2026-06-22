@@ -175,6 +175,29 @@ async function expectUsablePage(page: any, label: string, route: string) {
   });
 }
 
+async function selectFirstRealOption(selectLocator: any) {
+  const optionCount = await selectLocator.locator('option').count();
+  expect(optionCount).toBeGreaterThan(1);
+  const value = await selectLocator.locator('option').nth(1).getAttribute('value');
+  expect(value).toBeTruthy();
+  await selectLocator.selectOption(value!);
+}
+
+async function chooseMultiSelectModalOption(page: any, openerText: string | RegExp, modalTitle: string | RegExp, optionText: string | RegExp) {
+  await page.locator('button').filter({ hasText: openerText }).first().click();
+  await expect(page.getByRole('heading', { name: modalTitle })).toBeVisible();
+  const dialog = page.locator('.fixed').filter({ hasText: modalTitle }).last();
+  await dialog.locator('label', { hasText: optionText }).first().click();
+  await dialog.getByRole('button', { name: '确认' }).click();
+}
+
+async function chooseSingleSelectModalOption(page: any, openerText: string | RegExp, modalTitle: string | RegExp, optionText: string | RegExp) {
+  await page.locator('button').filter({ hasText: openerText }).first().click();
+  await expect(page.getByRole('heading', { name: modalTitle })).toBeVisible();
+  const dialog = page.locator('.fixed').filter({ hasText: modalTitle }).last();
+  await dialog.getByRole('button', { name: optionText }).first().click();
+}
+
 test.describe('browser smoke: authenticated core navigation', () => {
   test('enterprise user can login and open core enabled modules', async ({ page }) => {
     await page.goto('/login');
@@ -515,6 +538,102 @@ test.describe('browser smoke: authenticated core navigation', () => {
 
     await page.screenshot({
       path: '../docs/smoke-evidence/供应商班组CRUD.png',
+      fullPage: true,
+    });
+  });
+
+  test('enterprise user can complete wms inbound outbound return transfer chain', async ({ page }) => {
+    test.setTimeout(150_000);
+    await loginEnterprise(page);
+    const stamp = Date.now();
+    const supplierName = `浏览器物资供应商-${stamp}`;
+    const materialName = `浏览器钢筋-${stamp}`;
+    const projectName = `浏览器项目-${stamp}`;
+    const inboundRemark = `真实浏览器入库-${stamp}`;
+    const outboundRemark = `真实浏览器出库-${stamp}`;
+    const returnRemark = `真实浏览器退库-${stamp}`;
+    const transferRemark = `真实浏览器调拨-${stamp}`;
+
+    await page.goto('/wms/inbound');
+    await expect(page.getByRole('heading', { name: '入库管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增入库' }).click();
+    await page.getByPlaceholder('输入供应商名称').fill(supplierName);
+    await page.locator('select').filter({ hasText: '不选择项目部' }).selectOption({ label: '第一项目部' });
+    await page.getByPlaceholder('选填').fill(inboundRemark);
+    await page.getByPlaceholder('输入物资名称').fill(materialName);
+    await page.getByPlaceholder('单位').fill('吨');
+    await page.getByPlaceholder('项目名称').fill(projectName);
+    await page.getByPlaceholder('数量').fill('8');
+    await page.getByPlaceholder('实收').fill('8');
+    await page.getByPlaceholder('单价').fill('3200');
+    await page.getByRole('button', { name: '确认入库' }).click();
+    await expect(page.getByText('入库登记成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: supplierName })).toBeVisible();
+    await page.locator('tr', { hasText: supplierName }).getByTitle('查看明细').click();
+    await expect(page.getByRole('heading', { name: '入库明细' })).toBeVisible();
+    await expect(page.getByText(materialName)).toBeVisible();
+    await page.getByRole('button').filter({ has: page.locator('svg') }).last().click();
+
+    await page.goto('/wms/outbound');
+    await expect(page.getByRole('heading', { name: '出库管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增出库' }).click();
+    await chooseMultiSelectModalOption(page, '请选择项目部', /选择项目部/, '第一项目部');
+    await expect(page.getByText(materialName)).toBeVisible({ timeout: 15000 });
+    await selectFirstRealOption(page.locator('select').filter({ hasText: '请选择班组' }));
+    await page.getByPlaceholder('可选').fill(outboundRemark);
+    const outboundMaterialRow = page.locator('tr', { hasText: materialName }).first();
+    await outboundMaterialRow.locator('input[type="checkbox"]').check();
+    await outboundMaterialRow.locator('input[type="number"]').fill('3');
+    await page.getByRole('button', { name: /确认出库/ }).click();
+    await expect(page.getByRole('heading', { name: '出库成功' })).toBeVisible();
+    const outboundDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /下载出库单 PDF/ }).click();
+    const outboundDownload = await outboundDownloadPromise;
+    expect(outboundDownload.suggestedFilename()).toMatch(/^出库单-.*\.pdf$/);
+    await page.getByRole('button', { name: '返回继续出库' }).click();
+    await expect(page.getByRole('heading', { name: '出库管理' })).toBeVisible();
+    await expect(page.locator('tr', { hasText: outboundRemark })).toBeVisible();
+
+    await page.goto('/wms/returns');
+    await expect(page.getByRole('heading', { name: '退库管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增退库' }).click();
+    await page.locator('select').filter({ hasText: '请选择子项目' }).selectOption({ label: projectName });
+    await page.getByPlaceholder('可选').fill(returnRemark);
+    await page.getByRole('button', { name: /查询领料记录/ }).click();
+    await expect(page.getByText(materialName)).toBeVisible({ timeout: 15000 });
+    const returnMaterialRow = page.locator('tr', { hasText: materialName }).first();
+    await returnMaterialRow.locator('input[type="checkbox"]').check();
+    await returnMaterialRow.locator('input[type="number"]').fill('1');
+    await page.getByRole('button', { name: /确认退库/ }).click();
+    await expect(page.getByText('退库成功')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('tr', { hasText: returnRemark })).toBeVisible();
+
+    await page.goto('/wms/transfers');
+    await expect(page.getByRole('heading', { name: '物资调拨' })).toBeVisible();
+    await page.getByRole('button', { name: '新增调拨' }).click();
+    await chooseMultiSelectModalOption(page, '请选择项目部', /选择调出项目部/, '第一项目部');
+    await chooseSingleSelectModalOption(page, '请选择项目部', /选择调入项目部/, '第二项目部');
+    await expect(page.getByText(materialName)).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('可选').fill(transferRemark);
+    const transferMaterialRow = page.locator('tr', { hasText: materialName }).first();
+    await transferMaterialRow.locator('input[type="checkbox"]').check();
+    await transferMaterialRow.locator('input[type="number"]').fill('1');
+    await page.getByRole('button', { name: /确认调拨/ }).click();
+    await expect(page.getByText('调拨成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: transferRemark })).toBeVisible();
+    const transferDownloadPromise = page.waitForEvent('download');
+    await page.locator('tr', { hasText: transferRemark }).getByTitle('下载调拨单').click();
+    const transferDownload = await transferDownloadPromise;
+    expect(transferDownload.suggestedFilename()).toMatch(/^调拨单-.*\.pdf$/);
+
+    await page.goto('/wms/ledger');
+    await expect(page.getByRole('heading', { name: '班组台账' })).toBeVisible();
+    await page.getByPlaceholder('搜索班组/物资名称...').fill(materialName);
+    await expect(page.locator('tr', { hasText: materialName })).toBeVisible({ timeout: 15000 });
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/物资主链路CRUD.png',
       fullPage: true,
     });
   });

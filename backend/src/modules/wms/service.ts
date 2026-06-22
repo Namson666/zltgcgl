@@ -438,10 +438,24 @@ export async function createManualInbound(data: CreateManualInboundData) {
       departmentId = sp?.departmentId || null;
     }
 
+    let resolvedSubProjectId = data.subProjectId || null;
+    if (!resolvedSubProjectId && departmentId) {
+      const firstProjectName = resolvedItems.find(item => item.projectName?.trim())?.projectName?.trim();
+      if (firstProjectName) {
+        const existingSubProject = await tx.subProject.findFirst({
+          where: { tenantId: data.tenantId, departmentId, name: firstProjectName, isActive: true },
+        });
+        const subProject = existingSubProject || await tx.subProject.create({
+          data: { tenantId: data.tenantId, departmentId, name: firstProjectName, code: null, description: '由手动入库项目名称自动创建' },
+        });
+        resolvedSubProjectId = subProject.id;
+      }
+    }
+
     const order = await (tx.inboundOrder as any).create({
       data: {
         tenantId: data.tenantId, orderNo,
-        subProjectId: data.subProjectId || null,
+        subProjectId: resolvedSubProjectId,
         contractId,
         departmentId,
         supplierName: (data as any).supplierName || null,
@@ -465,7 +479,7 @@ export async function createManualInbound(data: CreateManualInboundData) {
     for (const item of resolvedItems) {
       if (item.materialId) {
         const projectName = item.projectName || '待分配物资';
-        const spId = data.subProjectId || null;
+        const spId = resolvedSubProjectId;
         const existing = await tx.inventory.findFirst({
           where: { subProjectId: spId, materialId: item.materialId, projectName },
         });
@@ -1028,7 +1042,9 @@ export async function createOutbound(data: CreateOutboundData) {
       data: {
         tenantId: data.tenantId, orderNo, subProjectId: spId,
         departmentId: data.departmentId || null,
-        workTeamId: data.workTeamId, outboundDate: new Date(data.outboundDate),
+        workTeamId: data.workTeamId,
+        workTeamName: workTeam?.name || null,
+        outboundDate: new Date(data.outboundDate),
         remark: data.remark,
         items: { create: resolvedItems.map(item => ({
           materialId: item.materialId, projectName: item.projectName,
@@ -1217,8 +1233,7 @@ export async function createReturn(data: CreateReturnData) {
         remark: data.remark,
         items: { create: resolvedItems.map(item => ({
           outboundItemId: item.outboundItemId, materialId: item.materialId,
-          projectName: item.projectName, quantity: item.quantity,
-          unitPrice: item.unitPrice, unit: item.unit,
+          quantity: item.quantity,
         })) },
       },
     });
@@ -1252,8 +1267,8 @@ export async function createExcelReturn(data: CreateExcelReturnData) {
         tenantId: data.tenantId, orderNo, subProjectId: data.subProjectId,
         returnDate: new Date(data.returnDate), source: 'excel', remark: data.remark,
         items: { create: data.items.map(item => ({
-          materialId: item.materialId, projectName: item.projectName || '待分配物资',
-          quantity: item.quantity, unitPrice: item.unitPrice || 0, unit: item.unit || '',
+          materialId: item.materialId,
+          quantity: item.quantity,
         })) },
       },
     });
@@ -1479,6 +1494,7 @@ export interface WorkTeamLedgerParams {
   tenantId: string;
   workTeamId?: string;
   subProjectId?: string;
+  keyword?: string;
   startDate?: string;
   endDate?: string;
   page: number;
@@ -1486,7 +1502,7 @@ export interface WorkTeamLedgerParams {
 }
 
 export async function listWorkTeamLedger(params: WorkTeamLedgerParams) {
-  const { tenantId, workTeamId, subProjectId, startDate, endDate, page, pageSize } = params;
+  const { tenantId, workTeamId, subProjectId, keyword, startDate, endDate, page, pageSize } = params;
   const skip = (page - 1) * pageSize;
   const where: any = {
     outboundOrder: { tenantId },
@@ -1499,13 +1515,10 @@ export async function listWorkTeamLedger(params: WorkTeamLedgerParams) {
     if (endDate) where.outboundOrder.outboundDate.lte = new Date(endDate);
   }
 
-  const [items, total] = await Promise.all([
-    prisma.outboundItem.findMany({
-      where, skip, take: pageSize, orderBy: { outboundOrder: { outboundDate: 'desc' } },
-      include: { material: true, outboundOrder: { include: { subProject: true } } },
-    }),
-    prisma.outboundItem.count({ where }),
-  ]);
+  const items = await prisma.outboundItem.findMany({
+    where, orderBy: { outboundOrder: { outboundDate: 'desc' } },
+    include: { material: true, outboundOrder: { include: { subProject: true } } },
+  });
 
   const result = await Promise.all(items.map(async item => {
     const returned = await prisma.returnItem.aggregate({
@@ -1513,10 +1526,32 @@ export async function listWorkTeamLedger(params: WorkTeamLedgerParams) {
       _sum: { quantity: true },
     });
     const returnedQuantity = Number(returned._sum?.quantity || 0);
-    return { ...item, returnedQuantity, netQuantity: item.quantity - returnedQuantity };
+    const netQuantity = item.quantity - returnedQuantity;
+    return {
+      id: item.id,
+      workTeamName: item.outboundOrder.workTeamName || '',
+      materialName: item.material?.name || '',
+      unit: item.material?.unit || item.unit || '',
+      quantity: netQuantity,
+      unitPrice: item.unitPrice || 0,
+      totalAmount: netQuantity * Number(item.unitPrice || 0),
+      outboundDate: item.outboundOrder.outboundDate,
+      projectName: item.projectName || item.outboundOrder.subProject?.name || '',
+      type: 'outbound',
+      returnedQuantity,
+    };
   }));
 
-  return { items: result, total, page, pageSize };
+  const normalizedKeyword = keyword?.trim().toLowerCase();
+  const filtered = normalizedKeyword
+    ? result.filter(item =>
+      item.materialName.toLowerCase().includes(normalizedKeyword) ||
+      item.workTeamName.toLowerCase().includes(normalizedKeyword) ||
+      item.projectName.toLowerCase().includes(normalizedKeyword)
+    )
+    : result;
+
+  return { items: filtered.slice(skip, skip + pageSize), total: filtered.length, page, pageSize };
 }
 
 export async function getWorkTeamLedgerExportData(tenantId: string, workTeamId?: string, subProjectId?: string) {
@@ -1529,16 +1564,31 @@ export async function getWorkTeamLedgerExportData(tenantId: string, workTeamId?:
     include: { material: true, outboundOrder: { include: { subProject: true } } },
   });
 
-  const rows = items.map(item => ({
-    '班组': item.outboundOrder.workTeamName || '',
-    '子项目名称': item.outboundOrder.subProject?.name || '',
-    '子项目编码': item.outboundOrder.subProject?.code || '',
-    '物资名称': item.material?.name || '',
-    '物资编码': item.material?.code || '',
-    '单位': item.material?.unit || '',
-    '领料数量': item.quantity,
-    '出库单号': item.outboundOrder.orderNo,
-    '出库日期': item.outboundOrder.outboundDate.toLocaleDateString('zh-CN'),
+  const rows = await Promise.all(items.map(async item => {
+    const returned = await prisma.returnItem.aggregate({
+      where: { outboundItemId: item.id, materialId: item.materialId },
+      _sum: { quantity: true },
+    });
+    const returnedQuantity = Number(returned._sum?.quantity || 0);
+    const netQuantity = item.quantity - returnedQuantity;
+    const unitPrice = Number(item.unitPrice || 0);
+
+    return {
+      '班组': item.outboundOrder.workTeamName || '',
+      '子项目名称': item.outboundOrder.subProject?.name || '',
+      '子项目编码': item.outboundOrder.subProject?.code || '',
+      '项目名称': item.projectName || item.outboundOrder.subProject?.name || '',
+      '物资名称': item.material?.name || '',
+      '物资编码': item.material?.code || '',
+      '单位': item.material?.unit || item.unit || '',
+      '原领数量': item.quantity,
+      '已退数量': returnedQuantity,
+      '净领用数量': netQuantity,
+      '单价': unitPrice,
+      '金额': netQuantity * unitPrice,
+      '出库单号': item.outboundOrder.orderNo,
+      '出库日期': item.outboundOrder.outboundDate.toLocaleDateString('zh-CN'),
+    };
   }));
 
   return { rows, count: items.length };

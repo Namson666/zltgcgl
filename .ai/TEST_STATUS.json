@@ -1,13 +1,49 @@
 {
-  "status": "admin_crud_inventory_alert_removal_pushed",
+  "status": "wms_main_flow_browser_verified_committed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_exports_inventory_alert_removed",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_exports_inventory_alert_removed_wms_main_flow",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "wms_main_flow",
+      "command": "real Chrome browser smoke + backend implementation review",
+      "status": "verified",
+      "result": "物资主链路已补齐真实 Chrome 验收：手动入库、自动关联/创建子项目、出库、出库单 PDF 下载、退库、调拨、调拨单 PDF 下载、班组台账搜索。班组台账导出同步使用原领数量/已退数量/净领用数量/金额，避免页面与导出对账口径不一致。"
+    },
+    {
+      "type": "unified_verify",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 5 files / 33 tests passed; backend TypeScript build passed; frontend tests 2 files / 36 tests passed; frontend production build passed after WMS main flow fixes"
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "rm -rf backend/uploads docs/smoke-evidence/test-results && bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "9 Playwright smoke tests passed in system Google Chrome, including WMS inbound/outbound/return/transfer/ledger chain, admin CRUD, labor exports, full route matrix, module entitlement hiding/API 403, and independent portal login without tenant code",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/物资主链路CRUD.png"
+      ]
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/wms-main-flow-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "PASS; Claude confirmed no blockers for tenant isolation, module entitlement boundaries, inventory accounting, destructive behavior, public repo secret leakage, or real Chrome smoke realism. Non-blocking notes: auto-created SubProject name is not unique-enforced, and ledger pagination is O(N) before slice for very large tenants.",
+      "evidence_file": ".ai/workers/20260622T164208Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 135 files / 1493 nodes / 17466 edges. detect-changes risk score 0.50. Function-level unit gaps remain listed for WMS service helpers, but the changed product journey is covered by real Chrome."
+    },
     {
       "type": "backend_test",
       "command": "cd backend && npm test",

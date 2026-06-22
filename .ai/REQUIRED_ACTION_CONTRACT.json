@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "admin_crud_inventory_alert_pushed",
+  "stage": "wms_main_flow_verified_committed_pending_push",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Inventory alert / 库存预警 remains removed per user request from product routes, menus, backend APIs, browser route matrix, and active docs while retaining historical DB columns for compatibility. Basic admin roles/users/departments deep CRUD/state-change flow is now covered by real Chrome. Labor salary/payment/report exports use real backend downloads. Module entitlement and independent portal login smoke coverage verifies menu hiding, direct route redirect, API 403, enabled wms continuity, and no-tenant-code portal login in real Chrome. Deep CRUD/upload/download across every remaining page and real third-party face gateway credentials remain Yellow before Product Green.",
+  "notes": "Inventory alert / 库存预警 remains removed per user request from product routes, menus, backend APIs, browser route matrix, and active docs while retaining historical DB columns for compatibility. Basic admin roles/users/departments deep CRUD/state-change flow is covered by real Chrome. Labor salary/payment/report exports use real backend downloads. Module entitlement and independent portal login smoke coverage verifies menu hiding, direct route redirect, API 403, enabled wms continuity, and no-tenant-code portal login in real Chrome. WMS main chain is now covered by real Chrome: inbound, outbound, outbound PDF download, return, transfer, transfer PDF download, and work-team ledger search. Deep CRUD/upload/download across every remaining historical page and real third-party face gateway credentials remain Yellow before Product Green.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-22T16:25:00Z"
+  "updated_at": "2026-06-22T16:45:00Z"
 }
