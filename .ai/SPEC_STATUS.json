@@ -4,6 +4,6 @@
   "design_approved_by_user": false,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Architecture contract drafted from user requirements. Awaiting user review before implementation planning.",
-  "updated_at": "2026-06-22T09:48:39Z"
+  "notes": "Architecture contract updated with mini-program multi-tenant routing, attendance policy, county anomaly, face recognition adapter, tenant portal login clarification, and contract attachment/delete rules. Awaiting user review before implementation planning.",
+  "updated_at": "2026-06-22T10:02:00Z"
 }
