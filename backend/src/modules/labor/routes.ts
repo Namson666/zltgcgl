@@ -16,6 +16,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import ExcelJS from 'exceljs';
 import { authenticate, requireUser } from '../../common/middleware/auth';
 import { requirePermission } from '../../common/middleware/permission';
 import { AuthenticatedRequest, ApiResponse, PaginatedResponse } from '../../common/types';
@@ -23,6 +24,20 @@ import { createLog } from '../../common/services/log.service';
 import * as laborService from './service';
 
 const router = Router();
+
+function addJsonWorksheet(workbook: ExcelJS.Workbook, name: string, rows: Record<string, any>[] = []) {
+  const worksheet = workbook.addWorksheet(name);
+  const keys = [...new Set(rows.flatMap(row => Object.keys(row || {})))];
+  if (!keys.length) {
+    worksheet.addRow(['暂无数据']);
+    return worksheet;
+  }
+  worksheet.columns = keys.map(key => ({ header: key, key, width: Math.max(12, Math.min(32, key.length * 2)) }));
+  rows.forEach(row => worksheet.addRow(row));
+  worksheet.getRow(1).font = { bold: true };
+  worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+  return worksheet;
+}
 
 // ============================================
 // 附件上传配置
@@ -823,21 +838,15 @@ reportRouter.get('/export', authenticate, requireUser, requirePermission('canMan
       return;
     }
 
-    let XLSX: any;
-    try {
-      XLSX = await import('xlsx');
-    } catch {
-      res.status(500).json({ success: false, error: 'DEPENDENCY_MISSING', message: 'Excel导出功能需要安装xlsx库（npm install xlsx）' } as ApiResponse);
-      return;
-    }
-
     const [salaryData, arrearsData, anomalyData, paymentData] = await laborService.getReportExportData(tenantId, monthList, departmentId);
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salaryData), '月度工资汇总表');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(arrearsData), '欠薪统计表');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(anomalyData), '异常人员明细表');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(paymentData), '工资发放记录表');
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = '资料通工程管理系统';
+    workbook.created = new Date();
+    addJsonWorksheet(workbook, '月度工资汇总表', salaryData);
+    addJsonWorksheet(workbook, '欠薪统计表', arrearsData);
+    addJsonWorksheet(workbook, '异常人员明细表', anomalyData);
+    addJsonWorksheet(workbook, '工资发放记录表', paymentData);
 
     const sorted = [...monthList].sort();
     let exportName = filename;
@@ -848,7 +857,7 @@ reportRouter.get('/export', authenticate, requireUser, requirePermission('canMan
         : `${fmtMonth(sorted[0])}~${fmtMonth(sorted[sorted.length - 1])}劳资报表`;
     }
 
-    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    const buf = await workbook.xlsx.writeBuffer();
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(exportName)}.xlsx"`);
     res.send(buf);

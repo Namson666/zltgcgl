@@ -1,5 +1,5 @@
 {
-  "status": "phase4_face_provider_gateway_green_pending_push",
+  "status": "xlsx_high_removed_green_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -364,6 +364,30 @@
       "command": "cd backend && npm audit --audit-level=high --omit=dev; cd ../frontend && npm audit --audit-level=high --omit=dev",
       "status": "yellow_backend_remaining_frontend_clear",
       "result": "frontend found 0 vulnerabilities after npm audit fix; backend reduced to xlsx high no-fix plus uuid moderate requiring breaking force upgrade."
+    },
+    {
+      "type": "dependency_audit",
+      "command": "cd backend && npm audit --audit-level=high --omit=dev",
+      "status": "verified_high_removed",
+      "result": "backend xlsx no-fix high removed by replacing labor report export with exceljs; audit now reports only 3 moderate uuid issues requiring breaking-force upgrade."
+    },
+    {
+      "type": "verification",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 5 files / 33 tests, backend build, frontend tests 2 files / 36 tests, frontend build all passed after xlsx removal."
+    },
+    {
+      "type": "claude_worker",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/xlsx-removal-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "Claude audit PASS; no blockers. Suggested rows default and direct writeBuffer send cleanup were applied and reverified."
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified",
+      "result": "Graph built 136 files / 1497 nodes / 15880 edges; risk score 0.40 after xlsx removal."
     }
   ],
   "known_yellow_items": [
@@ -378,9 +402,9 @@
     "Trusted check-in locations now have list/delete UI and smoke coverage; advanced filtering/pagination can be added later if record volume grows.",
     "Third-party face recognition account/gateway credentials are not configured in this repo; HTTP provider contract is implemented and tested, but production requires selecting and configuring a real vendor gateway.",
     "Frontend npm audit is clear after npm audit fix.",
-    "Backend still has xlsx high vulnerabilities with no npm audit fix available; requires replacing SheetJS/xlsx or isolating import/export processing before production Product Green.",
-    "Backend uuid moderate remains through exceljs/node-cron; npm audit fix --force would introduce breaking uuid@14 and needs separate compatibility work."
+    "Backend uuid moderate remains through exceljs/node-cron; npm audit fix --force would introduce breaking uuid@14 and needs separate compatibility work.",
+    "Backend xlsx high vulnerability removed by replacing labor report export with exceljs."
   ],
-  "notes": "Face provider gateway and dependency-audit reduction completed. Frontend audit is clear; backend still Yellow because xlsx has no fix and uuid force upgrade is breaking. Verify, Chrome smoke, Claude audit, and code-review-graph passed after changes.",
-  "updated_at": "2026-06-22T14:38:00Z"
+  "notes": "XLSX high vulnerability removed: labor report export now uses exceljs, backend audit has no high vulnerabilities and frontend audit remains clear. Remaining audit Yellow is uuid moderate requiring breaking-force compatibility work. Verify, Claude audit, and code-review-graph passed.",
+  "updated_at": "2026-06-22T14:42:00Z"
 }

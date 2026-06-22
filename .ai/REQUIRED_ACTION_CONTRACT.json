@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Phase 4 face provider gateway completed and verified locally: HTTP/cloud/tencent/baidu/aliyun provider adapter, safe downgrade, UI setting, tests, Chrome smoke, Claude audit, and code-review-graph. Real vendor gateway credentials and dependency audit remediation remain Yellow before production Product Green. Dependency audit reduction applied: frontend clear; backend xlsx high remains no-fix and uuid moderate force upgrade remains Yellow.",
+  "notes": "Phase 4 face provider gateway completed and verified locally: HTTP/cloud/tencent/baidu/aliyun provider adapter, safe downgrade, UI setting, tests, Chrome smoke, Claude audit, and code-review-graph. Real vendor gateway credentials and dependency audit remediation remain Yellow before production Product Green. Dependency audit reduction applied: frontend clear; backend xlsx high remains no-fix and uuid moderate force upgrade remains Yellow. Xlsx high vulnerability removed by ExcelJS replacement; uuid moderate remains Yellow.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-22T14:38:00Z"
+  "updated_at": "2026-06-22T14:42:00Z"
 }
