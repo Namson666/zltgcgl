@@ -1,5 +1,5 @@
 {
-  "status": "admin_crud_inventory_alert_removal_verified_pending_push",
+  "status": "admin_crud_inventory_alert_removal_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -605,5 +605,5 @@
     "Labor report export still writes the existing fixed workbook sheets; attendance/social preview is supported but adding those sheets to workbook export remains a non-blocking follow-up."
   ],
   "notes": "Inventory alert remains removed from active WMS product requirements. Basic admin roles/users/departments deep CRUD/state-change coverage is now included in real Chrome. Real Chrome now passes 8 tests. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-22T16:15:00Z"
+  "updated_at": "2026-06-22T16:25:00Z"
 }
