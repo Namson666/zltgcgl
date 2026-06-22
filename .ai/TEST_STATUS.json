@@ -1,10 +1,10 @@
 {
-  "status": "full_route_browser_matrix_green_pending_push",
+  "status": "supplier_workteam_crud_green_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_partial_route_matrix",
+  "browser_regression_green": "verified_partial_route_matrix_plus_supplier_workteam_crud",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
@@ -436,6 +436,37 @@
       "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
       "status": "verified",
       "result": "Graph built 136 files / 1502 nodes / 15937 edges; risk score 0.55 due test helper functions in smoke spec."
+    },
+    {
+      "type": "supplier_workteam_crud",
+      "command": "implementation + real Chrome CRUD",
+      "status": "verified",
+      "result": "Supplier management now uses dedicated supplier APIs instead of material APIs; work team management now supports delete and maps leader/leaderName correctly. Backend create/update/delete is tenant-scoped; supplier delete checks delivery orders/contracts; work team delete checks subcontract/outbound/return references."
+    },
+    {
+      "type": "verification",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 5 files / 33 tests, backend build, frontend tests 2 files / 36 tests, frontend build passed after supplier/work team CRUD fixes."
+    },
+    {
+      "type": "browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "Real system Google Chrome smoke passed 5 tests. New test creates, edits, searches by work-team leader, and deletes supplier/work-team records; route matrices still pass."
+    },
+    {
+      "type": "claude_worker",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260622T150659Z-audit_worker.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "Claude re-audit PASS; previous blocking WorkTeam search field issue fixed; deletion reference checks and tenant isolation verified.",
+      "evidence_file": ".ai/workers/20260622T150714Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 136 files / 1505 nodes / 16263 edges; risk score 0.55. Tool reports function-level test gaps, while real Chrome CRUD covers the product paths for this slice."
     }
   ],
   "known_yellow_items": [
@@ -449,8 +480,9 @@
     "Third-party face recognition account/gateway credentials are not configured in this repo; HTTP provider contract is implemented and tested, but production requires selecting and configuring a real vendor gateway.",
     "Backend xlsx high vulnerability removed by replacing labor report export with exceljs.",
     "Backend and frontend npm audit are clear at moderate threshold after xlsx removal and uuid override.",
-    "Full route matrix is now covered in real Chrome, but deep CRUD/upload/download regression for every page is still incomplete."
+    "Full route matrix is now covered in real Chrome, but deep CRUD/upload/download regression for every page is still incomplete.",
+    "Supplier/work-team CRUD has real Chrome create/edit/delete/search coverage; remaining admin/master-data pages still need equivalent deep CRUD where business rules support deletion."
   ],
-  "notes": "Full route browser matrix added and verified in real Chrome: enterprise 32 routes and developer 15 routes. This improves Browser Regression Green but is not full Product Green; deep CRUD/upload/download per page and real third-party face gateway configuration remain Yellow.",
-  "updated_at": "2026-06-22T15:02:00Z"
+  "notes": "Supplier/work-team CRUD slice completed after full route matrix. Real Chrome now covers supplier create/edit/delete and work-team create/search-by-leader/edit/delete. This improves Browser Regression Green but is not full Product Green; deep CRUD/upload/download per page and real third-party face gateway configuration remain Yellow.",
+  "updated_at": "2026-06-22T15:10:00Z"
 }

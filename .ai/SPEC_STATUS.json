@@ -1,9 +1,9 @@
 {
-  "stage": "S6_full_route_browser_matrix_green_pending_push",
+  "stage": "S7_supplier_workteam_crud_green_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Phase 4 mobile check-in now includes production-ready face provider HTTP gateway contract with safe downgrade and verified UI selection. Real third-party vendor credentials/gateway deployment, npm audit remediation, and broader exhaustive regression remain Yellow follow-ups. Dependency audit reduction applied: frontend clear; backend xlsx high remains no-fix and uuid moderate force upgrade remains Yellow. Xlsx high vulnerability removed by ExcelJS replacement; uuid moderate remains Yellow. Backend/frontend npm audit now clear after uuid override. Full route real Chrome matrix added: enterprise 32 routes and developer 15 routes; deep CRUD/upload/download remains Yellow.",
-  "updated_at": "2026-06-22T15:02:00Z"
+  "notes": "Phase 4 mobile check-in includes production-ready face provider HTTP gateway contract with safe downgrade and verified UI selection. Backend/frontend npm audit are clear. Full route real Chrome matrix covers enterprise 32 routes and developer 15 routes. Supplier/work-team CRUD is now verified in real Chrome with create/edit/delete and work-team leader search. Deep CRUD/upload/download for every remaining page and real third-party face gateway credentials remain Yellow.",
+  "updated_at": "2026-06-22T15:10:00Z"
 }

@@ -19,6 +19,7 @@ import {
   HardHat,
   Plus,
   Edit2,
+  Trash2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { wmsApi } from '@/api';
@@ -37,7 +38,7 @@ import Loading from '@/components/ui/Loading';
 
 /** 班组信息接口 */
 interface WorkTeamInfo {
-  id: number;                    /* 班组唯一标识 */
+  id: string | number;           /* 班组唯一标识 */
   name: string;                  /* 班组名称 */
   leader?: string;               /* 班组长姓名 */
   phone?: string;                /* 班组长联系电话 */
@@ -93,6 +94,7 @@ const AdminWorkTeams: React.FC = () => {
 
   /* ---------- 弹窗状态 ---------- */
   const [showFormModal, setShowFormModal] = useState(false);       /* 新增/编辑弹窗 */
+  const [deletingTeam, setDeletingTeam] = useState<WorkTeamInfo | null>(null); /* 待删除班组 */
   const [editingTeam, setEditingTeam] = useState<WorkTeamInfo | null>(null); /* 当前编辑的班组（null 为新增模式） */
   const [formLoading, setFormLoading] = useState(false);           /* 表单提交加载状态 */
   const [formData, setFormData] = useState<WorkTeamFormData>(EMPTY_FORM); /* 表单数据 */
@@ -229,6 +231,24 @@ const AdminWorkTeams: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  /**
+   * 删除班组
+   */
+  const handleDelete = async () => {
+    if (!deletingTeam) return;
+    setFormLoading(true);
+    try {
+      await wmsApi.deleteWorkTeam(deletingTeam.id);
+      toast.success('班组已删除');
+      setDeletingTeam(null);
+      fetchWorkTeams();
+    } catch (error: any) {
+      toast.error(error.message || '删除班组失败');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   /* ========================================
    * 权限检查 - 无权限时显示提示
    * ======================================== */
@@ -351,6 +371,13 @@ const AdminWorkTeams: React.FC = () => {
                         >
                           <Edit2 size={15} />
                         </button>
+                        <button
+                          onClick={() => setDeletingTeam(team)}
+                          className="p-1.5 rounded text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="删除班组"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -458,6 +485,28 @@ const AdminWorkTeams: React.FC = () => {
             />
           </div>
         </div>
+      </Modal>
+
+      {/* ====== 删除班组确认弹窗 ====== */}
+      <Modal
+        isOpen={!!deletingTeam}
+        onClose={() => setDeletingTeam(null)}
+        title="删除班组"
+        size="sm"
+        footer={
+          <>
+            <button onClick={() => setDeletingTeam(null)} className="btn-secondary" disabled={formLoading}>
+              取消
+            </button>
+            <button onClick={handleDelete} className="btn-danger" disabled={formLoading}>
+              {formLoading ? '删除中...' : '确认删除'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600">
+          确认删除班组「{deletingTeam?.name}」吗？已被合同或台账引用的班组可能无法删除。
+        </p>
       </Modal>
     </div>
   );

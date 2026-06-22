@@ -23,6 +23,7 @@ import {
   Truck,
   Plus,
   Edit2,
+  Trash2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { wmsApi } from '@/api';
@@ -41,9 +42,10 @@ import Loading from '@/components/ui/Loading';
 
 /** 供应商信息接口 */
 interface SupplierInfo {
-  id: number;                    /* 供应商唯一标识 */
+  id: string | number;           /* 供应商唯一标识 */
   name: string;                  /* 供应商名称 */
   contact?: string;              /* 联系人 */
+  contactName?: string;          /* 后端联系人字段 */
   phone?: string;                /* 联系电话 */
   address?: string;              /* 地址 */
   bankAccount?: string;          /* 银行账号 */
@@ -103,6 +105,7 @@ const AdminSuppliers: React.FC = () => {
 
   /* ---------- 弹窗状态 ---------- */
   const [showFormModal, setShowFormModal] = useState(false);       /* 新增/编辑弹窗 */
+  const [deletingSupplier, setDeletingSupplier] = useState<SupplierInfo | null>(null); /* 待删除供应商 */
   const [editingSupplier, setEditingSupplier] = useState<SupplierInfo | null>(null); /* 当前编辑的供应商（null 为新增模式） */
   const [formLoading, setFormLoading] = useState(false);           /* 表单提交加载状态 */
   const [formData, setFormData] = useState<SupplierFormData>(EMPTY_FORM); /* 表单数据 */
@@ -182,7 +185,7 @@ const AdminSuppliers: React.FC = () => {
     setEditingSupplier(supplier);
     setFormData({
       name: supplier.name,
-      contact: supplier.contact || '',
+      contact: supplier.contact || supplier.contactName || '',
       phone: supplier.phone || '',
       address: supplier.address || '',
       bankAccount: supplier.bankAccount || '',
@@ -211,14 +214,11 @@ const AdminSuppliers: React.FC = () => {
     try {
       if (editingSupplier) {
         /* 编辑模式：更新供应商信息 */
-        await wmsApi.createMaterial({
-          ...formData,
-          id: editingSupplier.id,
-        });
+        await wmsApi.updateSupplier(editingSupplier.id, formData);
         toast.success('供应商信息已更新');
       } else {
         /* 新增模式：创建供应商 */
-        await wmsApi.createMaterial(formData);
+        await wmsApi.createSupplier(formData);
         toast.success('供应商创建成功');
       }
       setShowFormModal(false);
@@ -242,6 +242,24 @@ const AdminSuppliers: React.FC = () => {
    */
   const updateFormField = (field: keyof SupplierFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  /**
+   * 删除供应商
+   */
+  const handleDelete = async () => {
+    if (!deletingSupplier) return;
+    setFormLoading(true);
+    try {
+      await wmsApi.deleteSupplier(deletingSupplier.id);
+      toast.success('供应商已删除');
+      setDeletingSupplier(null);
+      fetchSuppliers();
+    } catch (error: any) {
+      toast.error(error.message || '删除供应商失败');
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   /* ========================================
@@ -342,7 +360,7 @@ const AdminSuppliers: React.FC = () => {
                     </td>
                     {/* 联系人 */}
                     <td className="px-4 py-3 whitespace-nowrap text-gray-700">
-                      {supplier.contact || '-'}
+                      {supplier.contact || supplier.contactName || '-'}
                     </td>
                     {/* 联系电话 */}
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">
@@ -362,6 +380,13 @@ const AdminSuppliers: React.FC = () => {
                           title="编辑供应商"
                         >
                           <Edit2 size={15} />
+                        </button>
+                        <button
+                          onClick={() => setDeletingSupplier(supplier)}
+                          className="p-1.5 rounded text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="删除供应商"
+                        >
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -490,6 +515,28 @@ const AdminSuppliers: React.FC = () => {
             />
           </div>
         </div>
+      </Modal>
+
+      {/* ====== 删除供应商确认弹窗 ====== */}
+      <Modal
+        isOpen={!!deletingSupplier}
+        onClose={() => setDeletingSupplier(null)}
+        title="删除供应商"
+        size="sm"
+        footer={
+          <>
+            <button onClick={() => setDeletingSupplier(null)} className="btn-secondary" disabled={formLoading}>
+              取消
+            </button>
+            <button onClick={handleDelete} className="btn-danger" disabled={formLoading}>
+              {formLoading ? '删除中...' : '确认删除'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600">
+          确认删除供应商「{deletingSupplier?.name}」吗？已有送货单或合同引用的供应商不会被删除。
+        </p>
       </Modal>
     </div>
   );

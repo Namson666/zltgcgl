@@ -1083,9 +1083,72 @@ const suppliersRouter = Router();
 
 suppliersRouter.get('/', wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
-  const { name } = req.query as any;
-  const suppliers = await wms.listSuppliers(tenantId, name);
+  const { name, keyword, search } = req.query as any;
+  const suppliers = await wms.listSuppliers(tenantId, name || keyword || search);
   res.json({ success: true, data: suppliers } as unknown as ApiResponse);
+}));
+
+suppliersRouter.post('/', requirePermission('canManageSystem'), wrapHandler(async (req, res) => {
+  const tenantId = getTenantId(req);
+  const body = req.body || {};
+  const name = String(body.name || '').trim();
+  if (!name) throw { status: 400, code: 'VALIDATION_ERROR', message: '供应商名称不能为空' };
+
+  const supplier = await prisma.supplier.create({
+    data: {
+      tenantId,
+      name,
+      contactName: body.contactName ?? body.contact ?? null,
+      phone: body.phone ?? null,
+      address: body.address ?? null,
+      bankAccount: body.bankAccount ?? null,
+      bankName: body.bankName ?? null,
+      remark: body.remark ?? null,
+    },
+  });
+  await createLog({ tenantId, userId: getEffectiveUserId(req), action: 'CREATE', module: '物资管理', description: `创建供应商「${supplier.name}」`, ip: req.ip, userAgent: req.headers['user-agent'] });
+  res.status(201).json({ success: true, data: { ...supplier, contact: supplier.contactName } } as unknown as ApiResponse);
+}));
+
+suppliersRouter.put('/:id', requirePermission('canManageSystem'), wrapHandler(async (req, res) => {
+  const tenantId = getTenantId(req);
+  const existing = await prisma.supplier.findFirst({ where: { id: req.params.id, tenantId } });
+  if (!existing) throw { status: 404, code: 'NOT_FOUND', message: '供应商不存在' };
+
+  const body = req.body || {};
+  const name = body.name === undefined ? existing.name : String(body.name || '').trim();
+  if (!name) throw { status: 400, code: 'VALIDATION_ERROR', message: '供应商名称不能为空' };
+
+  const supplier = await prisma.supplier.update({
+    where: { id: existing.id },
+    data: {
+      name,
+      contactName: body.contactName ?? body.contact ?? existing.contactName,
+      phone: body.phone ?? existing.phone,
+      address: body.address ?? existing.address,
+      bankAccount: body.bankAccount ?? existing.bankAccount,
+      bankName: body.bankName ?? existing.bankName,
+      remark: body.remark ?? existing.remark,
+    },
+  });
+  await createLog({ tenantId, userId: getEffectiveUserId(req), action: 'UPDATE', module: '物资管理', description: `更新供应商「${supplier.name}」`, ip: req.ip, userAgent: req.headers['user-agent'] });
+  res.json({ success: true, data: { ...supplier, contact: supplier.contactName } } as unknown as ApiResponse);
+}));
+
+suppliersRouter.delete('/:id', requirePermission('canManageSystem'), wrapHandler(async (req, res) => {
+  const tenantId = getTenantId(req);
+  const existing = await prisma.supplier.findFirst({
+    where: { id: req.params.id, tenantId },
+    include: { _count: { select: { deliveryOrders: true, contracts: true } } },
+  });
+  if (!existing) throw { status: 404, code: 'NOT_FOUND', message: '供应商不存在' };
+  if (existing._count.deliveryOrders > 0 || existing._count.contracts > 0) {
+    throw { status: 400, code: 'SUPPLIER_IN_USE', message: '供应商已有业务数据，不能删除' };
+  }
+
+  await prisma.supplier.delete({ where: { id: existing.id } });
+  await createLog({ tenantId, userId: getEffectiveUserId(req), action: 'DELETE', module: '物资管理', description: `删除供应商「${existing.name}」`, ip: req.ip, userAgent: req.headers['user-agent'] });
+  res.json({ success: true, data: null } as unknown as ApiResponse);
 }));
 
 // ============================================
@@ -1105,18 +1168,58 @@ workTeamsRouter.get('/', wrapHandler(async (req, res) => {
 
 workTeamsRouter.post('/', requirePermission('canManageSystem'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
-  const team = await prisma.workTeam.create({ data: { tenantId, ...req.body } });
+  const body = req.body || {};
+  const name = String(body.name || '').trim();
+  if (!name) throw { status: 400, code: 'VALIDATION_ERROR', message: '班组名称不能为空' };
+  const team = await prisma.workTeam.create({
+    data: {
+      tenantId,
+      name,
+      leaderName: body.leaderName ?? body.leader ?? null,
+      phone: body.phone ?? null,
+      memberCount: body.memberCount === '' || body.memberCount === undefined ? null : Number(body.memberCount),
+      remark: body.remark ?? null,
+    },
+  });
   await createLog({ tenantId, userId: getEffectiveUserId(req), action: 'CREATE', module: '物资管理', description: `创建班组「${team.name}」`, ip: req.ip, userAgent: req.headers['user-agent'] });
-  res.status(201).json({ success: true, data: team } as unknown as ApiResponse);
+  res.status(201).json({ success: true, data: { ...team, leader: team.leaderName } } as unknown as ApiResponse);
 }));
 
 workTeamsRouter.put('/:id', requirePermission('canManageSystem'), wrapHandler(async (req, res) => {
-  const team = await prisma.workTeam.update({ where: { id: req.params.id }, data: req.body });
-  res.json({ success: true, data: team } as unknown as ApiResponse);
+  const tenantId = getTenantId(req);
+  const existing = await prisma.workTeam.findFirst({ where: { id: req.params.id, tenantId } });
+  if (!existing) throw { status: 404, code: 'NOT_FOUND', message: '班组不存在' };
+  const body = req.body || {};
+  const name = body.name === undefined ? existing.name : String(body.name || '').trim();
+  if (!name) throw { status: 400, code: 'VALIDATION_ERROR', message: '班组名称不能为空' };
+  const team = await prisma.workTeam.update({
+    where: { id: existing.id },
+    data: {
+      name,
+      leaderName: body.leaderName ?? body.leader ?? existing.leaderName,
+      phone: body.phone ?? existing.phone,
+      memberCount: body.memberCount === '' || body.memberCount === undefined ? existing.memberCount : Number(body.memberCount),
+      remark: body.remark ?? existing.remark,
+    },
+  });
+  await createLog({ tenantId, userId: getEffectiveUserId(req), action: 'UPDATE', module: '物资管理', description: `更新班组「${team.name}」`, ip: req.ip, userAgent: req.headers['user-agent'] });
+  res.json({ success: true, data: { ...team, leader: team.leaderName } } as unknown as ApiResponse);
 }));
 
 workTeamsRouter.delete('/:id', requirePermission('canManageSystem'), wrapHandler(async (req, res) => {
-  await prisma.workTeam.delete({ where: { id: req.params.id } });
+  const tenantId = getTenantId(req);
+  const existing = await prisma.workTeam.findFirst({ where: { id: req.params.id, tenantId } });
+  if (!existing) throw { status: 404, code: 'NOT_FOUND', message: '班组不存在' };
+  const [subContractCount, outboundCount, returnCount] = await Promise.all([
+    prisma.subContract.count({ where: { tenantId, workTeamId: existing.id } }),
+    prisma.outboundOrder.count({ where: { tenantId, workTeamId: existing.id } }),
+    prisma.returnOrder.count({ where: { tenantId, workTeamId: existing.id } }),
+  ]);
+  if (subContractCount > 0 || outboundCount > 0 || returnCount > 0) {
+    throw { status: 400, code: 'WORK_TEAM_IN_USE', message: '班组已有合同或出入库业务数据，不能删除' };
+  }
+  await prisma.workTeam.delete({ where: { id: existing.id } });
+  await createLog({ tenantId, userId: getEffectiveUserId(req), action: 'DELETE', module: '物资管理', description: `删除班组「${existing.name}」`, ip: req.ip, userAgent: req.headers['user-agent'] });
   res.json({ success: true, data: null } as unknown as ApiResponse);
 }));
 

@@ -345,7 +345,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
     }
   });
 
-	  test('developer can login and open tenant management', async ({ page }) => {
+  test('developer can login and open tenant management', async ({ page }) => {
     await page.goto('/login');
 
     await page.getByRole('button', { name: /开发者登录/ }).click();
@@ -371,6 +371,74 @@ test.describe('browser smoke: authenticated core navigation', () => {
 	    await expect(page.getByText('企业小程序接入配置已保存')).toBeVisible();
 	    await page.screenshot({
 	      path: '../docs/smoke-evidence/开发者企业管理.png',
+      fullPage: true,
+    });
+  });
+
+  test('enterprise user can create edit and delete supplier and work team', async ({ page }) => {
+    await loginEnterprise(page);
+    const stamp = Date.now();
+
+    const supplierName = `浏览器供应商-${stamp}`;
+    const supplierNameEdited = `${supplierName}-已编辑`;
+    await page.goto('/admin/suppliers');
+    await expect(page.getByRole('heading', { name: '供应商管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增供应商' }).click();
+    await page.getByPlaceholder('请输入供应商名称').fill(supplierName);
+    await page.getByPlaceholder('请输入联系人姓名').fill('验收联系人');
+    await page.getByPlaceholder('请输入联系电话').fill('13800138000');
+    await page.getByPlaceholder('请输入供应商地址').fill('深圳市南山区验收地址');
+    await page.getByPlaceholder('请输入开户行名称').fill('验收银行');
+    await page.getByRole('button', { name: '创建供应商' }).click();
+    await expect(page.getByText('供应商创建成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: supplierName })).toBeVisible();
+
+    await page.locator('tr', { hasText: supplierName }).getByTitle('编辑供应商').click();
+    await page.getByPlaceholder('请输入供应商名称').fill(supplierNameEdited);
+    await page.getByPlaceholder('请输入联系人姓名').fill('验收联系人已编辑');
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('供应商信息已更新')).toBeVisible();
+    await expect(page.locator('tr', { hasText: supplierNameEdited })).toBeVisible();
+    await expect(page.locator('tr', { hasText: supplierNameEdited }).getByText('验收联系人已编辑')).toBeVisible();
+
+    await page.locator('tr', { hasText: supplierNameEdited }).getByTitle('删除供应商').click();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('供应商已删除')).toBeVisible();
+    await expect(page.locator('tr', { hasText: supplierNameEdited })).toHaveCount(0);
+
+    const workTeamName = `浏览器班组-${stamp}`;
+    const workTeamNameEdited = `${workTeamName}-已编辑`;
+    await page.goto('/admin/work-teams');
+    await expect(page.getByRole('heading', { name: '班组管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增班组' }).click();
+    await page.getByPlaceholder('请输入班组名称').fill(workTeamName);
+    await page.getByPlaceholder('请输入班组长姓名').fill('验收班组长');
+    await page.getByPlaceholder('请输入联系电话').fill('13900139000');
+    await page.getByPlaceholder('请输入班组人数').fill('8');
+    await page.getByRole('button', { name: '创建班组' }).click();
+    await expect(page.getByText('班组创建成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: workTeamName })).toBeVisible();
+    await page.getByPlaceholder('搜索班组名称...').fill('验收班组长');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('tr', { hasText: workTeamName })).toBeVisible();
+
+    await page.locator('tr', { hasText: workTeamName }).getByTitle('编辑班组').click();
+    await page.getByPlaceholder('请输入班组名称').fill(workTeamNameEdited);
+    await page.getByPlaceholder('请输入班组长姓名').fill('验收班组长已编辑');
+    await page.getByPlaceholder('请输入班组人数').fill('12');
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('班组信息已更新')).toBeVisible();
+    await expect(page.locator('tr', { hasText: workTeamNameEdited })).toBeVisible();
+    await expect(page.locator('tr', { hasText: workTeamNameEdited }).getByText('验收班组长已编辑')).toBeVisible();
+    await expect(page.locator('tr', { hasText: workTeamNameEdited }).getByText('12 人')).toBeVisible();
+
+    await page.locator('tr', { hasText: workTeamNameEdited }).getByTitle('删除班组').click();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('班组已删除')).toBeVisible();
+    await expect(page.locator('tr', { hasText: workTeamNameEdited })).toHaveCount(0);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/供应商班组CRUD.png',
       fullPage: true,
     });
   });

@@ -1435,10 +1435,14 @@ export async function getTransferExportData(tenantId: string, fromSubProjectId?:
 export async function listSuppliers(tenantId: string, name?: string) {
   const where: any = { tenantId };
   if (name) where.name = { contains: name, mode: 'insensitive' };
-  return prisma.supplier.findMany({
+  const suppliers = await prisma.supplier.findMany({
     where, orderBy: { createdAt: 'desc' },
     include: { _count: { select: { deliveryOrders: true, contracts: true } } },
   });
+  return suppliers.map((supplier) => ({
+    ...supplier,
+    contact: supplier.contactName,
+  }));
 }
 
 // ============================================
@@ -1456,13 +1460,22 @@ export async function listWorkTeams(params: WorkTeamListParams) {
   const { tenantId, search, page, pageSize } = params;
   const where: any = { tenantId };
   if (search) {
-    where.OR = [{ name: { contains: search } }, { leader: { contains: search } }];
+    where.OR = [{ name: { contains: search } }, { leaderName: { contains: search } }];
   }
   const [total, teams] = await Promise.all([
     prisma.workTeam.count({ where }),
     prisma.workTeam.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: 'desc' } }),
   ]);
-  return { teams, total, totalPages: Math.ceil(total / pageSize), page, pageSize };
+  return {
+    teams: teams.map((team) => ({
+      ...team,
+      leader: team.leaderName,
+    })),
+    total,
+    totalPages: Math.ceil(total / pageSize),
+    page,
+    pageSize,
+  };
 }
 
 // ============================================

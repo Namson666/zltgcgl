@@ -1028,6 +1028,15 @@ export const wmsApi = {
   getSuppliers: (params?: PaginationParams) =>
     http.get('/wms/suppliers', params),
 
+  createSupplier: (data: any) =>
+    http.post('/wms/suppliers', data),
+
+  updateSupplier: (id: string | number, data: any) =>
+    http.put(`/wms/suppliers/${id}`, data),
+
+  deleteSupplier: (id: string | number) =>
+    http.delete(`/wms/suppliers/${id}`),
+
   /**
    * 获取班组列表
    * @param params - 分页参数
@@ -1050,6 +1059,9 @@ export const wmsApi = {
    */
   updateWorkTeam: (id: string | number, data: any) =>
     http.put(`/wms/work-teams/${id}`, data),
+
+  deleteWorkTeam: (id: string | number) =>
+    http.delete(`/wms/work-teams/${id}`),
 
   /**
    * 获取子项目列表（当前租户下全部）
