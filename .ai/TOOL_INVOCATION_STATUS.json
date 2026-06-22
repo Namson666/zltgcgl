@@ -11,8 +11,15 @@
       "tool": "gh",
       "required_for": "read-only GitHub repository readiness check",
       "status": "called",
-      "evidence": "gh repo view Namson666/zltgcgl shows repository exists, sshUrl git@github.com:Namson666/zltgcgl.git, isPrivate false; user approved public repository; git ls-remote returned no refs",
-      "gate": "yellow_public_repo_approved_push_still_blocked_by_tracked_database_files"
+      "evidence": "gh repo view Namson666/zltgcgl shows repository exists, sshUrl git@github.com:Namson666/zltgcgl.git, isPrivate false; user approved public repository; public clean baseline pushed to origin/main at 5a22443d4a331fdd71ee88d4ccfb724fb99b463c",
+      "gate": "yellow_pushed_public_clean_baseline_build_and_audit_still_blocked"
+    },
+    {
+      "tool": "git push",
+      "required_for": "publish public clean baseline",
+      "status": "called",
+      "evidence": "git push -u origin public-main:main succeeded",
+      "gate": "green_for_push_only"
     },
     {
       "tool": "local verification commands",

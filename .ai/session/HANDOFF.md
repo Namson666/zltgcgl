@@ -6,8 +6,8 @@
 - Current mode: Enforced Delivery, Enhanced
 - Code changes allowed: no
 - Commit allowed: no
-- Push allowed: no, until tracked database files/history risk is resolved and user confirms push
-- Last completed: created public clean baseline root commit 554b1c6 on branch public-main; verified no tracked .env/.db/.sqlite/sqlite journal files in that branch
-- Next action: get explicit user approval before pushing public-main to origin main; then start refactor scope/design
+- Push allowed: completed for public clean baseline only
+- Last completed: pushed public clean baseline commit 5a22443d4a331fdd71ee88d4ccfb724fb99b463c to origin/main
+- Next action: read development documents and confirm first refactor slice
 - Blockers: backend TypeScript build fails; backend/frontend npm audit have high vulnerabilities; refactor design not yet approved
-- Updated at: 2026-06-22T09:25:00Z
+- Updated at: 2026-06-22T09:28:00Z

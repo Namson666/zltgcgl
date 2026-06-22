@@ -20,7 +20,9 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "blocked_until_sensitive_tracked_files_are_removed_from_git_history_or_user_accepts_history_risk"
+    "push_status": "pushed_public_clean_baseline_to_origin_main",
+    "pushed_url": "https://github.com/Namson666/zltgcgl",
+    "pushed_commit": "5a22443d4a331fdd71ee88d4ccfb724fb99b463c"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -29,6 +31,6 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_public_clean_baseline_ready_but_build_and_audit_blocked",
-  "updated_at": "2026-06-22T09:25:00Z"
+  "status": "yellow_public_clean_baseline_pushed_but_build_and_audit_blocked",
+  "updated_at": "2026-06-22T09:28:00Z"
 }
