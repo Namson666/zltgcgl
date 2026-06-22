@@ -1,11 +1,11 @@
 {
-  "status": "project_dependency_audit_green_pending_push",
+  "status": "full_route_browser_matrix_green_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
-  "runtime_smoke_green": "verified_partial",
-  "browser_regression_green": "verified_partial",
-  "product_green": "verified_v1_with_yellow_notes",
+  "runtime_smoke_green": "verified",
+  "browser_regression_green": "verified_partial_route_matrix",
+  "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
     {
@@ -412,6 +412,30 @@
       "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
       "status": "verified",
       "result": "Graph built 136 files / 1497 nodes / 15880 edges; detect-changes risk score 0.00 after dependency-only uuid override."
+    },
+    {
+      "type": "browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "Real system Google Chrome smoke expanded to 4 tests passed. Enterprise route matrix covers 32 enabled business routes including /subscription; developer route matrix covers 15 developer routes. Screenshots generated under docs/smoke-evidence/full-route-*.png."
+    },
+    {
+      "type": "verification",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 5 files / 33 tests, backend build, frontend tests 2 files / 36 tests, frontend build passed after route matrix expansion."
+    },
+    {
+      "type": "claude_worker",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/full-route-matrix-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "Claude audit PASS. It found /subscription missing; fixed by adding /subscription and networkidle wait; Chrome smoke reran and passed."
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified",
+      "result": "Graph built 136 files / 1502 nodes / 15937 edges; risk score 0.55 due test helper functions in smoke spec."
     }
   ],
   "known_yellow_items": [
@@ -424,8 +448,9 @@
     "Trusted check-in locations now have list/delete UI and smoke coverage; advanced filtering/pagination can be added later if record volume grows.",
     "Third-party face recognition account/gateway credentials are not configured in this repo; HTTP provider contract is implemented and tested, but production requires selecting and configuring a real vendor gateway.",
     "Backend xlsx high vulnerability removed by replacing labor report export with exceljs.",
-    "Backend and frontend npm audit are clear at moderate threshold after xlsx removal and uuid override."
+    "Backend and frontend npm audit are clear at moderate threshold after xlsx removal and uuid override.",
+    "Full route matrix is now covered in real Chrome, but deep CRUD/upload/download regression for every page is still incomplete."
   ],
-  "notes": "Project dependency audit is green for backend and frontend at moderate threshold. Verify, real Chrome smoke, and code-review-graph passed after uuid override. Remaining Product Green Yellow items are real third-party face gateway credentials/configuration and exhaustive all-module browser regression beyond current smoke.",
-  "updated_at": "2026-06-22T14:54:00Z"
+  "notes": "Full route browser matrix added and verified in real Chrome: enterprise 32 routes and developer 15 routes. This improves Browser Regression Green but is not full Product Green; deep CRUD/upload/download per page and real third-party face gateway configuration remain Yellow.",
+  "updated_at": "2026-06-22T14:58:00Z"
 }

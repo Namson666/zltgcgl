@@ -13,6 +13,92 @@ const developerAccount = {
   password: 'Admin@2024',
 };
 
+const enterpriseRouteMatrix = [
+  ['数据看板', '/dashboard'],
+  ['合同管理', '/contracts'],
+  ['物资总览', '/wms/materials'],
+  ['入库管理', '/wms/inbound'],
+  ['出库管理', '/wms/outbound'],
+  ['退库管理', '/wms/returns'],
+  ['物资借调', '/wms/transfers'],
+  ['班组台账', '/wms/ledger'],
+  ['库存预警', '/wms/alerts'],
+  ['人员管理', '/labor/personnel'],
+  ['考勤管理', '/labor/attendance'],
+  ['工资核算', '/labor/salary'],
+  ['工资发放', '/labor/payment'],
+  ['风控管理', '/labor/risk'],
+  ['报表导出', '/labor/reports'],
+  ['项目部报账', '/finance/dept-entry'],
+  ['公司财务凭证', '/finance/finance-entry'],
+  ['备用金管理', '/finance/petty-cash'],
+  ['费用列表', '/finance/expenses'],
+  ['开票记录', '/finance/invoices'],
+  ['收款记录', '/finance/receipts'],
+  ['合同盈利分析', '/finance/contract-pnl'],
+  ['财务看板', '/finance/dashboard'],
+  ['类别设置', '/finance/settings'],
+  ['台账导入', '/finance/import'],
+  ['项目部管理', '/departments'],
+  ['用户管理', '/admin/users'],
+  ['角色权限', '/admin/roles'],
+  ['供应商管理', '/admin/suppliers'],
+  ['班组管理', '/admin/work-teams'],
+  ['回收站', '/admin/recycle-bin'],
+  ['订阅计划', '/subscription'],
+] as const;
+
+const developerRouteMatrix = [
+  ['综合看板', '/dev'],
+  ['企业管理', '/dev/tenants'],
+  ['套餐订阅', '/dev/plans'],
+  ['支付记录', '/dev/payments'],
+  ['发票管理', '/dev/invoices'],
+  ['AI 模型配置', '/dev/ai-config'],
+  ['OCR 配置', '/dev/ocr-config'],
+  ['第三方集成', '/dev/integrations'],
+  ['存储管理', '/dev/storage'],
+  ['API 密钥', '/dev/api-keys'],
+  ['系统公告', '/dev/announcements'],
+  ['安全策略', '/dev/security'],
+  ['系统监控', '/dev/monitoring'],
+  ['系统配置', '/dev/system-config'],
+  ['操作日志', '/dev/logs'],
+] as const;
+
+async function loginEnterprise(page: any) {
+  await page.goto('/login');
+  await page.getByPlaceholder('请输入企业代码').fill(enterpriseAccount.tenantCode);
+  await page.getByPlaceholder('请输入用户名').fill(enterpriseAccount.username);
+  await page.getByPlaceholder('请输入密码').fill(enterpriseAccount.password);
+  await page.getByRole('button', { name: '登 录' }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
+}
+
+async function loginDeveloper(page: any) {
+  await page.goto('/login');
+  await page.getByRole('button', { name: /开发者登录/ }).click();
+  await page.getByPlaceholder('请输入用户名').fill(developerAccount.username);
+  await page.getByPlaceholder('请输入密码').fill(developerAccount.password);
+  await page.getByRole('button', { name: '登 录' }).click();
+  await expect(page).toHaveURL(/\/dashboard|\/dev/);
+}
+
+async function expectUsablePage(page: any, label: string, route: string) {
+  await page.goto(route);
+  await page.waitForLoadState('networkidle');
+  await expect(page).toHaveURL(new RegExp(route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  await expect(page.locator('body')).not.toContainText('页面加载中');
+  await expect(page.locator('body')).not.toContainText('页面不存在');
+  await expect(page.locator('body')).not.toContainText('未开通');
+  await expect(page.locator('body')).not.toContainText('无权限');
+  await expect(page.getByRole('main')).toBeVisible();
+  await page.screenshot({
+    path: `../docs/smoke-evidence/full-route-${label.replace(/[\\/:*?"<>|\\s]+/g, '-')}.png`,
+    fullPage: true,
+  });
+}
+
 test.describe('browser smoke: authenticated core navigation', () => {
   test('enterprise user can login and open core enabled modules', async ({ page }) => {
     await page.goto('/login');
@@ -287,5 +373,19 @@ test.describe('browser smoke: authenticated core navigation', () => {
 	      path: '../docs/smoke-evidence/开发者企业管理.png',
       fullPage: true,
     });
+  });
+
+  test('enterprise user can open every enabled business route', async ({ page }) => {
+    await loginEnterprise(page);
+    for (const [label, route] of enterpriseRouteMatrix) {
+      await expectUsablePage(page, label, route);
+    }
+  });
+
+  test('developer can open every developer route', async ({ page }) => {
+    await loginDeveloper(page);
+    for (const [label, route] of developerRouteMatrix) {
+      await expectUsablePage(page, label, route);
+    }
   });
 });

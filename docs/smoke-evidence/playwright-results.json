@@ -89,7 +89,7 @@
         {
           "title": "browser smoke: authenticated core navigation",
           "file": "browser-smoke.spec.ts",
-          "line": 16,
+          "line": 102,
           "column": 6,
           "specs": [
             {
@@ -108,12 +108,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 18563,
+                      "duration": 18488,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T14:41:37.168Z",
+                      "startTime": "2026-06-22T14:50:42.467Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -123,7 +123,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-37e25edcb70b2214e5ba",
               "file": "browser-smoke.spec.ts",
-              "line": 17,
+              "line": 103,
               "column": 3
             },
             {
@@ -142,12 +142,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2378,
+                      "duration": 2380,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T14:41:56.463Z",
+                      "startTime": "2026-06-22T14:51:01.387Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -157,8 +157,76 @@
               ],
               "id": "5a831c70b3774ee84c9d-e42aafba7f0f51619208",
               "file": "browser-smoke.spec.ts",
-              "line": 262,
+              "line": 348,
               "column": 4
+            },
+            {
+              "title": "enterprise user can open every enabled business route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 33374,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-22T14:51:03.773Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-e982e543af9213ddde17",
+              "file": "browser-smoke.spec.ts",
+              "line": 378,
+              "column": 3
+            },
+            {
+              "title": "developer can open every developer route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 16042,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-22T14:51:37.154Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-d05a0faf5f199fe198ee",
+              "file": "browser-smoke.spec.ts",
+              "line": 385,
+              "column": 3
             }
           ]
         }
@@ -167,9 +235,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-06-22T14:41:33.930Z",
-    "duration": 32866.526,
-    "expected": 2,
+    "startTime": "2026-06-22T14:50:39.161Z",
+    "duration": 74210.454,
+    "expected": 4,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
