@@ -99,7 +99,7 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): 
 router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const tenantId = req.user!.tenantId!;
-    const { type, name, code, totalAmount, supplierId, awardingParty, description, startDate, endDate } = req.body;
+    const { type, name, code, totalAmount, supplierId, parentContractId, awardingParty, description, startDate, endDate } = req.body;
 
     if (!name) {
       res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '合同名称不能为空' } as ApiResponse);
@@ -111,7 +111,7 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response):
     }
 
     const contract = await contractService.createContract({
-      tenantId, type, name, code, totalAmount, supplierId, awardingParty, description, startDate, endDate,
+      tenantId, type, name, code, totalAmount, supplierId, parentContractId, awardingParty, description, startDate, endDate,
     });
 
     await createLog(contractService.makeLogInput(tenantId, req.user!.id, 'CREATE', `创建合同「${name}」`, { type: contract.type, code, totalAmount }, req.ip, req.headers['user-agent']));
@@ -182,7 +182,7 @@ router.get('/attachments', authenticate, async (req: AuthenticatedRequest, res: 
       return;
     }
 
-    const data = await contractService.listContractAttachments(tenantId, contractId);
+    const data = await contractService.listContractAttachments(tenantId, contractId, req.query.category as string | undefined);
     res.json({ success: true, data } as ApiResponse);
   } catch (error: any) {
     const status = error.status || 500;
@@ -282,9 +282,9 @@ router.put('/:id', authenticate, async (req: AuthenticatedRequest, res: Response
   try {
     const tenantId = req.user!.tenantId!;
     const { id } = req.params;
-    const { name, code, totalAmount, supplierId, awardingParty, description, startDate, endDate, type } = req.body;
+    const { name, code, totalAmount, supplierId, parentContractId, awardingParty, description, startDate, endDate, type } = req.body;
 
-    const result = await contractService.updateContract(tenantId, id, { name, code, totalAmount, supplierId, awardingParty, description, startDate, endDate, type });
+    const result = await contractService.updateContract(tenantId, id, { name, code, totalAmount, supplierId, parentContractId, awardingParty, description, startDate, endDate, type });
 
     if (!result) {
       res.status(404).json({ success: false, error: 'NOT_FOUND', message: '合同不存在' } as ApiResponse);
@@ -297,6 +297,8 @@ router.put('/:id', authenticate, async (req: AuthenticatedRequest, res: Response
   } catch (error: any) {
     if (error.code === 'P2002') {
       res.status(409).json({ success: false, error: 'DUPLICATE_CODE', message: '合同编号已存在' } as ApiResponse);
+    } else if (error.status) {
+      res.status(error.status).json({ success: false, error: error.code, message: error.message } as ApiResponse);
     } else {
       console.error('更新合同失败:', error);
       res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
@@ -364,6 +366,49 @@ router.post('/:id/progress-payments', authenticate, async (req: AuthenticatedReq
     res.status(201).json({ success: true, data: result.payment, message: '进度款添加成功' } as ApiResponse);
   } catch (error: any) {
     console.error('新增进度款失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+// ============================================
+// 采购合同付款记录
+// ============================================
+
+router.get('/:id/payments', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const result = await contractService.listContractPayments(req.user!.tenantId!, req.params.id);
+    if (!result.contract) {
+      res.status(404).json({ success: false, error: 'NOT_FOUND', message: '采购合同不存在' } as ApiResponse);
+      return;
+    }
+    res.json({ success: true, data: { payments: result.payments, totalAmount: result.totalAmount, contractTotal: result.contractTotal } } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取采购付款记录失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+router.post('/:id/payments', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId!;
+    const { id } = req.params;
+    const { amount, paidAt, remark } = req.body;
+
+    if (!amount || !paidAt) {
+      res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '付款金额和付款日期不能为空' } as ApiResponse);
+      return;
+    }
+
+    const result = await contractService.createContractPayment({ tenantId, contractId: id, amount, paidAt, remark });
+    if (!result.contract) {
+      res.status(404).json({ success: false, error: 'NOT_FOUND', message: '采购合同不存在' } as ApiResponse);
+      return;
+    }
+
+    await createLog(contractService.makeLogInput(tenantId, req.user!.id, 'CREATE', `为采购合同「${result.contract.name}」新增付款记录（金额：${amount}）`, undefined, req.ip, req.headers['user-agent']));
+    res.status(201).json({ success: true, data: result.payment, message: '付款记录添加成功' } as ApiResponse);
+  } catch (error: any) {
+    console.error('新增采购付款记录失败:', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
   }
 });

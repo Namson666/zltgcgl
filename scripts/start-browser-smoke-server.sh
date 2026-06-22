@@ -16,7 +16,8 @@ rm -f "$DB_PATH"
 sqlite3 "$DB_PATH" \
   ".read $ROOT/backend/prisma/migrations/20260424_init/migration.sql" \
   ".read $ROOT/backend/prisma/migrations/20260622_add_tenant_module_entitlements/migration.sql" \
-  ".read $ROOT/backend/prisma/migrations/20260622_add_tenant_portal_configs/migration.sql"
+  ".read $ROOT/backend/prisma/migrations/20260622_add_tenant_portal_configs/migration.sql" \
+  ".read $ROOT/backend/prisma/migrations/20260622_add_procurement_contract_flows/migration.sql"
 
 cd "$ROOT/backend"
 DATABASE_URL="file:$DB_PATH" npx ts-node prisma/seed.ts >/dev/null

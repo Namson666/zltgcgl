@@ -647,8 +647,8 @@ export const contractApi = {
   /**
    * 获取合同附件列表
    */
-  getAttachments: (contractId: string | number) =>
-    http.get('/contracts/attachments', { contractId: String(contractId) }),
+  getAttachments: (contractId: string | number, category?: string) =>
+    http.get('/contracts/attachments', { contractId: String(contractId), category }),
 
   /**
    * 上传合同附件（支持多文件）
@@ -667,6 +667,18 @@ export const contractApi = {
    */
   deleteAttachment: (id: string) =>
     http.delete(`/contracts/attachments/${id}`),
+
+  /**
+   * 获取采购合同付款记录
+   */
+  getPayments: (contractId: number | string) =>
+    http.get(`/contracts/${contractId}/payments`),
+
+  /**
+   * 创建采购合同付款记录
+   */
+  createPayment: (contractId: number | string, data: any) =>
+    http.post(`/contracts/${contractId}/payments`, data),
 };
 
 /* ========================================

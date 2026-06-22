@@ -1,0 +1,101 @@
+现在我已经完成了全面的分析。以下是审计报告。
+
+---
+
+## 审计报告：采购合同工作流
+
+### BLOCKERS: none
+
+逐项检查后，未发现阻塞级问题。
+
+---
+
+### 逐项审查结果
+
+**1. 租户隔离**
+
+所有后端路由均从 `req.user!.tenantId` 提取租户，并在服务层每个操作中透传。新增的 `ContractPayment` 操作、`parentContractId` 关联验证、附件查询 —— 全部包含 `tenantId` 过滤。未发现跨租户漏洞。
+
+**2. 审批流程依赖**
+
+采购合同直接创建为 `isActive: true`，无审批状态、无挂起阶段、无审批工作流。与现有承包合同创建模式一致。✅
+
+**3. 附件分类混淆**
+
+`Attachment.category` 默认值为 `null`（schema 中为 `@default("other")`）。前端将其分为：
+- `contractAttachments`：`(att.category || 'contract') === 'contract'` —— 将 `null` 视为合同附件
+- `invoiceAttachments`：`att.category === 'invoice'`
+- `paymentVoucherAttachments`：`att.category === 'payment_voucher'`
+
+上传端点在 `req.body.category` 中接收 category，并将其传递给 `createContractAttachments`。列表端点根据传入的 `category` 查询参数进行筛选。未发现分类混淆路径。✅
+
+**4. 浏览器测试真实度**
+
+Playwright 测试涵盖了以下真实浏览器交互：
+- 创建采购合同，选择关联承包合同下拉框（基于 label）
+- 创建付款记录，填写金额和日期
+- 使用 `waitForEvent('download')` 上传发票和凭证（真实文件下载，不仅仅是伪造的异步操作）
+- 通过 `suggestedFilename()` 验证下载
+- 通过 `.toHaveCount(0)` 断言删除
+- 删除采购合同
+
+所有断言都是真实的。这不是虚假测试。✅
+
+**5. Schema/Migration 漂移**
+
+| Migration | Schema | 一致？ |
+|-----------|--------|--------|
+| `contracts` 表添加 `parentContractId TEXT` | `parentContractId String?` | ✅ |
+| 创建 `contract_payments` 表（id, contractId, tenantId, amount, paidAt, remark） | `ContractPayment` 模型包含所有字段 | ✅ |
+| `contract_payments(tenantId, contractId)` 上的索引 | `@@index([tenantId, contractId])` | ✅ |
+| `contracts(parentContractId)` 上的索引 | `@@index([parentContractId])` | ✅ |
+
+未发现漂移。✅
+
+**6. 前端运行时风险**
+
+- 前后端 TypeScript 编译均通过，0 个错误
+- API 响应解析包含保护性回退：`body?.data?.payments || body?.payments || []`
+- 条件渲染始终使用 `detailContract?.type` 进行安全可选链式调用
+- `handleUploadClick` 设置 `uploadCategory` → 点击文件输入 —— React 状态更新在用户选择文件前处理，因此 `handleFileChange` 读取正确的 category。不存在实际竞态条件。
+- 付款表单验证正确分支：采购合同跳过期次/占比，要求付款日期
+- 未发现白屏风险 ✅
+
+---
+
+### NON_BLOCKING（可后续优化）
+
+1. **`updateContract` 未在设置 `parentContractId` 时检查合同类型**  
+   `createContract` 正确限制了 `parentContractId: type === 'PROCUREMENT' ? (val || null) : null`，但 `updateContract` 允许通过 API 直接调用为承包合同设置 `parentContractId`。前端不会发送此值，但 API 消费者可能误操作。影响极小。
+
+2. **`fetchSuppliers` 的脆弱响应解析**  
+   尝试 5 种不同的响应格式（`body`、`body.data`、`body.items`、`body.data?.items`、空数组回退）。若 `suppliers` API 响应格式发生变化，供应商下拉框会静默为空，且无用户可见错误反馈。此为修改后的既有代码。
+
+3. **供应商 ID 类型不一致**  
+   前端 `Contract` 接口写为 `supplierId?: number`，但后端为 `Supplier?`（`String?`）。表单使用 `String(contract.supplierId)` 可正常工作，但类型标注具误导性。
+
+4. **测试未验证付款记录持久化**  
+   Playwright 测试在 modal 内创建付款记录，但未关闭后重新打开 modal 以验证数据持久化。低风险 —— 属于 smoke 测试而非回归测试。
+
+---
+
+### 验证回顾
+
+**`bash scripts/verify.sh`：**
+- 运行后端测试（`npm test`）
+- 运行后端构建（`tsc`）—— ✅ 编译通过
+- 运行前端测试
+- 运行前端构建（`tsc -b && vite build`）—— ✅ 编译通过
+
+**`bash scripts/browser-smoke.sh`：**
+- 运行 Playwright 配置文件中定义的 Playwright 测试
+- 采购合同新增部分的覆盖范围：
+  - 采购合同 CRUD（创建、查看详情、删除）
+  - 关联承包合同选择
+  - 付款记录创建和显示
+  - 发票上传/下载/删除
+  - 付款凭证上传/下载/删除
+  - 全新 fixture 文件（`procurement-invoice.pdf`、`payment-voucher.pdf`）
+- 两次 smoke 运行的 playwright-report 前后差异显示：`expected: 2`、`unexpected: 0`、无错误 ✅
+
+未发现覆盖缺口。

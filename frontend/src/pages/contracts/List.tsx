@@ -68,8 +68,12 @@ interface Contract {
   type: string;                  /* 合同类型：purchase(采购合同) / construction(承包合同) */
   totalAmount: number;           /* 合同总金额 */
   status: string;                /* 合同状态：active(生效中) / inactive(已终止) */
-  supplierId?: number;           /* 供应商 ID（采购合同时使用） */
+  supplierId?: string;           /* 供应商 ID（采购合同时使用） */
   supplierName?: string;         /* 供应商名称 */
+  supplier?: { id: string; name: string };
+  parentContractId?: string;
+  parentContract?: { id: string; name: string; code?: string | null; totalAmount?: number | null };
+  awardingParty?: string;
   startDate?: string;            /* 合同开始日期 */
   endDate?: string;              /* 合同结束日期 */
   description?: string;          /* 合同描述 */
@@ -88,6 +92,16 @@ interface ProgressPayment {
   description?: string;          /* 描述/备注 */
   status?: string;               /* 状态 */
   createdAt: string;             /* 创建时间 */
+}
+
+/** 采购付款记录接口 */
+interface ContractPayment {
+  id: string;
+  contractId: string;
+  amount: number;
+  paidAt?: string;
+  remark?: string;
+  createdAt: string;
 }
 
 /** 分包合同信息接口 */
@@ -114,6 +128,7 @@ interface ContractFormData {
   type: string;                  /* 合同类型 */
   totalAmount: string;           /* 合同总金额（字符串，方便表单处理） */
   supplierId: string;            /* 供应商 ID（字符串，方便表单处理） */
+  parentContractId: string;      /* 关联承包合同 ID（采购合同时使用） */
   awardingParty: string;         /* 发包方（承包合同时使用） */
   startDate: string;             /* 开始日期 */
   endDate: string;               /* 结束日期 */
@@ -169,6 +184,7 @@ const DEFAULT_CONTRACT_FORM: ContractFormData = {
   type: 'PROCUREMENT',
   totalAmount: '',
   supplierId: '',
+  parentContractId: '',
   awardingParty: '',
   startDate: '',
   endDate: '',
@@ -218,6 +234,7 @@ const ContractList: React.FC = () => {
   /* ---------- 详情与进度款状态 ---------- */
   const [detailContract, setDetailContract] = useState<Contract | null>(null); /* 查看的合同详情 */
   const [progressPayments, setProgressPayments] = useState<ProgressPayment[]>([]); /* 进度款列表 */
+  const [contractPayments, setContractPayments] = useState<ContractPayment[]>([]); /* 采购付款记录 */
   const [paymentsLoading, setPaymentsLoading] = useState(false); /* 进度款加载状态 */
   const [paymentForm, setPaymentForm] = useState<ProgressPaymentFormData>(DEFAULT_PAYMENT_FORM); /* 进度款表单 */
   const [paymentLoading, setPaymentLoading] = useState(false);   /* 进度款提交加载状态 */
@@ -230,10 +247,12 @@ const ContractList: React.FC = () => {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadCategory, setUploadCategory] = useState<'contract' | 'invoice' | 'payment_voucher'>('contract');
   const uploadRef = useRef<HTMLInputElement>(null);
 
   /* ---------- 供应商列表（采购合同选择供应商用） ---------- */
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);    /* 供应商列表 */
+  const [constructionContracts, setConstructionContracts] = useState<Contract[]>([]);
 
   /* ========================================
    * 数据加载方法
@@ -294,10 +313,32 @@ const ContractList: React.FC = () => {
   const fetchSuppliers = useCallback(async () => {
     try {
       const res = await wmsApi.getSuppliers({ pageSize: 100 });
-      const data: any = res.data || res;
-      setSuppliers(data.items || data || []);
+      const body: any = res.data || res;
+      const supplierList = Array.isArray(body)
+        ? body
+        : Array.isArray(body.data)
+          ? body.data
+          : Array.isArray(body.items)
+            ? body.items
+            : Array.isArray(body.data?.items)
+              ? body.data.items
+              : [];
+      setSuppliers(supplierList);
     } catch (error: any) {
       console.error('加载供应商列表失败:', error);
+    }
+  }, []);
+
+  /**
+   * 加载可关联的承包合同列表
+   */
+  const fetchConstructionContracts = useCallback(async () => {
+    try {
+      const res = await contractApi.getList({ page: 1, pageSize: 100, type: 'CONSTRUCTION' } as any);
+      const body: any = res.data;
+      setConstructionContracts(Array.isArray(body.data) ? body.data : []);
+    } catch (error: any) {
+      console.error('加载承包合同列表失败:', error);
     }
   }, []);
 
@@ -320,6 +361,23 @@ const ContractList: React.FC = () => {
   }, []);
 
   /**
+   * 加载采购合同付款记录
+   */
+  const fetchContractPayments = useCallback(async (contractId: number) => {
+    try {
+      setPaymentsLoading(true);
+      const res = await contractApi.getPayments(contractId);
+      const body: any = res.data;
+      const payments = body?.data?.payments || body?.payments || [];
+      setContractPayments(Array.isArray(payments) ? payments : []);
+    } catch (error: any) {
+      toast.error(error.message || '加载付款记录失败');
+    } finally {
+      setPaymentsLoading(false);
+    }
+  }, []);
+
+  /**
    * 加载合同附件列表
    */
   const fetchAttachments = useCallback(async (contractId: number) => {
@@ -335,7 +393,8 @@ const ContractList: React.FC = () => {
   /**
    * 打开文件选择器
    */
-  const handleUploadClick = useCallback(() => {
+  const handleUploadClick = useCallback((category: 'contract' | 'invoice' | 'payment_voucher' = 'contract') => {
+    setUploadCategory(category);
     uploadRef.current?.click();
   }, []);
 
@@ -349,7 +408,7 @@ const ContractList: React.FC = () => {
     const formData = new FormData();
     Array.from(files).forEach(f => formData.append('files', f));
     formData.append('contractId', String(detailContract.id));
-    formData.append('category', 'contract');
+    formData.append('category', uploadCategory);
 
     try {
       setUploading(true);
@@ -361,7 +420,7 @@ const ContractList: React.FC = () => {
       setUploading(false);
       if (uploadRef.current) uploadRef.current.value = '';
     }
-  }, [detailContract, fetchAttachments]);
+  }, [detailContract, fetchAttachments, uploadCategory]);
 
   /**
    * 删除附件
@@ -391,6 +450,11 @@ const ContractList: React.FC = () => {
   useEffect(() => {
     fetchContracts();
   }, [fetchContracts]);
+
+  useEffect(() => {
+    fetchSuppliers();
+    fetchConstructionContracts();
+  }, [fetchSuppliers, fetchConstructionContracts]);
 
   /* ========================================
    * 搜索与筛选方法
@@ -452,6 +516,7 @@ const ContractList: React.FC = () => {
       type: contract.type || 'PROCUREMENT',
       totalAmount: contract.totalAmount ? String(contract.totalAmount) : '',
       supplierId: contract.supplierId ? String(contract.supplierId) : '',
+      parentContractId: contract.parentContractId || contract.parentContract?.id || '',
       awardingParty: (contract as any).awardingParty || '',
       startDate: contract.startDate ? contract.startDate.split('T')[0] : '',
       endDate: contract.endDate ? contract.endDate.split('T')[0] : '',
@@ -487,6 +552,9 @@ const ContractList: React.FC = () => {
       if (formData.type === 'PROCUREMENT' && formData.supplierId) {
         submitData.supplierId = formData.supplierId;
       }
+      if (formData.type === 'PROCUREMENT' && formData.parentContractId) {
+        submitData.parentContractId = formData.parentContractId;
+      }
       /* 承包合同时添加发包方 */
       if (formData.type === 'CONSTRUCTION' && formData.awardingParty.trim()) {
         submitData.awardingParty = formData.awardingParty.trim();
@@ -505,12 +573,13 @@ const ContractList: React.FC = () => {
       /* 关闭弹窗并刷新列表 */
       setShowFormModal(false);
       fetchContracts();
+      fetchConstructionContracts();
     } catch (error: any) {
       toast.error(error.message || '操作失败，请重试');
     } finally {
       setFormLoading(false);
     }
-  }, [formData, editingContract, fetchContracts]);
+  }, [formData, editingContract, fetchContracts, fetchConstructionContracts]);
 
   /* ========================================
    * 合同详情与进度款方法
@@ -524,11 +593,16 @@ const ContractList: React.FC = () => {
   const handleOpenDetail = useCallback(async (contract: Contract) => {
     setDetailContract(contract);
     setShowDetailModal(true);
-    /* 加载进度款数据 */
-    await fetchProgressPayments(contract.id);
+    if (contract.type === 'PROCUREMENT') {
+      setProgressPayments([]);
+      await fetchContractPayments(contract.id);
+    } else {
+      setContractPayments([]);
+      await fetchProgressPayments(contract.id);
+    }
     /* 加载附件 */
     await fetchAttachments(contract.id);
-  }, [fetchProgressPayments, fetchAttachments]);
+  }, [fetchProgressPayments, fetchContractPayments, fetchAttachments]);
 
   /**
    * 打开新增进度款弹窗
@@ -544,12 +618,16 @@ const ContractList: React.FC = () => {
    */
   const handlePaymentSubmit = useCallback(async () => {
     /* 表单校验 */
-    if (!paymentForm.installment || isNaN(Number(paymentForm.installment))) {
+    if (detailContract?.type !== 'PROCUREMENT' && (!paymentForm.installment || isNaN(Number(paymentForm.installment)))) {
       toast.error('请输入有效的期次');
       return;
     }
     if (!paymentForm.amount || isNaN(Number(paymentForm.amount))) {
-      toast.error('请输入有效的收款金额');
+      toast.error(detailContract?.type === 'PROCUREMENT' ? '请输入有效的付款金额' : '请输入有效的收款金额');
+      return;
+    }
+    if (detailContract?.type === 'PROCUREMENT' && !paymentForm.paymentDate) {
+      toast.error('请选择付款日期');
       return;
     }
 
@@ -561,25 +639,35 @@ const ContractList: React.FC = () => {
       const submitData: any = {
         installment: Number(paymentForm.installment),
         amount: Number(paymentForm.amount),
-        paymentDate: paymentForm.paymentDate || undefined,
-        description: paymentForm.description.trim() || undefined,
+        receivedAt: paymentForm.paymentDate || undefined,
+        remark: paymentForm.description.trim() || undefined,
       };
       /* 占比（可选） */
       if (paymentForm.percentage) {
         submitData.percentage = Number(paymentForm.percentage);
       }
 
-      await contractApi.createProgressPayment(detailContract.id, submitData);
-      toast.success('进度款记录创建成功');
+      if (detailContract.type === 'PROCUREMENT') {
+        await contractApi.createPayment(detailContract.id, {
+          amount: Number(paymentForm.amount),
+          paidAt: paymentForm.paymentDate,
+          remark: paymentForm.description.trim() || undefined,
+        });
+        toast.success('付款记录创建成功');
+      } else {
+        await contractApi.createProgressPayment(detailContract.id, submitData);
+        toast.success('进度款记录创建成功');
+      }
       /* 关闭弹窗并刷新进度款列表 */
       setShowPaymentModal(false);
-      await fetchProgressPayments(detailContract.id);
+      if (detailContract.type === 'PROCUREMENT') await fetchContractPayments(detailContract.id);
+      else await fetchProgressPayments(detailContract.id);
     } catch (error: any) {
       toast.error(error.message || '创建进度款记录失败');
     } finally {
       setPaymentLoading(false);
     }
-  }, [paymentForm, detailContract, fetchProgressPayments]);
+  }, [paymentForm, detailContract, fetchProgressPayments, fetchContractPayments]);
 
   /* ========================================
    * 删除操作方法
@@ -625,11 +713,61 @@ const ContractList: React.FC = () => {
     (sum, p) => sum + (p.amount || 0),
     0
   );
+  const totalContractPaymentAmount = contractPayments.reduce(
+    (sum, p) => sum + (p.amount || 0),
+    0
+  );
+  const visiblePaymentAmount = detailContract?.type === 'PROCUREMENT' ? totalContractPaymentAmount : totalPaymentAmount;
+  const contractAttachments = attachments.filter((att: any) => (att.category || 'contract') === 'contract');
+  const invoiceAttachments = attachments.filter((att: any) => att.category === 'invoice');
+  const paymentVoucherAttachments = attachments.filter((att: any) => att.category === 'payment_voucher');
 
   /** 收款进度百分比 */
   const paymentProgress = detailContract?.totalAmount
-    ? Math.min(100, (totalPaymentAmount / detailContract.totalAmount) * 100)
+    ? Math.min(100, (visiblePaymentAmount / detailContract.totalAmount) * 100)
     : 0;
+
+  const renderAttachmentSection = (
+    title: string,
+    items: any[],
+    category: 'contract' | 'invoice' | 'payment_voucher',
+    emptyText: string,
+    uploadText: string,
+  ) => (
+    <div>
+      <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
+        <h3 className="text-base font-semibold text-gray-800">{title}</h3>
+        <button onClick={() => handleUploadClick(category)} className="btn-primary btn-sm" disabled={uploading}>
+          <Upload size={14} className="mr-1" />
+          {uploading && uploadCategory === category ? '上传中...' : uploadText}
+        </button>
+      </div>
+      {attachmentsLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 size={24} className="animate-spin text-[#0066CC]" />
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-gray-400 py-4 text-center">{emptyText}</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {items.map((att: any) => (
+            <div key={att.id} className="relative group border border-gray-200 rounded-lg p-3 flex items-center gap-2 hover:border-[#0066CC] transition-colors">
+              <FileText size={24} className={att.mimeType?.startsWith('image/') ? 'text-blue-500 shrink-0' : 'text-red-500 shrink-0'} />
+              <button type="button" onClick={() => handleDownloadAttachment(att)}
+                className="text-sm text-gray-700 truncate flex-1 text-left hover:text-[#0066CC]">
+                {att.fileName}
+              </button>
+              <button onClick={() => handleDeleteAttachment(att.id)}
+                title="删除附件"
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   /* ========================================
    * 渲染：加载状态
@@ -957,20 +1095,37 @@ const ContractList: React.FC = () => {
 
           {/* 第三行：供应商选择（仅采购合同显示） */}
           {formData.type === 'PROCUREMENT' && (
-            <div>
-              <label className="form-label">供应商 <span className="text-gray-400 text-xs font-normal">(选填)</span></label>
-              <select
-                value={formData.supplierId}
-                onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
-                className="select"
-              >
-                <option value="">请选择供应商</option>
-                {suppliers.map((supplier) => (
-                  <option key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="form-label">关联承包合同 <span className="text-gray-400 text-xs font-normal">(选填)</span></label>
+                <select
+                  value={formData.parentContractId}
+                  onChange={(e) => setFormData({ ...formData, parentContractId: e.target.value })}
+                  className="select"
+                >
+                  <option value="">请选择承包合同</option>
+                  {constructionContracts.map((contract) => (
+                    <option key={contract.id} value={contract.id}>
+                      {contract.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">供应商 <span className="text-gray-400 text-xs font-normal">(选填)</span></label>
+                <select
+                  value={formData.supplierId}
+                  onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
+                  className="select"
+                >
+                  <option value="">请选择供应商</option>
+                  {suppliers.map((supplier) => (
+                    <option key={supplier.id} value={supplier.id}>
+                      {supplier.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
 
@@ -1079,10 +1234,16 @@ const ContractList: React.FC = () => {
                   </span>
                 </div>
                 {/* 供应商（采购合同显示） */}
-                {detailContract.type === 'PROCUREMENT' && detailContract.supplierName && (
+                {detailContract.type === 'PROCUREMENT' && (detailContract.supplierName || detailContract.supplier?.name) && (
                   <div>
                     <span className="text-gray-500">供应商：</span>
-                    <span className="text-gray-800">{detailContract.supplierName}</span>
+                    <span className="text-gray-800">{detailContract.supplierName || detailContract.supplier?.name}</span>
+                  </div>
+                )}
+                {detailContract.type === 'PROCUREMENT' && detailContract.parentContract && (
+                  <div>
+                    <span className="text-gray-500">关联承包合同：</span>
+                    <span className="text-gray-800">{detailContract.parentContract.name}</span>
                   </div>
                 )}
                 {/* 合同期限 */}
@@ -1111,29 +1272,28 @@ const ContractList: React.FC = () => {
               )}
             </div>
 
-            {/* ---- 进度款收款列表 ---- */}
+            {/* ---- 收/付款记录 ---- */}
             <div>
               <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
                 <h3 className="text-base font-semibold text-gray-800">
-                  进度款收款记录
+                  {detailContract.type === 'PROCUREMENT' ? '采购付款记录' : '进度款收款记录'}
                 </h3>
-                {/* 新增进度款按钮 */}
                 {can('contract:create') && (
                   <button
                     onClick={handleOpenPaymentModal}
                     className="btn-primary btn-sm"
                   >
                     <Plus size={14} className="mr-1" />
-                    新增进度款
+                    {detailContract.type === 'PROCUREMENT' ? '新增付款' : '新增进度款'}
                   </button>
                 )}
               </div>
 
-              {/* 收款进度条 */}
+              {/* 收/付款进度条 */}
               <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center justify-between text-sm mb-1.5">
                   <span className="text-gray-600">
-                    收款进度：{formatMoney(totalPaymentAmount)} / {formatMoney(detailContract.totalAmount)}
+                    {detailContract.type === 'PROCUREMENT' ? '付款进度' : '收款进度'}：{formatMoney(visiblePaymentAmount)} / {formatMoney(detailContract.totalAmount)}
                   </span>
                   <span className="font-medium text-[#0066CC]">
                     {paymentProgress.toFixed(1)}%
@@ -1151,20 +1311,41 @@ const ContractList: React.FC = () => {
                 </div>
               </div>
 
-              {/* 进度款列表表格 */}
+              {/* 收/付款列表表格 */}
               {paymentsLoading ? (
                 /* 加载中 */
                 <div className="flex items-center justify-center py-8">
                   <Loader2 size={24} className="animate-spin text-[#0066CC]" />
                   <span className="ml-2 text-sm text-gray-500">加载中...</span>
                 </div>
-              ) : progressPayments.length === 0 ? (
+              ) : (detailContract.type === 'PROCUREMENT' ? contractPayments.length === 0 : progressPayments.length === 0) ? (
                 /* 空状态 */
                 <EmptyState
-                  title="暂无进度款记录"
-                  description={'点击"新增进度款"按钮添加收款记录'}
+                  title={detailContract.type === 'PROCUREMENT' ? '暂无付款记录' : '暂无进度款记录'}
+                  description={detailContract.type === 'PROCUREMENT' ? '点击"新增付款"按钮添加付款记录' : '点击"新增进度款"按钮添加收款记录'}
                   icon={<DollarSign size={40} />}
                 />
+              ) : detailContract.type === 'PROCUREMENT' ? (
+                <div className="table-container">
+                  <table className="table text-sm">
+                    <thead>
+                      <tr className="table-thead" style={{ backgroundColor: '#0066CC', color: '#fff' }}>
+                        <th>付款金额</th>
+                        <th>付款日期</th>
+                        <th>备注</th>
+                      </tr>
+                    </thead>
+                    <tbody className="table-tbody">
+                      {contractPayments.map((payment, index) => (
+                        <tr key={payment.id} className={index % 2 === 1 ? 'bg-gray-50' : ''}>
+                          <td className="font-medium text-[#0066CC]">{formatMoney(payment.amount)}</td>
+                          <td>{formatDate(payment.paidAt)}</td>
+                          <td className="text-gray-500">{payment.remark || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 /* 进度款数据表格 */
                 <div className="table-container">
@@ -1191,8 +1372,8 @@ const ContractList: React.FC = () => {
                           <td>
                             {payment.percentage ? `${payment.percentage}%` : '-'}
                           </td>
-                          <td>{formatDate(payment.paymentDate)}</td>
-                          <td className="text-gray-500">{payment.description || '-'}</td>
+                          <td>{formatDate(payment.paymentDate || (payment as any).receivedAt)}</td>
+                          <td className="text-gray-500">{payment.description || (payment as any).remark || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1201,41 +1382,10 @@ const ContractList: React.FC = () => {
               )}
             </div>
 
-            {/* ---- 合同附件 ---- */}
-            <div>
-              <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
-                <h3 className="text-base font-semibold text-gray-800">合同附件</h3>
-                <button onClick={handleUploadClick} className="btn-primary btn-sm" disabled={uploading}>
-                  <Upload size={14} className="mr-1" />
-                  {uploading ? '上传中...' : '上传附件'}
-                </button>
-              </div>
-              <input ref={uploadRef} type="file" multiple accept="image/*,.pdf" className="hidden" onChange={handleFileChange} />
-              {attachmentsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 size={24} className="animate-spin text-[#0066CC]" />
-                </div>
-              ) : attachments.length === 0 ? (
-                <p className="text-sm text-gray-400 py-4 text-center">暂无附件</p>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {attachments.map((att: any) => (
-                    <div key={att.id} className="relative group border border-gray-200 rounded-lg p-3 flex items-center gap-2 hover:border-[#0066CC] transition-colors">
-                      <FileText size={24} className={att.mimeType?.startsWith('image/') ? 'text-blue-500 shrink-0' : 'text-red-500 shrink-0'} />
-                      <button type="button" onClick={() => handleDownloadAttachment(att)}
-                        className="text-sm text-gray-700 truncate flex-1 text-left hover:text-[#0066CC]">
-                        {att.fileName}
-                      </button>
-                      <button onClick={() => handleDeleteAttachment(att.id)}
-                        title="删除附件"
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <input ref={uploadRef} type="file" multiple accept="image/*,.pdf" className="hidden" onChange={handleFileChange} />
+            {renderAttachmentSection('合同附件', contractAttachments, 'contract', '暂无合同附件', '上传附件')}
+            {detailContract.type === 'PROCUREMENT' && renderAttachmentSection('采购发票', invoiceAttachments, 'invoice', '暂无发票', '上传发票')}
+            {detailContract.type === 'PROCUREMENT' && renderAttachmentSection('付款凭证', paymentVoucherAttachments, 'payment_voucher', '暂无付款凭证', '上传凭证')}
           </div>
         )}
       </Modal>
@@ -1244,7 +1394,7 @@ const ContractList: React.FC = () => {
       <Modal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        title="新增进度款收款"
+        title={detailContract?.type === 'PROCUREMENT' ? '新增采购付款' : '新增进度款收款'}
         size="md"
         footer={
           <>
@@ -1266,10 +1416,9 @@ const ContractList: React.FC = () => {
         }
       >
         <div className="space-y-4">
-          {/* 期次和金额 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className={detailContract?.type === 'PROCUREMENT' ? '' : 'grid grid-cols-2 gap-4'}>
             {/* 期次 */}
-            <div>
+            {detailContract?.type !== 'PROCUREMENT' && <div>
               <label className="form-label">
                 期次 <span className="text-red-500">*</span>
               </label>
@@ -1281,28 +1430,27 @@ const ContractList: React.FC = () => {
                 placeholder="如：1"
                 min="1"
               />
-            </div>
+            </div>}
             {/* 收款金额 */}
             <div>
               <label className="form-label">
-                收款金额（元） <span className="text-red-500">*</span>
+                {detailContract?.type === 'PROCUREMENT' ? '付款金额' : '收款金额'}（元） <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 value={paymentForm.amount}
                 onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
                 className="input"
-                placeholder="请输入收款金额"
+                placeholder={detailContract?.type === 'PROCUREMENT' ? '请输入付款金额' : '请输入收款金额'}
                 min="0"
                 step="0.01"
               />
             </div>
           </div>
 
-          {/* 占比和收款日期 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className={detailContract?.type === 'PROCUREMENT' ? '' : 'grid grid-cols-2 gap-4'}>
             {/* 占比 */}
-            <div>
+            {detailContract?.type !== 'PROCUREMENT' && <div>
               <label className="form-label">占比（%）</label>
               <input
                 type="number"
@@ -1314,10 +1462,10 @@ const ContractList: React.FC = () => {
                 max="100"
                 step="0.1"
               />
-            </div>
+            </div>}
             {/* 收款日期 */}
             <div>
-              <label className="form-label">收款日期</label>
+              <label className="form-label">{detailContract?.type === 'PROCUREMENT' ? '付款日期' : '收款日期'} <span className="text-red-500">*</span></label>
               <input
                 type="date"
                 value={paymentForm.paymentDate}

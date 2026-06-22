@@ -184,6 +184,7 @@ model Contract {
   code             String?
   totalAmount      Float?
   supplierId       String?
+  parentContractId String?
   awardingParty    String?
   description      String?
   startDate        DateTime?
@@ -192,15 +193,35 @@ model Contract {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   supplier         Supplier?         @relation(fields: [supplierId], references: [id])
+  parentContract   Contract?         @relation("ContractProcurements", fields: [parentContractId], references: [id])
+  procurementContracts Contract[]     @relation("ContractProcurements")
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   deliveryOrders   DeliveryOrder[]
   departments      Department[]
   inboundOrders    InboundOrder[]
   progressPayments ProgressPayment[]
+  contractPayments ContractPayment[]
   subContracts     SubContract[]
 
   @@unique([tenantId, code])
+  @@index([parentContractId])
   @@map("contracts")
+}
+
+/// 采购合同付款记录
+model ContractPayment {
+  id         String   @id @default(cuid())
+  contractId String
+  tenantId   String
+  amount     Float
+  paidAt     DateTime
+  remark     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, contractId])
+  @@map("contract_payments")
 }
 
 /// 进度款收款记录（原Labor）

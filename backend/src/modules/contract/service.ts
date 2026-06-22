@@ -52,7 +52,8 @@ export async function listContracts(params: ContractListParams) {
       orderBy: { createdAt: 'desc' },
       include: {
         supplier: { select: { id: true, name: true } },
-        _count: { select: { departments: true, progressPayments: true } },
+        parentContract: { select: { id: true, name: true, code: true, totalAmount: true } },
+        _count: { select: { departments: true, progressPayments: true, contractPayments: true } },
       },
     }),
   ]);
@@ -67,6 +68,7 @@ export interface CreateContractInput {
   code?: string;
   totalAmount?: number;
   supplierId?: string;
+  parentContractId?: string;
   awardingParty?: string;
   description?: string;
   startDate?: string;
@@ -74,12 +76,19 @@ export interface CreateContractInput {
 }
 
 export async function createContract(input: CreateContractInput) {
-  const { tenantId, type, name, code, totalAmount, supplierId, awardingParty, description, startDate, endDate } = input;
+  const { tenantId, type, name, code, totalAmount, supplierId, parentContractId, awardingParty, description, startDate, endDate } = input;
 
   // 验证供应商
   if (supplierId) {
     const supplier = await prisma.supplier.findFirst({ where: { id: supplierId, tenantId } });
     if (!supplier) throw { status: 400, code: 'INVALID_SUPPLIER', message: '指定的供应商不存在' };
+  }
+
+  if (type === 'PROCUREMENT' && parentContractId) {
+    const parent = await prisma.contract.findFirst({
+      where: { id: parentContractId, tenantId, type: 'CONSTRUCTION', isActive: true },
+    });
+    if (!parent) throw { status: 400, code: 'INVALID_PARENT_CONTRACT', message: '关联的承包合同不存在' };
   }
 
   const contract = await prisma.contract.create({
@@ -90,6 +99,7 @@ export async function createContract(input: CreateContractInput) {
       code: code || null,
       totalAmount: totalAmount ? parseFloat(String(totalAmount)) : null,
       supplierId: supplierId || null,
+      parentContractId: type === 'PROCUREMENT' ? (parentContractId || null) : null,
       awardingParty: awardingParty || null,
       description,
       startDate: startDate ? new Date(startDate) : null,
@@ -105,8 +115,10 @@ export async function getContractDetail(tenantId: string, id: string) {
     where: { id, tenantId },
     include: {
       supplier: true,
+      parentContract: { select: { id: true, name: true, code: true, totalAmount: true } },
       departments: { select: { id: true, name: true, code: true, isActive: true } },
       progressPayments: { orderBy: { receivedAt: 'desc' } },
+      contractPayments: { orderBy: { paidAt: 'desc' } },
     },
   });
   return contract;
@@ -117,6 +129,7 @@ export interface UpdateContractInput {
   code?: string;
   totalAmount?: number | null;
   supplierId?: string;
+  parentContractId?: string | null;
   awardingParty?: string;
   description?: string;
   startDate?: string;
@@ -128,11 +141,27 @@ export async function updateContract(tenantId: string, id: string, input: Update
   const existing = await prisma.contract.findFirst({ where: { id, tenantId } });
   if (!existing) return null;
 
+  const nextType = input.type || existing.type;
   const updateData: any = {};
   if (input.name !== undefined) updateData.name = input.name;
   if (input.code !== undefined) updateData.code = input.code;
   if (input.totalAmount !== undefined) updateData.totalAmount = input.totalAmount !== null ? Number(input.totalAmount) : null;
   if (input.supplierId !== undefined) updateData.supplierId = input.supplierId;
+  if (input.parentContractId !== undefined) {
+    if (nextType !== 'PROCUREMENT') {
+      updateData.parentContractId = null;
+    } else if (input.parentContractId) {
+      const parent = await prisma.contract.findFirst({
+        where: { id: input.parentContractId, tenantId, type: 'CONSTRUCTION', isActive: true },
+      });
+      if (!parent) throw { status: 400, code: 'INVALID_PARENT_CONTRACT', message: '关联的承包合同不存在' };
+      updateData.parentContractId = input.parentContractId;
+    } else {
+      updateData.parentContractId = null;
+    }
+  } else if (nextType !== 'PROCUREMENT' && existing.parentContractId) {
+    updateData.parentContractId = null;
+  }
   if (input.awardingParty !== undefined) updateData.awardingParty = input.awardingParty;
   if (input.description !== undefined) updateData.description = input.description;
   if (input.startDate !== undefined) updateData.startDate = new Date(input.startDate);
@@ -233,12 +262,12 @@ export async function createContractAttachments(tenantId: string, contractId: st
   );
 }
 
-export async function listContractAttachments(tenantId: string, contractId: string) {
+export async function listContractAttachments(tenantId: string, contractId: string, category?: string) {
   const contract = await assertContractExists(tenantId, contractId);
   if (!contract) throw { status: 404, code: 'CONTRACT_NOT_FOUND', message: '合同不存在' };
 
   return prisma.attachment.findMany({
-    where: { tenantId, entityType: 'contract', entityId: contractId },
+    where: { tenantId, entityType: 'contract', entityId: contractId, ...(category ? { category } : {}) },
     orderBy: { createdAt: 'desc' },
   });
 }
@@ -305,6 +334,43 @@ export async function createProgressPayment(input: CreateProgressPaymentInput) {
       receivedAt: new Date(receivedAt),
       remark,
     },
+  });
+
+  return { contract, payment };
+}
+
+// ============================================
+// 采购合同付款记录
+// ============================================
+
+export async function listContractPayments(tenantId: string, contractId: string) {
+  const contract = await prisma.contract.findFirst({ where: { id: contractId, tenantId, type: 'PROCUREMENT' } });
+  if (!contract) return { contract: null };
+
+  const payments = await prisma.contractPayment.findMany({
+    where: { contractId, tenantId },
+    orderBy: { paidAt: 'desc' },
+  });
+
+  const totalAmount = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  return { contract, payments, totalAmount, contractTotal: contract.totalAmount ? Number(contract.totalAmount) : 0 };
+}
+
+export interface CreateContractPaymentInput {
+  tenantId: string;
+  contractId: string;
+  amount: number;
+  paidAt: string;
+  remark?: string;
+}
+
+export async function createContractPayment(input: CreateContractPaymentInput) {
+  const { tenantId, contractId, amount, paidAt, remark } = input;
+  const contract = await prisma.contract.findFirst({ where: { id: contractId, tenantId, type: 'PROCUREMENT' } });
+  if (!contract) return { contract: null };
+
+  const payment = await prisma.contractPayment.create({
+    data: { contractId, tenantId, amount: Number(amount), paidAt: new Date(paidAt), remark },
   });
 
   return { contract, payment };

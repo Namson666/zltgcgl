@@ -1,5 +1,5 @@
 {
-  "status": "phase3_contract_attachments_green",
+  "status": "phase3_procurement_contracts_green",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -149,6 +149,55 @@
       "status": "verified",
       "result": "PASS; tenant isolation and labor-module decoupling confirmed. Claude found a smoke upload race and JSON upload error handling issue; both were fixed before final verify/browser smoke.",
       "evidence_file": ".ai/workers/20260622T123235Z-audit_worker.result.md"
+    },
+    {
+      "type": "phase3_procurement_contracts",
+      "command": "implementation + real browser procurement create/payment/upload/download/delete",
+      "status": "verified",
+      "result": "Procurement contracts can link to construction contracts, create payment records, and manage categorized invoice/payment-voucher attachments. Backend enforces tenant-scoped parent contract validation and procurement-only payment records."
+    },
+    {
+      "type": "unified_verify",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 4 files / 24 tests passed; backend TypeScript build passed; frontend tests 2 files / 36 tests passed; frontend production build passed after procurement contract workflow slice"
+    },
+    {
+      "type": "prisma_schema_validate",
+      "command": "cd backend && DATABASE_URL=file:/tmp/zlt_prisma_validate.db npx prisma validate",
+      "status": "verified",
+      "result": "Prisma schema is valid after ContractPayment and parentContractId index declarations"
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "2 Playwright tests passed in system Google Chrome. Enterprise smoke creates a construction contract, uploads/downloads/deletes its attachment, creates a linked procurement contract, creates a payment record, uploads/downloads/deletes a procurement invoice and payment voucher, then deletes test contracts; developer smoke opens tenant management.",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/合同管理.png",
+        "docs/smoke-evidence/物资总览.png",
+        "docs/smoke-evidence/人员管理.png",
+        "docs/smoke-evidence/项目部报账.png",
+        "docs/smoke-evidence/项目部管理.png",
+        "docs/smoke-evidence/用户管理.png",
+        "docs/smoke-evidence/角色权限.png",
+        "docs/smoke-evidence/开发者企业管理.png"
+      ]
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/phase3-procurement-contract-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "PASS; BLOCKERS none. Claude reviewed tenant isolation, approval-free procurement workflow, attachment category separation, browser smoke realism, and schema/migration consistency. Non-blocking updateContract/type notes were fixed after audit and reverified.",
+      "evidence_file": ".ai/workers/20260622T130415Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 130 files / 1413 nodes / 14414 edges. detect-changes risk score 0.50, mainly because backend contract service functions have no direct unit tests; real Chrome smoke covers the procurement end-to-end path."
     }
   ],
   "known_yellow_items": [
@@ -159,9 +208,9 @@
     "Browser E2E for independent-domain portal login and unopen-module 403/menu-hidden matrix is still required before Product Green.",
     "Browser smoke harness uses raw SQL migrations because Prisma migrate/db push returns an opaque Schema engine error in this environment.",
     "Browser smoke screenshots use explicit docs/smoke-evidence paths; future full regression should use testInfo/outputDir for richer artifact grouping.",
-    "Phase 3 currently has contract tabs and construction-contract attachment upload/download/delete covered. Procurement invoices/payment vouchers and subcontract create/team relation/payment/settlement vouchers still need implementation and real-browser CRUD/upload/download verification.",
+    "Phase 3 currently has contract tabs, construction-contract attachment upload/download/delete, and procurement linked contract/payment/invoice/payment-voucher flows covered by real Chrome smoke. Subcontract create/team relation/payment/settlement vouchers still need implementation and real-browser CRUD/upload/download verification.",
     "Contract attachment deletion is currently a hard delete because the existing Attachment schema has no isActive/deletedAt field; soft-delete attachment audit trail remains a follow-up if required by production policy."
   ],
-  "notes": "Phase 3 contract tab foundation and construction-contract attachment slice are verified with build/tests, Claude CLI audit, and real Chrome upload/download/delete smoke. Product Green remains open until all required procurement/subcontract/attendance flows pass.",
-  "updated_at": "2026-06-22T12:35:00Z"
+  "notes": "Phase 3 contract tab foundation, construction-contract attachment slice, and procurement contract linked payment/invoice/voucher slice are verified with build/tests, Claude CLI audit, code-review-graph, and real Chrome upload/download/delete smoke. Product Green remains open until all required subcontract/attendance flows pass.",
+  "updated_at": "2026-06-22T13:08:00Z"
 }
