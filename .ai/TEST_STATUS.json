@@ -406,5 +406,5 @@
     "Backend xlsx high vulnerability removed by replacing labor report export with exceljs."
   ],
   "notes": "XLSX high vulnerability removed: labor report export now uses exceljs, backend audit has no high vulnerabilities and frontend audit remains clear. Remaining audit Yellow is uuid moderate requiring breaking-force compatibility work. Verify, Claude audit, and code-review-graph passed.",
-  "updated_at": "2026-06-22T14:42:00Z"
+  "updated_at": "2026-06-22T14:45:00Z"
 }
