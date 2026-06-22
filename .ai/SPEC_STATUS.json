@@ -1,9 +1,9 @@
 {
-  "stage": "S7_module_portal_browser_smoke_green_pushed",
+  "stage": "S8_admin_crud_inventory_alert_verified_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Inventory alert / 库存预警 has been removed per user request. Labor salary/payment/report export real downloads are fixed and verified. Module entitlement and independent portal login are now covered by real Chrome: temporary tenant only opens wms, disabled labor/finance menus hide, direct routes redirect, APIs return 403, and portal login works without tenant code. Deep CRUD/upload/download for every remaining page, production DNS/logo polish, and real third-party face gateway credentials remain Yellow.",
-  "updated_at": "2026-06-22T16:00:00Z"
+  "notes": "Inventory alert / 库存预警 remains removed from active WMS product requirements and docs. Basic admin roles/users/departments deep CRUD/state-change flow is now covered by real Chrome, and the run exposed/fixed department/user field mapping and operation-log detail serialization issues. Deep CRUD/upload/download for every remaining page, production DNS/logo polish, and real third-party face gateway credentials remain Yellow.",
+  "updated_at": "2026-06-22T16:15:00Z"
 }

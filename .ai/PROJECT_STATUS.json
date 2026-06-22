@@ -20,7 +20,7 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "module_portal_smoke_pushed",
+    "push_status": "admin_crud_inventory_alert_verified_pending_push",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
     "pushed_commit": "c085a94 test: add full route browser matrix smoke"
   },
@@ -31,9 +31,9 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_module_portal_smoke_pushed",
-  "updated_at": "2026-06-22T16:00:00Z",
-  "push_status": "module_portal_smoke_pushed",
+  "status": "yellow_admin_crud_inventory_alert_verified_pending_push",
+  "updated_at": "2026-06-22T16:15:00Z",
+  "push_status": "admin_crud_inventory_alert_verified_pending_push",
   "last_pushed_commit": "b122ebc",
   "current_commit": "b122ebc",
   "notes": [
@@ -49,6 +49,7 @@
     "2026-06-22: Full route browser matrix pushed at c085a94; remaining Yellow: deep CRUD/upload/download regression and real third-party face gateway credentials.",
     "2026-06-22: Supplier/work-team CRUD verified locally: verify passed, Chrome 5 tests passed, Claude re-audit PASS, code-review-graph risk 0.55; pushed at ebf731c.",
     "2026-06-22: Inventory alert feature removed per user request and labor export/report downloads fixed; verify passed, Chrome 6 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed at e7c0772.",
-    "2026-06-22: Module entitlement and independent portal login real Chrome coverage added; verify passed, Chrome 7 tests passed, Claude audit PASS, code-review-graph risk 0.55; pushed at b122ebc."
+    "2026-06-22: Module entitlement and independent portal login real Chrome coverage added; verify passed, Chrome 7 tests passed, Claude audit PASS, code-review-graph risk 0.55; pushed at b122ebc.",
+    "2026-06-22: User reconfirmed inventory alert must be deleted. Active WMS product docs were refreshed to remove remaining inventory alert/low-stock requirement text. Basic admin roles/users/departments deep CRUD/state-change coverage added; verify passed, Chrome 8 tests passed, Claude audit PASS, code-review-graph risk 0.55; pending commit/push."
   ]
 }

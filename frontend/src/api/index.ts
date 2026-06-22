@@ -497,7 +497,7 @@ export const tenantApi = {
    * @returns 新创建的用户信息
    */
   createUser: (data: any) =>
-    http.post('/tenants/users', data),
+    http.post('/tenants/users', data?.realName && !data?.name ? { ...data, name: data.realName } : data),
 
   /**
    * 更新用户信息
@@ -505,7 +505,7 @@ export const tenantApi = {
    * @param data - 要更新的字段
    */
   updateUser: (id: number, data: any) =>
-    http.put(`/tenants/users/${id}`, data),
+    http.put(`/tenants/users/${id}`, data?.realName && !data?.name ? { ...data, name: data.realName } : data),
 
   /**
    * 启用/禁用用户
@@ -795,7 +795,7 @@ export const departmentApi = {
    * @param data - 成员信息（用户 ID、角色等）
    */
   addMember: (departmentId: number, data: any) =>
-    http.post(`/departments/${departmentId}/members`, data),
+    http.post(`/departments/${departmentId}/members`, data?.userIds ? data : { ...data, userIds: data?.userId ? [data.userId] : [] }),
 
   /**
    * 移除项目成员

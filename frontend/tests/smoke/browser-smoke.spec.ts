@@ -519,6 +519,143 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can manage roles users and departments', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const stamp = Date.now();
+
+    const roleKey = `smoke_role_${stamp}`;
+    const roleName = `浏览器角色-${stamp}`;
+    const roleNameEdited = `${roleName}-已编辑`;
+    await page.goto('/admin/roles');
+    await expect(page.getByRole('heading', { name: '角色权限' })).toBeVisible();
+    await page.getByRole('button', { name: '新增角色' }).click();
+    await page.getByPlaceholder('英文标识，如 admin、operator').fill(roleKey);
+    await page.getByPlaceholder('中文显示名称，如 系统管理员').fill(roleName);
+    await page.getByPlaceholder('可选的角色描述').fill('真实浏览器角色 CRUD 验收');
+    await page.getByRole('button', { name: '创建角色' }).click();
+    await expect(page.getByText('角色已创建')).toBeVisible();
+    await expect(page.getByText(roleName)).toBeVisible();
+
+    const roleCard = page.locator('.card', { hasText: roleName }).last();
+    await roleCard.getByTitle('编辑角色').click();
+    await page.getByPlaceholder('中文显示名称，如 系统管理员').fill(roleNameEdited);
+    await page.getByPlaceholder('可选的角色描述').fill('真实浏览器角色编辑验收');
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('角色已更新')).toBeVisible();
+    await expect(page.getByText(roleNameEdited)).toBeVisible();
+
+    const editedRoleCard = page.locator('.card', { hasText: roleNameEdited }).last();
+    await editedRoleCard.click();
+    await expect(page.getByRole('button', { name: '保存权限' })).toBeVisible();
+    await page.locator('label', { hasText: '全选' }).first().click();
+    await page.getByRole('button', { name: '保存权限' }).click();
+    await expect(page.getByText('权限配置已保存')).toBeVisible();
+    await page.locator('.card', { hasText: roleNameEdited }).last().getByTitle('删除角色').click();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText(`已删除角色「${roleNameEdited}」`)).toBeVisible();
+    await expect(page.getByText(roleNameEdited)).toHaveCount(0);
+
+    const username = `smoke_user_${stamp}`;
+    const realName = `浏览器用户-${stamp}`;
+    const realNameEdited = `${realName}-已编辑`;
+    await page.goto('/admin/users');
+    await expect(page.getByRole('heading', { name: '用户管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增用户' }).click();
+    await page.getByPlaceholder('请输入用户名').fill(username);
+    await page.getByPlaceholder('请输入密码（至少6位）').fill('Admin@2024');
+    await page.getByPlaceholder('请输入真实姓名').fill(realName);
+    await page.getByPlaceholder('请输入手机号码').fill(`137${String(stamp).slice(-8)}`);
+    const roleSelect = page.locator('select').filter({ hasText: '请选择角色' });
+    const roleValue = await roleSelect.locator('option').nth(1).getAttribute('value');
+    expect(roleValue).toBeTruthy();
+    await roleSelect.selectOption(roleValue!);
+    await page.getByRole('button', { name: '创建用户' }).click();
+    await expect(page.getByText('用户创建成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: username })).toBeVisible();
+
+    const userRow = page.locator('tr', { hasText: username });
+    await userRow.getByTitle('编辑用户').click();
+    await page.getByPlaceholder('请输入真实姓名').fill(realNameEdited);
+    await page.getByPlaceholder('请输入手机号码').fill(`138${String(stamp).slice(-8)}`);
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('用户信息已更新')).toBeVisible();
+    await expect(page.locator('tr', { hasText: realNameEdited })).toBeVisible();
+
+    const editedUserRow = page.locator('tr', { hasText: username });
+    await editedUserRow.getByTitle('重置密码').click();
+    await page.getByPlaceholder('请输入新密码（至少6位）').fill('NewPass@2026');
+    await page.getByRole('button', { name: '确认重置' }).click();
+    await expect(page.getByText(new RegExp(`已重置用户 "${realNameEdited}" 的密码`))).toBeVisible();
+    await editedUserRow.getByTitle('停用用户').click();
+    await page.getByRole('button', { name: '确认停用' }).click();
+    await expect(page.getByText(new RegExp(`已停用用户 "${realNameEdited}"`))).toBeVisible();
+    await page.locator('tr', { hasText: username }).getByTitle('启用用户').click();
+    await page.getByRole('button', { name: '确认启用' }).click();
+    await expect(page.getByText(new RegExp(`已启用用户 "${realNameEdited}"`))).toBeVisible();
+
+    const deptName = `浏览器项目部-${stamp}`;
+    const deptNameEdited = `${deptName}-已编辑`;
+    const deptCode = `D${String(stamp).slice(-8)}`;
+    await page.goto('/departments');
+    await expect(page.getByRole('heading', { name: '项目部管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增项目部' }).click();
+    await page.getByPlaceholder('请输入项目部名称').fill(deptName);
+    await page.getByPlaceholder('请输入项目部编号').fill(deptCode);
+    await page.getByPlaceholder('请输入项目部描述（选填）').fill('真实浏览器项目部 CRUD 验收');
+    await page.getByRole('button', { name: '确认创建' }).click();
+    await expect(page.getByText('项目部创建成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: deptName })).toBeVisible();
+
+    await page.locator('tr', { hasText: deptName }).getByTitle('编辑').click();
+    await page.getByPlaceholder('请输入项目部名称').fill(deptNameEdited);
+    await page.getByPlaceholder('请输入项目部描述（选填）').fill('真实浏览器项目部编辑验收');
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('项目部更新成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: deptNameEdited })).toBeVisible();
+
+    await page.locator('tr', { hasText: deptNameEdited }).getByTitle('查看详情').click();
+    await expect(page.getByRole('heading', { name: '项目部详情' })).toBeVisible();
+    const subProjectName = `浏览器子项目-${stamp}`;
+    const subProjectNameEdited = `${subProjectName}-已编辑`;
+    await page.getByRole('button', { name: '新增子项目' }).click();
+    await page.getByPlaceholder('请输入子项目名称').fill(subProjectName);
+    await page.getByPlaceholder('请输入子项目编号（选填）').fill(`SP${String(stamp).slice(-6)}`);
+    await page.getByPlaceholder('请输入子项目描述（选填）').fill('真实浏览器子项目验收');
+    await page.getByRole('button', { name: '确认创建' }).click();
+    await expect(page.getByText('子项目创建成功')).toBeVisible();
+    await expect(page.getByText(subProjectName)).toBeVisible();
+    await page.locator('tr', { hasText: subProjectName }).getByTitle('编辑子项目').click();
+    await page.getByPlaceholder('请输入子项目名称').fill(subProjectNameEdited);
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('子项目更新成功')).toBeVisible();
+    await expect(page.getByText(subProjectNameEdited)).toBeVisible();
+
+    await page.getByRole('button', { name: '添加成员' }).click();
+    const memberSelect = page.locator('select').filter({ hasText: '请选择要添加的用户' });
+    await memberSelect.selectOption({ label: `${realNameEdited}（${username}）` });
+    await page.getByRole('button', { name: '确认添加' }).click();
+    await expect(page.getByText('成员添加成功')).toBeVisible();
+    await expect(page.getByText(username)).toBeVisible();
+    await page.locator('tr', { hasText: username }).getByTitle('移除成员').click();
+    await page.getByRole('button', { name: '确认移除' }).click();
+    await expect(page.getByText('成员已移除')).toBeVisible();
+    await expect(page.locator('tr', { hasText: username })).toHaveCount(0);
+    await page.getByTitle('关闭').click();
+
+    await page.locator('tr', { hasText: deptNameEdited }).getByTitle('停用').click();
+    await page.getByRole('button', { name: '确认停用' }).click();
+    await expect(page.getByText('项目部已停用')).toBeVisible();
+    await page.locator('tr', { hasText: deptNameEdited }).getByTitle('启用').click();
+    await page.getByRole('button', { name: '确认启用' }).click();
+    await expect(page.getByText('项目部已启用')).toBeVisible();
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/基础后台CRUD.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can download labor salary payment and report exports', async ({ page }) => {
     await loginEnterprise(page);
     const stamp = Date.now();

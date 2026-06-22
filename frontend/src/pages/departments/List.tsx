@@ -94,7 +94,7 @@ interface Member {
   userId: number;                /* 用户 ID */
   username: string;              /* 用户名 */
   realName?: string;             /* 真实姓名 */
-  role?: string;                 /* 项目角色 */
+  role?: string;                 /* 系统角色 */
   joinedAt?: string;             /* 加入时间 */
 }
 
@@ -130,7 +130,6 @@ interface SubProjectFormData {
 /** 添加成员表单数据接口 */
 interface AddMemberFormData {
   userId: string;                /* 用户 ID（字符串，方便表单处理） */
-  role: string;                  /* 项目角色 */
 }
 
 /* ========================================
@@ -163,8 +162,15 @@ const DEFAULT_SUB_PROJECT_FORM: SubProjectFormData = {
 /** 添加成员表单默认值 */
 const DEFAULT_ADD_MEMBER_FORM: AddMemberFormData = {
   userId: '',
-  role: '',
 };
+
+const normalizeDepartment = (dept: any): Department => ({
+  ...dept,
+  status: dept.status || (dept.isActive === false ? 'inactive' : 'active'),
+  contractName: dept.contractName || dept.contract?.name,
+  subProjectCount: dept.subProjectCount ?? dept._count?.subProjects ?? dept.subProjects?.length ?? 0,
+  memberCount: dept.memberCount ?? dept._count?.users ?? dept.users?.length ?? 0,
+});
 
 /* ========================================
  * 项目部管理列表组件
@@ -246,7 +252,8 @@ const DepartmentList: React.FC = () => {
       const res = await departmentApi.getList(params);
       const body: any = res.data;
       const deptsData = body.data || body.pagination || body;
-      setDepartments(Array.isArray(deptsData) ? deptsData : body.data || []);
+      const deptList = Array.isArray(deptsData) ? deptsData : body.data || [];
+      setDepartments(deptList.map(normalizeDepartment));
       setTotalRecords(body.pagination?.total || 0);
       setTotalPages(body.pagination?.totalPages || 1);
     } catch (error: any) {
@@ -282,11 +289,12 @@ const DepartmentList: React.FC = () => {
   const fetchAvailableUsers = useCallback(async () => {
     try {
       const res = await tenantApi.getUsers({ pageSize: 100 });
-      const data: any = res.data || res;
-      setAvailableUsers((data.items || data || []).map((u: any) => ({
+      const body: any = res.data || res;
+      const users = body?.data ?? body?.items ?? body;
+      setAvailableUsers((Array.isArray(users) ? users : []).map((u: any) => ({
         id: u.id,
         username: u.username,
-        realName: u.realName,
+        realName: u.realName || u.name,
       })));
     } catch (error: any) {
       console.error('加载用户列表失败:', error);
@@ -307,12 +315,28 @@ const DepartmentList: React.FC = () => {
       ]);
 
       /* 解析子项目数据 */
-      const subData = subRes.data || subRes;
+      const subBody = (subRes.data || subRes) as any;
+      const subData = subBody?.data ?? subBody;
       setSubProjects(Array.isArray(subData) ? subData : subData.subProjects || subData.items || []);
 
       /* 解析成员数据（从详情中提取） */
-      const detailData = memberRes.data || memberRes;
-      setMembers(Array.isArray(detailData.members) ? detailData.members : []);
+      const detailBody = (memberRes.data || memberRes) as any;
+      const detailSource: any = detailBody?.data ?? detailBody;
+      const detailData = normalizeDepartment(detailSource);
+      setDetailDepartment(detailData);
+      const rawMembers = Array.isArray(detailSource.members)
+        ? detailSource.members
+        : Array.isArray(detailSource.users)
+          ? detailSource.users
+          : [];
+      setMembers(rawMembers.map((member: any) => ({
+        id: member.id,
+        userId: member.userId || member.id,
+        username: member.username,
+        realName: member.realName || member.name,
+        role: typeof member.role === 'string' ? member.role : member.role?.displayName || member.role?.name,
+        joinedAt: member.joinedAt || member.updatedAt || member.createdAt,
+      })));
     } catch (error: any) {
       toast.error(error.message || '加载项目部详情失败');
     } finally {
@@ -551,13 +575,8 @@ const DepartmentList: React.FC = () => {
       setAddMemberLoading(true);
       /* 构建提交数据 */
       const submitData: any = {
-        userId: Number(addMemberForm.userId),
+        userId: addMemberForm.userId,
       };
-      /* 项目角色（可选） */
-      if (addMemberForm.role.trim()) {
-        submitData.role = addMemberForm.role.trim();
-      }
-
       await departmentApi.addMember(detailDepartment.id, submitData);
       toast.success('成员添加成功');
       /* 关闭弹窗并刷新详情 */
@@ -1083,7 +1102,7 @@ const DepartmentList: React.FC = () => {
                       <tr className="table-thead" style={{ backgroundColor: '#0066CC', color: '#fff' }}>
                         <th>用户名</th>
                         <th>真实姓名</th>
-                        <th>项目角色</th>
+                        <th>系统角色</th>
                         <th>加入时间</th>
                         <th>操作</th>
                       </tr>
@@ -1102,7 +1121,7 @@ const DepartmentList: React.FC = () => {
                           <td className="text-gray-600">
                             {member.realName || '-'}
                           </td>
-                          {/* 项目角色 */}
+                          {/* 系统角色 */}
                           <td>
                             {member.role ? (
                               <span className="badge badge-blue">{member.role}</span>
@@ -1249,18 +1268,6 @@ const DepartmentList: React.FC = () => {
                   </option>
                 ))}
             </select>
-          </div>
-
-          {/* 项目角色 */}
-          <div>
-            <label className="form-label">项目角色</label>
-            <input
-              type="text"
-              value={addMemberForm.role}
-              onChange={(e) => setAddMemberForm({ ...addMemberForm, role: e.target.value })}
-              className="input"
-              placeholder="请输入项目角色（选填，如：项目经理）"
-            />
           </div>
         </div>
       </Modal>

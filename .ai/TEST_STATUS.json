@@ -1,10 +1,10 @@
 {
-  "status": "module_portal_browser_smoke_green_pushed",
+  "status": "admin_crud_inventory_alert_removal_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_crud_labor_exports_inventory_alert_removed",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_exports_inventory_alert_removed",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
@@ -539,6 +539,53 @@
       "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
       "status": "verified_with_yellow_notes",
       "result": "Graph built 135 files / 1485 nodes / 16559 edges; risk score 0.55. Test helper functions are reported as gaps, while the added product journey is covered by real Chrome."
+    },
+    {
+      "type": "inventory_alert_removal_refresh",
+      "command": "rg -n \"库存预警|低库存|预警阈值|Alerts\\.tsx\" .",
+      "status": "verified",
+      "result": "Only README handoff/status text still mentions inventory alert removal. Active WMS requirements/docs no longer include inventory alert as a feature; labor risk warnings and face recognition thresholds remain intact."
+    },
+    {
+      "type": "admin_crud_browser_smoke",
+      "command": "cd frontend && npx playwright test --config playwright.config.ts -g \"roles users and departments\"",
+      "status": "verified",
+      "result": "Real system Google Chrome passed the focused admin CRUD flow: role create/edit/permission-save/delete, user create/edit/password-reset/disable/enable, department create/edit, subproject create/edit, member add/remove, department disable/enable.",
+      "evidence_files": [
+        "docs/smoke-evidence/基础后台CRUD.png",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html"
+      ]
+    },
+    {
+      "type": "verification",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 5 files / 33 tests, backend build, frontend tests 2 files / 36 tests, frontend build passed after admin CRUD integration fixes and inventory alert documentation cleanup."
+    },
+    {
+      "type": "browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "Real system Google Chrome smoke passed 8 tests including enterprise/developer route matrices, supplier/work-team CRUD, basic admin roles/users/departments CRUD, labor exports, module entitlement hiding/API 403, and independent portal login.",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/基础后台CRUD.png"
+      ]
+    },
+    {
+      "type": "claude_worker",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/admin-crud-inventory-alert-removal-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "Claude audit PASS; no blockers. Confirmed inventory alert removal is limited to WMS product docs/surfaces, admin CRUD browser coverage is real, department/user/log integration fixes are safe, and the unsupported project-role input was removed in favor of system-role display.",
+      "evidence_file": ".ai/workers/20260622T161953Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 135 files / 1487 nodes / 17074 edges; risk score 0.55. Tool reports function-level gaps, while the changed product journey is covered by real Chrome and Claude audit found no blockers."
     }
   ],
   "known_yellow_items": [
@@ -553,10 +600,10 @@
     "Backend xlsx high vulnerability removed by replacing labor report export with exceljs.",
     "Backend and frontend npm audit are clear at moderate threshold after xlsx removal and uuid override.",
     "Full route matrix is now covered in real Chrome, but deep CRUD/upload/download regression for every page is still incomplete.",
-    "Supplier/work-team CRUD has real Chrome create/edit/delete/search coverage; remaining admin/master-data pages still need equivalent deep CRUD where business rules support deletion.",
+    "Supplier/work-team CRUD has real Chrome create/edit/delete/search coverage; basic admin roles/users/departments now also have real Chrome deep CRUD/state-change coverage. Remaining historical business pages still need equivalent deep CRUD/upload/download where business rules support it.",
     "Inventory alert product feature has been removed per user request; historical Prisma alertThreshold column remains only for compatibility.",
     "Labor report export still writes the existing fixed workbook sheets; attendance/social preview is supported but adding those sheets to workbook export remains a non-blocking follow-up."
   ],
-  "notes": "Module entitlement and independent portal login smoke coverage added. Real Chrome now passes 7 tests including menu hiding, disabled route redirect, disabled API 403, enabled wms continuity, and portal login without tenant code. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-22T16:00:00Z"
+  "notes": "Inventory alert remains removed from active WMS product requirements. Basic admin roles/users/departments deep CRUD/state-change coverage is now included in real Chrome. Real Chrome now passes 8 tests. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
+  "updated_at": "2026-06-22T16:15:00Z"
 }

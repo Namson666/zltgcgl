@@ -26,7 +26,7 @@ export async function createLog(data: CreateLogInput): Promise<void> {
         action: data.action,
         module: data.module,
         description: data.description,
-        detail: data.detail ? JSON.parse(JSON.stringify(data.detail)) : undefined,
+        detail: data.detail === undefined || data.detail === null ? undefined : JSON.stringify(data.detail),
         ip: data.ip,
         userAgent: data.userAgent,
       },
