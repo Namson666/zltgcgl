@@ -1,8 +1,9 @@
 {
-  "stage": "S1_context_discovery",
+  "stage": "S1_design_draft",
   "spec_frozen": false,
   "design_approved_by_user": false,
-  "architecture_contract_present": false,
-  "notes": "Refactor objective, scope, and acceptance criteria still need confirmation before implementation.",
-  "updated_at": "2026-06-22T09:06:07Z"
+  "architecture_contract_present": true,
+  "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
+  "notes": "Architecture contract drafted from user requirements. Awaiting user review before implementation planning.",
+  "updated_at": "2026-06-22T09:48:39Z"
 }

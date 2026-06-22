@@ -4,12 +4,12 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S1 context discovery / refactor preparation
-- Current task: 准备把现有项目重构并迁移到公开仓库 git@github.com:Namson666/zltgcgl.git
-- Last completed: 已创建公开安全基线 root commit，并确认未跟踪 .env/.db/.sqlite/SQLite journal 文件
-- In progress: 查看开发文档，准备确认第一阶段重构切片
-- Next action: 确认第一阶段重构目标；确认后写设计文档和实施计划
-- Blockers: 后端 TypeScript build 失败；前后端 npm audit 存在 high 漏洞；重构设计未确认
+- Current phase: S1 design draft / architecture contract
+- Current task: 模块化 SaaS 重构设计：基础功能、模块开通、合同板块、独立登录页、小程序打卡
+- Last completed: 已创建重构架构合同草案
+- In progress: 等待用户审阅架构合同
+- Next action: 用户确认后，写实施计划
+- Blockers: 后端 TypeScript build 失败；前后端 npm audit 存在 high 漏洞；架构合同未最终确认
 - Do not repeat: 不要在未确认重构设计前修改业务代码；不要把 Build Green 当 Product Green
 - Must read:
   1. .ai/REQUIRED_ACTION_CONTRACT.json
@@ -20,10 +20,12 @@
   6. .ai/SKILL_INVOCATION_STATUS.json
   7. .ai/TOOL_INVOCATION_STATUS.json
   8. .ai/session/HANDOFF.md
+- Must read spec:
+  1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
 - Last verified command: backend npm test passed; backend npm run build failed; frontend npm test passed; frontend npm run build passed; backend/frontend npm audit --audit-level=high failed
 - Last commit: 931dd69 chore(prisma): add initial migration (62 tables)
 - Safe rollback point: 931dd69
-- Updated at: 2026-06-22T09:28:00Z
+- Updated at: 2026-06-22T09:48:39Z
 
 ## 项目概览
 
