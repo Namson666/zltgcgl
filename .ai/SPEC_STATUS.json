@@ -1,9 +1,9 @@
 {
-  "stage": "S11_finance_invoice_receipt_import_export_verified_pending_push",
+  "stage": "S11_finance_invoice_receipt_import_export_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "Inventory alert / 库存预警 remains removed from active WMS product requirements and docs. Finance invoice/receipt/P&L/import/export slice is now verified in real Chrome: invoice create/edit/delete, receipt create/filter/edit/delete, invoice-to-receipt expansion, contract P&L route/API, template download, import upload, ledger export, and summary export. Backend now tenant-scopes invoice/receipt detail/update/delete and validates invoice/contract associations. Deep CRUD/upload/download for every remaining historical page, production DNS/logo polish, and real third-party face gateway credentials remain Yellow.",
-  "updated_at": "2026-06-22T18:01:20Z"
+  "updated_at": "2026-06-22T18:06:55Z"
 }

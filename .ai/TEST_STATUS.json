@@ -1,5 +1,5 @@
 {
-  "status": "finance_invoice_receipt_import_export_browser_verified_pending_push",
+  "status": "finance_invoice_receipt_import_export_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -696,5 +696,5 @@
     "Finance invoice/receipt/P&L/import/export has real Chrome CRUD/upload/download coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow evidence."
   ],
   "notes": "Inventory alert remains removed from active WMS product requirements. Finance invoice/receipt/P&L/import/export is now included in real Chrome CRUD/upload/download coverage. Real Chrome now passes 11 tests. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-22T18:01:20Z"
+  "updated_at": "2026-06-22T18:06:55Z"
 }

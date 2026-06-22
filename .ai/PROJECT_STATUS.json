@@ -20,7 +20,7 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "finance_invoice_receipt_import_export_pending_push",
+    "push_status": "finance_invoice_receipt_import_export_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
     "pushed_commit": "c085a94 test: add full route browser matrix smoke"
   },
@@ -31,11 +31,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_finance_invoice_receipt_import_export_verified_pending_push",
-  "updated_at": "2026-06-22T18:01:20Z",
-  "push_status": "finance_invoice_receipt_import_export_pending_push",
-  "last_pushed_commit": "692025b",
-  "current_commit": "d108fc5",
+  "status": "yellow_finance_invoice_receipt_import_export_pushed",
+  "updated_at": "2026-06-22T18:06:55Z",
+  "push_status": "finance_invoice_receipt_import_export_pushed",
+  "last_pushed_commit": "dad2f12",
+  "current_commit": "dad2f12",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -53,6 +53,6 @@
     "2026-06-22: User reconfirmed inventory alert must be deleted. Active WMS product docs were refreshed to remove remaining inventory alert/low-stock requirement text. Basic admin roles/users/departments deep CRUD/state-change coverage added; verify passed, Chrome 8 tests passed, Claude audit PASS, code-review-graph risk 0.55; implementation committed at 5fe8382.",
     "2026-06-22: WMS main chain verified locally in real Chrome: inbound, outbound, outbound PDF download, return, transfer, transfer PDF download, and work-team ledger search. Backend fixed manual inbound project-to-subproject association, return item schema mismatch, work-team name snapshot, and ledger/export net quantity consistency. verify passed, Chrome 9 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed to public main.",
     "2026-06-22: Finance petty-cash/voucher slice verified locally in real Chrome: petty cash account, advance record, finance voucher upload, receiptPath assertion, expense detail/edit/delete. Backend added multipart voucher upload, receiptPath safety, contract/department hydration, expense write permission, and tenant-scoped update/delete. verify passed, Chrome 10 tests passed, Claude audit PASS, code-review-graph risk 0.55; pushed at 692025b.",
-    "2026-06-22: Finance invoice/receipt/P&L/import/export slice verified locally in real Chrome: invoice create/edit/delete, receipt create/filter/edit/delete, invoice expansion, P&L API/route, template download, import upload, ledger export, summary export. verify passed, Chrome 11 tests passed, Claude audit PASS, code-review-graph risk 0.50; pending commit/push."
+    "2026-06-22: Finance invoice/receipt/P&L/import/export slice verified locally in real Chrome: invoice create/edit/delete, receipt create/filter/edit/delete, invoice expansion, P&L API/route, template download, import upload, ledger export, summary export. verify passed, Chrome 11 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed at dad2f12."
   ]
 }
