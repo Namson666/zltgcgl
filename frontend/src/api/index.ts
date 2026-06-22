@@ -597,6 +597,33 @@ export const contractApi = {
   getSubContracts: (params?: PaginationParams & { contractId?: string; subcontractorId?: string; search?: string }) =>
     http.get('/contracts/sub-contracts', params),
 
+  getContractWorkTeams: () =>
+    http.get('/contracts/work-teams'),
+
+  createSubContract: (data: any) =>
+    http.post('/contracts/sub-contracts', data),
+
+  updateSubContract: (id: string, data: any) =>
+    http.put(`/contracts/sub-contracts/${id}`, data),
+
+  deleteSubContract: (id: string) =>
+    http.delete(`/contracts/sub-contracts/${id}`),
+
+  getSubContractDetail: (id: string) =>
+    http.get(`/contracts/sub-contracts/${id}`),
+
+  getSubContractPayments: (id: string) =>
+    http.get(`/contracts/sub-contracts/${id}/payments`),
+
+  createSubContractPayment: (id: string, data: any) =>
+    http.post(`/contracts/sub-contracts/${id}/payments`, data),
+
+  getSubContractAttachments: (id: string, category?: string) =>
+    http.get(`/contracts/sub-contracts/${id}/attachments`, { category }),
+
+  uploadSubContractAttachment: (id: string, formData: FormData) =>
+    http.upload(`/contracts/sub-contracts/${id}/attachments/upload`, formData),
+
   /**
    * 创建新合同
    * @param data - 合同信息（合同编号、甲方、金额等）

@@ -164,6 +164,157 @@ router.get('/sub-contracts', authenticate, async (req: AuthenticatedRequest, res
   }
 });
 
+router.get('/work-teams', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId;
+    if (!tenantId) {
+      res.status(400).json({ success: false, error: 'NO_TENANT', message: '当前用户未关联企业' } as ApiResponse);
+      return;
+    }
+    const data = await contractService.listWorkTeamsForContracts(tenantId);
+    res.json({ success: true, data } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取合同班组列表失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+router.post('/sub-contracts', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId!;
+    const { contractId, workTeamId, name, totalAmount, description } = req.body;
+    if (!contractId || !workTeamId || !name) {
+      res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '分包合同名称、承包合同和班组不能为空' } as ApiResponse);
+      return;
+    }
+    const data = await contractService.createSubContract({
+      tenantId,
+      contractId,
+      workTeamId,
+      name,
+      totalAmount: totalAmount !== undefined && totalAmount !== '' ? Number(totalAmount) : undefined,
+      description,
+    });
+    await createLog(contractService.makeLogInput(tenantId, req.user!.id, 'CREATE', `创建分包合同「${name}」`, { contractId, workTeamId, totalAmount }, req.ip, req.headers['user-agent']));
+    res.status(201).json({ success: true, data, message: '分包合同创建成功' } as ApiResponse);
+  } catch (error: any) {
+    const status = error.status || 500;
+    console.error('创建分包合同失败:', error);
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
+router.get('/sub-contracts/:id', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const data = await contractService.getSubContractDetail(req.user!.tenantId!, req.params.id);
+    if (!data) {
+      res.status(404).json({ success: false, error: 'NOT_FOUND', message: '分包合同不存在' } as ApiResponse);
+      return;
+    }
+    res.json({ success: true, data } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取分包合同详情失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+router.put('/sub-contracts/:id', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId!;
+    const { contractId, workTeamId, name, totalAmount, description } = req.body;
+    const data = await contractService.updateSubContract(tenantId, req.params.id, {
+      contractId,
+      workTeamId,
+      name,
+      totalAmount: totalAmount !== undefined && totalAmount !== '' ? Number(totalAmount) : undefined,
+      description,
+    });
+    await createLog(contractService.makeLogInput(tenantId, req.user!.id, 'UPDATE', '更新分包合同信息', { subContractId: req.params.id }, req.ip, req.headers['user-agent']));
+    res.json({ success: true, data, message: '分包合同信息更新成功' } as ApiResponse);
+  } catch (error: any) {
+    const status = error.status || 500;
+    console.error('更新分包合同失败:', error);
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
+router.delete('/sub-contracts/:id', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId!;
+    await contractService.deleteSubContract(tenantId, req.params.id);
+    await createLog(contractService.makeLogInput(tenantId, req.user!.id, 'DELETE', '删除分包合同', { subContractId: req.params.id }, req.ip, req.headers['user-agent']));
+    res.json({ success: true, data: null, message: '分包合同已删除' } as ApiResponse);
+  } catch (error: any) {
+    const status = error.status || 500;
+    console.error('删除分包合同失败:', error);
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
+router.get('/sub-contracts/:id/payments', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const result = await contractService.listSubContractPayments(req.user!.tenantId!, req.params.id);
+    if (!result.subContract) {
+      res.status(404).json({ success: false, error: 'NOT_FOUND', message: '分包合同不存在' } as ApiResponse);
+      return;
+    }
+    res.json({ success: true, data: { payments: result.payments, totalAmount: result.totalAmount, contractTotal: result.contractTotal } } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取分包付款记录失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+router.post('/sub-contracts/:id/payments', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId!;
+    const { amount, paidAt, remark } = req.body;
+    if (!amount || !paidAt) {
+      res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '付款金额和付款日期不能为空' } as ApiResponse);
+      return;
+    }
+    const result = await contractService.createSubContractPayment({ tenantId, subContractId: req.params.id, amount, paidAt, remark });
+    if (!result.subContract) {
+      res.status(404).json({ success: false, error: 'NOT_FOUND', message: '分包合同不存在' } as ApiResponse);
+      return;
+    }
+    await createLog(contractService.makeLogInput(tenantId, req.user!.id, 'CREATE', `为分包合同新增付款记录（金额：${amount}）`, { subContractId: req.params.id }, req.ip, req.headers['user-agent']));
+    res.status(201).json({ success: true, data: result.payment, message: '分包付款记录添加成功' } as ApiResponse);
+  } catch (error: any) {
+    console.error('新增分包付款记录失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+router.get('/sub-contracts/:id/attachments', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const data = await contractService.listSubContractAttachments(req.user!.tenantId!, req.params.id, req.query.category as string | undefined);
+    res.json({ success: true, data } as ApiResponse);
+  } catch (error: any) {
+    const status = error.status || 500;
+    console.error('获取分包合同附件失败:', error);
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
+router.post('/sub-contracts/:id/attachments/upload', authenticate, uploadContractAttachments, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId!;
+    const { category } = req.body;
+    if (!req.files?.length) {
+      res.status(400).json({ success: false, error: 'MISSING_FILES', message: '请选择要上传的文件' } as ApiResponse);
+      return;
+    }
+    const saved = await contractService.createSubContractAttachments(tenantId, req.params.id, req.files as Express.Multer.File[], category);
+    await createLog(contractService.makeLogInput(tenantId, req.user!.id, 'UPLOAD', `上传分包合同附件 ${saved.length} 个`, { subContractId: req.params.id, category }, req.ip, req.headers['user-agent']));
+    res.status(201).json({ success: true, data: saved, message: `成功上传 ${saved.length} 个文件` } as ApiResponse);
+  } catch (error: any) {
+    const status = error.status || 500;
+    console.error('上传分包合同附件失败:', error);
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
 // ============================================
 // 合同附件管理（合同基础板块入口）
 // 必须放在 /:id 动态路由之前。
@@ -227,7 +378,7 @@ router.get('/attachments/:id/download', authenticate, fileDownloadRateLimit, asy
       return;
     }
 
-    const attachment = await contractService.getContractAttachment(tenantId, req.params.id);
+    const attachment = await contractService.getManagedAttachment(tenantId, req.params.id);
     if (!attachment) {
       res.status(404).json({ success: false, error: 'NOT_FOUND', message: '附件不存在' } as ApiResponse);
       return;
@@ -254,7 +405,7 @@ router.delete('/attachments/:id', authenticate, async (req: AuthenticatedRequest
       return;
     }
 
-    const attachment = await contractService.deleteContractAttachment(tenantId, req.params.id, uploadDir);
+    const attachment = await contractService.deleteManagedAttachment(tenantId, req.params.id, uploadDir);
     await createLog(contractService.makeLogInput(tenantId, req.user!.id, 'DELETE', `删除合同附件「${attachment.fileName}」`, { attachmentId: attachment.id, contractId: attachment.entityId }, req.ip, req.headers['user-agent']));
     res.json({ success: true, data: null, message: '附件已删除' } as ApiResponse);
   } catch (error: any) {

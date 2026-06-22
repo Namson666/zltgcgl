@@ -220,6 +220,7 @@ export async function listSubContracts(params: SubContractListParams) {
       orderBy: { createdAt: 'desc' },
       include: {
         contract: { select: { id: true, name: true, code: true, totalAmount: true } },
+        workTeam: { select: { id: true, name: true, leaderName: true, phone: true } },
         subcontractor: { select: { id: true, companyName: true, contactName: true, type: true } },
         outputValues: { select: { amount: true, payableRatio: true } },
         subProgressPayments: { select: { totalAmount: true } },
@@ -231,12 +232,139 @@ export async function listSubContracts(params: SubContractListParams) {
   return { contracts, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
 }
 
+export async function listWorkTeamsForContracts(tenantId: string) {
+  return prisma.workTeam.findMany({
+    where: { tenantId, isActive: true },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, name: true, leaderName: true, phone: true, memberCount: true },
+  });
+}
+
+export interface CreateSubContractInput {
+  tenantId: string;
+  contractId: string;
+  workTeamId: string;
+  name: string;
+  totalAmount?: number;
+  description?: string;
+}
+
+async function resolveWorkTeamSubcontractor(tenantId: string, workTeamId: string) {
+  const workTeam = await prisma.workTeam.findFirst({ where: { id: workTeamId, tenantId, isActive: true } });
+  if (!workTeam) throw { status: 400, code: 'INVALID_WORK_TEAM', message: '关联的班组不存在' };
+
+  const existing = await prisma.subcontractor.findFirst({
+    where: {
+      tenantId,
+      type: 'WORK_TEAM',
+      companyName: workTeam.name,
+      contactPhone: workTeam.phone || undefined,
+      isActive: true,
+    },
+  });
+  if (existing) return { workTeam, subcontractor: existing };
+
+  const subcontractor = await prisma.subcontractor.create({
+    data: {
+      tenantId,
+      type: 'WORK_TEAM',
+      companyName: workTeam.name,
+      contactName: workTeam.leaderName || null,
+      contactPhone: workTeam.phone || null,
+      remark: '合同管理分包合同关联班组自动生成',
+    },
+  });
+  return { workTeam, subcontractor };
+}
+
+async function assertConstructionContract(tenantId: string, contractId: string) {
+  const contract = await prisma.contract.findFirst({
+    where: { id: contractId, tenantId, type: 'CONSTRUCTION', isActive: true },
+  });
+  if (!contract) throw { status: 400, code: 'INVALID_PARENT_CONTRACT', message: '关联的承包合同不存在' };
+  return contract;
+}
+
+export async function createSubContract(input: CreateSubContractInput) {
+  const { tenantId, contractId, workTeamId, name, totalAmount, description } = input;
+  await assertConstructionContract(tenantId, contractId);
+  const { subcontractor } = await resolveWorkTeamSubcontractor(tenantId, workTeamId);
+
+  return prisma.subContract.create({
+    data: {
+      tenantId,
+      contractId,
+      workTeamId,
+      subcontractorId: subcontractor.id,
+      name,
+      totalAmount: totalAmount !== undefined ? Number(totalAmount) : null,
+      description: description || null,
+    },
+    include: {
+      contract: { select: { id: true, name: true, code: true, totalAmount: true } },
+      workTeam: { select: { id: true, name: true, leaderName: true, phone: true } },
+      subcontractor: { select: { id: true, companyName: true, contactName: true, type: true } },
+    },
+  });
+}
+
+export async function getSubContractDetail(tenantId: string, id: string) {
+  return prisma.subContract.findFirst({
+    where: { id, tenantId, isActive: true },
+    include: {
+      contract: { select: { id: true, name: true, code: true, totalAmount: true } },
+      workTeam: { select: { id: true, name: true, leaderName: true, phone: true } },
+      subcontractor: { select: { id: true, companyName: true, contactName: true, type: true } },
+      subProgressPayments: { orderBy: { paidAt: 'desc' } },
+    },
+  });
+}
+
+export async function updateSubContract(tenantId: string, id: string, input: Partial<CreateSubContractInput>) {
+  const existing = await prisma.subContract.findFirst({ where: { id, tenantId, isActive: true } });
+  if (!existing) throw { status: 404, code: 'NOT_FOUND', message: '分包合同不存在' };
+
+  const updateData: any = {};
+  if (input.name !== undefined) updateData.name = input.name;
+  if (input.totalAmount !== undefined) updateData.totalAmount = input.totalAmount !== null ? Number(input.totalAmount) : null;
+  if (input.description !== undefined) updateData.description = input.description || null;
+  if (input.contractId !== undefined) {
+    await assertConstructionContract(tenantId, input.contractId);
+    updateData.contractId = input.contractId;
+  }
+  if (input.workTeamId !== undefined) {
+    const { subcontractor } = await resolveWorkTeamSubcontractor(tenantId, input.workTeamId);
+    updateData.workTeamId = input.workTeamId;
+    updateData.subcontractorId = subcontractor.id;
+  }
+
+  return prisma.subContract.update({
+    where: { id },
+    data: updateData,
+    include: {
+      contract: { select: { id: true, name: true, code: true, totalAmount: true } },
+      workTeam: { select: { id: true, name: true, leaderName: true, phone: true } },
+      subcontractor: { select: { id: true, companyName: true, contactName: true, type: true } },
+    },
+  });
+}
+
+export async function deleteSubContract(tenantId: string, id: string) {
+  const existing = await prisma.subContract.findFirst({ where: { id, tenantId, isActive: true } });
+  if (!existing) throw { status: 404, code: 'NOT_FOUND', message: '分包合同不存在' };
+  return prisma.subContract.update({ where: { id }, data: { isActive: false } });
+}
+
 // ============================================
 // 合同附件管理
 // ============================================
 
 export async function assertContractExists(tenantId: string, contractId: string) {
   return prisma.contract.findFirst({ where: { id: contractId, tenantId } });
+}
+
+export async function assertSubContractExists(tenantId: string, subContractId: string) {
+  return prisma.subContract.findFirst({ where: { id: subContractId, tenantId, isActive: true } });
 }
 
 export async function createContractAttachments(tenantId: string, contractId: string, files: Express.Multer.File[], category?: string) {
@@ -280,6 +408,56 @@ export async function getContractAttachment(tenantId: string, attachmentId: stri
 
 export async function deleteContractAttachment(tenantId: string, attachmentId: string, uploadDir: string) {
   const attachment = await getContractAttachment(tenantId, attachmentId);
+  if (!attachment) throw { status: 404, code: 'NOT_FOUND', message: '附件不存在' };
+
+  const fullPath = path.join(uploadDir, attachment.storedName);
+  if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+
+  await prisma.attachment.delete({ where: { id: attachment.id } });
+  return attachment;
+}
+
+export async function createSubContractAttachments(tenantId: string, subContractId: string, files: Express.Multer.File[], category?: string) {
+  const subContract = await assertSubContractExists(tenantId, subContractId);
+  if (!subContract) throw { status: 404, code: 'SUB_CONTRACT_NOT_FOUND', message: '分包合同不存在' };
+
+  return prisma.$transaction(
+    files.map(file =>
+      prisma.attachment.create({
+        data: {
+          tenantId,
+          fileName: file.originalname,
+          storedName: file.filename,
+          filePath: `/uploads/${file.filename}`,
+          fileSize: file.size,
+          mimeType: file.mimetype,
+          entityType: 'sub_contract',
+          entityId: subContractId,
+          category: category || 'payment_voucher',
+        },
+      })
+    )
+  );
+}
+
+export async function listSubContractAttachments(tenantId: string, subContractId: string, category?: string) {
+  const subContract = await assertSubContractExists(tenantId, subContractId);
+  if (!subContract) throw { status: 404, code: 'SUB_CONTRACT_NOT_FOUND', message: '分包合同不存在' };
+
+  return prisma.attachment.findMany({
+    where: { tenantId, entityType: 'sub_contract', entityId: subContractId, ...(category ? { category } : {}) },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+export async function getManagedAttachment(tenantId: string, attachmentId: string) {
+  return prisma.attachment.findFirst({
+    where: { id: attachmentId, tenantId, entityType: { in: ['contract', 'sub_contract'] } },
+  });
+}
+
+export async function deleteManagedAttachment(tenantId: string, attachmentId: string, uploadDir: string) {
+  const attachment = await getManagedAttachment(tenantId, attachmentId);
   if (!attachment) throw { status: 404, code: 'NOT_FOUND', message: '附件不存在' };
 
   const fullPath = path.join(uploadDir, attachment.storedName);
@@ -374,6 +552,48 @@ export async function createContractPayment(input: CreateContractPaymentInput) {
   });
 
   return { contract, payment };
+}
+
+// ============================================
+// 分包合同付款记录
+// ============================================
+
+export async function listSubContractPayments(tenantId: string, subContractId: string) {
+  const subContract = await assertSubContractExists(tenantId, subContractId);
+  if (!subContract) return { subContract: null };
+
+  const payments = await prisma.subProgressPayment.findMany({
+    where: { subContractId, tenantId },
+    orderBy: { paidAt: 'desc' },
+  });
+  const totalAmount = payments.reduce((sum, p) => sum + Number(p.totalAmount), 0);
+  return { subContract, payments, totalAmount, contractTotal: subContract.totalAmount ? Number(subContract.totalAmount) : 0 };
+}
+
+export interface CreateSubContractPaymentInput {
+  tenantId: string;
+  subContractId: string;
+  amount: number;
+  paidAt: string;
+  remark?: string;
+}
+
+export async function createSubContractPayment(input: CreateSubContractPaymentInput) {
+  const { tenantId, subContractId, amount, paidAt, remark } = input;
+  const subContract = await assertSubContractExists(tenantId, subContractId);
+  if (!subContract) return { subContract: null };
+
+  const payment = await prisma.subProgressPayment.create({
+    data: {
+      tenantId,
+      subContractId,
+      totalAmount: Number(amount),
+      paidAt: new Date(paidAt),
+      remark,
+    },
+  });
+
+  return { subContract, payment };
 }
 
 // ============================================

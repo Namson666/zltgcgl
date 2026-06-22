@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "phase3_procurement_contracts",
+  "stage": "phase3_subcontract_contracts",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Phase 3 procurement contract slice completed through local verification: contract management has tabs, construction-contract attachments use contract-owned list/upload/authenticated download/delete APIs, and procurement contracts can link to construction contracts, record payments, and manage invoice/payment-voucher attachments. Claude CLI audit, code-review-graph, verify, and real Chrome upload/download/delete smoke passed. Browser regression for subcontract/payment/anomaly flows remains open.",
+  "notes": "Phase 3 subcontract contract slice completed through local verification: contract management has tabs, construction-contract attachments, procurement payment/invoice/voucher flows, and subcontract linked construction/work-team/payment/payment-voucher/settlement-voucher flows. Claude CLI audit, code-review-graph, verify, Prisma validate, and real Chrome upload/download/delete smoke passed. Mini-program attendance/anomaly flows remain open.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-22T13:08:00Z"
+  "updated_at": "2026-06-22T13:31:00Z"
 }

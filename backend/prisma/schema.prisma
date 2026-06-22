@@ -433,6 +433,7 @@ model WorkTeam {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subContracts SubContract[]
 
   @@map("work_teams")
 }
@@ -763,6 +764,7 @@ model SubContract {
   tenantId            String
   contractId          String
   subcontractorId     String
+  workTeamId          String?
   name                String
   totalAmount         Float?
   description         String?
@@ -771,9 +773,11 @@ model SubContract {
   updatedAt           DateTime             @updatedAt
   outputValues        OutputValue[]
   subcontractor       Subcontractor        @relation(fields: [subcontractorId], references: [id])
+  workTeam            WorkTeam?            @relation(fields: [workTeamId], references: [id])
   contract            Contract             @relation(fields: [contractId], references: [id], onDelete: Cascade)
   subProgressPayments SubProgressPayment[]
 
+  @@index([workTeamId])
   @@map("sub_contracts")
 }
 

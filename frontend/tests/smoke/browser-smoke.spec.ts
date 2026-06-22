@@ -114,6 +114,60 @@ test.describe('browser smoke: authenticated core navigation', () => {
         await expect(page.getByRole('button', { name: 'payment-voucher.pdf' })).toHaveCount(0);
         await page.getByTitle('关闭').click();
 
+        await page.getByText('分包合同、班组关联、付款/结算凭证').click();
+        const subContractName = `浏览器分包验收合同-${stamp}`;
+        await page.getByRole('button', { name: /新增分包合同/ }).click();
+        await page.getByPlaceholder('请输入分包合同名称').fill(subContractName);
+        await page.getByPlaceholder('请输入合同总金额').fill('2345');
+        await page.locator('select').filter({ hasText: '请选择承包合同' }).selectOption({ label: contractName });
+        const workTeamSelect = page.locator('select').filter({ hasText: '请选择班组' });
+        await expect(workTeamSelect).toBeVisible();
+        const workTeamOptionValue = await workTeamSelect.locator('option').nth(1).getAttribute('value');
+        expect(workTeamOptionValue).toBeTruthy();
+        await workTeamSelect.selectOption(workTeamOptionValue!);
+        await page.getByRole('button', { name: '确认创建' }).click();
+        await expect(page.getByText(subContractName)).toBeVisible();
+
+        const subContractRow = page.locator('tr', { hasText: subContractName });
+        await subContractRow.getByTitle('查看详情').click();
+        await expect(page.getByRole('heading', { name: '分包合同详情' })).toBeVisible();
+        const subDetailDialog = page.getByLabel('分包合同详情');
+        await expect(subDetailDialog.getByText(contractName)).toBeVisible();
+
+        await page.getByRole('button', { name: '新增付款' }).click();
+        await page.getByPlaceholder('请输入付款金额').fill('800');
+        await page.locator('input[type="date"]').fill('2026-06-22');
+        await page.getByRole('button', { name: '确认创建' }).click();
+        await expect(page.getByRole('cell', { name: '¥800.00' })).toBeVisible();
+
+        const subVoucherPath = path.resolve(process.cwd(), 'tests/fixtures/payment-voucher.pdf');
+        await page.getByRole('button', { name: '上传凭证' }).click();
+        await page.locator('input[type="file"]').setInputFiles(subVoucherPath);
+        await expect(page.getByText('附件上传成功').last()).toBeVisible({ timeout: 10000 });
+        await expect(page.getByRole('button', { name: 'payment-voucher.pdf' })).toBeVisible();
+        const subVoucherDownloadPromise = page.waitForEvent('download');
+        await page.getByRole('button', { name: 'payment-voucher.pdf' }).click();
+        expect((await subVoucherDownloadPromise).suggestedFilename()).toBe('payment-voucher.pdf');
+        await page.getByTitle('删除附件').last().click();
+        await expect(page.getByRole('button', { name: 'payment-voucher.pdf' })).toHaveCount(0);
+
+        const settlementPath = path.resolve(process.cwd(), 'tests/fixtures/settlement-voucher.pdf');
+        await page.getByRole('button', { name: '上传结算凭证' }).click();
+        await page.locator('input[type="file"]').setInputFiles(settlementPath);
+        await expect(page.getByText('附件上传成功').last()).toBeVisible({ timeout: 10000 });
+        await expect(page.getByRole('button', { name: 'settlement-voucher.pdf' })).toBeVisible();
+        const settlementDownloadPromise = page.waitForEvent('download');
+        await page.getByRole('button', { name: 'settlement-voucher.pdf' }).click();
+        expect((await settlementDownloadPromise).suggestedFilename()).toBe('settlement-voucher.pdf');
+        await page.getByTitle('删除附件').last().click();
+        await expect(page.getByRole('button', { name: 'settlement-voucher.pdf' })).toHaveCount(0);
+        await page.getByTitle('关闭').click();
+
+        await subContractRow.getByTitle('删除').click();
+        await page.getByRole('button', { name: '确认删除' }).click();
+        await expect(page.getByText(subContractName)).toHaveCount(0);
+
+        await page.getByText('采购合同、发票、附件、支付记录').click();
         await procurementRow.getByTitle('删除').click();
         await page.getByRole('button', { name: '确认删除' }).click();
         await expect(page.getByText(procurementName)).toHaveCount(0);

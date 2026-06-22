@@ -104,15 +104,38 @@ interface ContractPayment {
   createdAt: string;
 }
 
+/** 分包付款记录接口 */
+interface SubContractPayment {
+  id: string;
+  subContractId: string;
+  totalAmount: number;
+  paidAt?: string;
+  remark?: string;
+  createdAt: string;
+}
+
 /** 分包合同信息接口 */
 interface SubContract {
   id: string;
   name?: string;
   totalAmount?: number;
+  description?: string;
   isActive?: boolean;
   createdAt?: string;
-  contract?: { id: string; name: string; code?: string | null };
+  contractId?: string;
+  workTeamId?: string;
+  contract?: { id: string; name: string; code?: string | null; totalAmount?: number | null };
+  workTeam?: { id: string; name: string; leaderName?: string | null; phone?: string | null };
   subcontractor?: { companyName?: string | null; contactName?: string | null; type?: string | null };
+}
+
+/** 合同基础板块可选班组 */
+interface ContractWorkTeam {
+  id: string;
+  name: string;
+  leaderName?: string | null;
+  phone?: string | null;
+  memberCount?: number | null;
 }
 
 /** 供应商信息接口（简化版） */
@@ -142,6 +165,14 @@ interface ProgressPaymentFormData {
   percentage: string;            /* 占比 */
   paymentDate: string;           /* 收款日期 */
   description: string;           /* 描述 */
+}
+
+interface SubContractFormData {
+  name: string;
+  contractId: string;
+  workTeamId: string;
+  totalAmount: string;
+  description: string;
 }
 
 /* ========================================
@@ -200,6 +231,14 @@ const DEFAULT_PAYMENT_FORM: ProgressPaymentFormData = {
   description: '',
 };
 
+const DEFAULT_SUB_CONTRACT_FORM: SubContractFormData = {
+  name: '',
+  contractId: '',
+  workTeamId: '',
+  totalAmount: '',
+  description: '',
+};
+
 /* ========================================
  * 合同管理列表组件
  * ======================================== */
@@ -222,37 +261,45 @@ const ContractList: React.FC = () => {
 
   /* ---------- 弹窗状态 ---------- */
   const [showFormModal, setShowFormModal] = useState(false);     /* 新增/编辑合同弹窗 */
+  const [showSubFormModal, setShowSubFormModal] = useState(false); /* 新增/编辑分包合同弹窗 */
   const [showDetailModal, setShowDetailModal] = useState(false); /* 查看详情弹窗 */
+  const [showSubDetailModal, setShowSubDetailModal] = useState(false); /* 分包合同详情弹窗 */
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); /* 删除确认弹窗 */
   const [showPaymentModal, setShowPaymentModal] = useState(false);   /* 新增进度款弹窗 */
 
   /* ---------- 表单状态 ---------- */
   const [editingContract, setEditingContract] = useState<Contract | null>(null); /* 当前编辑的合同（null 为新增模式） */
+  const [editingSubContract, setEditingSubContract] = useState<SubContract | null>(null);
   const [formData, setFormData] = useState<ContractFormData>(DEFAULT_CONTRACT_FORM); /* 合同表单数据 */
+  const [subFormData, setSubFormData] = useState<SubContractFormData>(DEFAULT_SUB_CONTRACT_FORM);
   const [formLoading, setFormLoading] = useState(false);         /* 表单提交加载状态 */
 
   /* ---------- 详情与进度款状态 ---------- */
   const [detailContract, setDetailContract] = useState<Contract | null>(null); /* 查看的合同详情 */
+  const [detailSubContract, setDetailSubContract] = useState<SubContract | null>(null);
   const [progressPayments, setProgressPayments] = useState<ProgressPayment[]>([]); /* 进度款列表 */
   const [contractPayments, setContractPayments] = useState<ContractPayment[]>([]); /* 采购付款记录 */
+  const [subContractPayments, setSubContractPayments] = useState<SubContractPayment[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false); /* 进度款加载状态 */
   const [paymentForm, setPaymentForm] = useState<ProgressPaymentFormData>(DEFAULT_PAYMENT_FORM); /* 进度款表单 */
   const [paymentLoading, setPaymentLoading] = useState(false);   /* 进度款提交加载状态 */
 
   /* ---------- 删除操作状态 ---------- */
   const [deletingContract, setDeletingContract] = useState<Contract | null>(null); /* 待删除的合同 */
+  const [deletingSubContract, setDeletingSubContract] = useState<SubContract | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);     /* 删除操作加载状态 */
 
   /* ---------- 附件状态 ---------- */
   const [attachments, setAttachments] = useState<any[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadCategory, setUploadCategory] = useState<'contract' | 'invoice' | 'payment_voucher'>('contract');
+  const [uploadCategory, setUploadCategory] = useState<'contract' | 'invoice' | 'payment_voucher' | 'settlement_voucher'>('contract');
   const uploadRef = useRef<HTMLInputElement>(null);
 
   /* ---------- 供应商列表（采购合同选择供应商用） ---------- */
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);    /* 供应商列表 */
   const [constructionContracts, setConstructionContracts] = useState<Contract[]>([]);
+  const [contractWorkTeams, setContractWorkTeams] = useState<ContractWorkTeam[]>([]);
 
   /* ========================================
    * 数据加载方法
@@ -343,6 +390,19 @@ const ContractList: React.FC = () => {
   }, []);
 
   /**
+   * 加载合同基础板块可关联班组列表
+   */
+  const fetchContractWorkTeams = useCallback(async () => {
+    try {
+      const res = await contractApi.getContractWorkTeams();
+      const body: any = res.data || res;
+      setContractWorkTeams(Array.isArray(body.data) ? body.data : Array.isArray(body) ? body : []);
+    } catch (error: any) {
+      console.error('加载班组列表失败:', error);
+    }
+  }, []);
+
+  /**
    * 加载合同进度款列表
    * @param contractId - 合同 ID
    */
@@ -378,6 +438,33 @@ const ContractList: React.FC = () => {
   }, []);
 
   /**
+   * 加载分包合同付款记录
+   */
+  const fetchSubContractPayments = useCallback(async (subContractId: string) => {
+    try {
+      setPaymentsLoading(true);
+      const res = await contractApi.getSubContractPayments(subContractId);
+      const body: any = res.data;
+      const payments = body?.data?.payments || body?.payments || [];
+      setSubContractPayments(Array.isArray(payments) ? payments : []);
+    } catch (error: any) {
+      toast.error(error.message || '加载分包付款记录失败');
+    } finally {
+      setPaymentsLoading(false);
+    }
+  }, []);
+
+  const fetchSubContractAttachments = useCallback(async (subContractId: string) => {
+    try {
+      setAttachmentsLoading(true);
+      const res = await contractApi.getSubContractAttachments(subContractId);
+      const body: any = res.data;
+      setAttachments(body?.data || body || []);
+    } catch { setAttachments([]); }
+    finally { setAttachmentsLoading(false); }
+  }, []);
+
+  /**
    * 加载合同附件列表
    */
   const fetchAttachments = useCallback(async (contractId: number) => {
@@ -393,7 +480,7 @@ const ContractList: React.FC = () => {
   /**
    * 打开文件选择器
    */
-  const handleUploadClick = useCallback((category: 'contract' | 'invoice' | 'payment_voucher' = 'contract') => {
+  const handleUploadClick = useCallback((category: 'contract' | 'invoice' | 'payment_voucher' | 'settlement_voucher' = 'contract') => {
     setUploadCategory(category);
     uploadRef.current?.click();
   }, []);
@@ -403,24 +490,29 @@ const ContractList: React.FC = () => {
    */
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files?.length || !detailContract) return;
+    if (!files?.length || (!detailContract && !detailSubContract)) return;
 
     const formData = new FormData();
     Array.from(files).forEach(f => formData.append('files', f));
-    formData.append('contractId', String(detailContract.id));
     formData.append('category', uploadCategory);
 
     try {
       setUploading(true);
-      await contractApi.uploadAttachment(formData);
+      if (detailSubContract) {
+        await contractApi.uploadSubContractAttachment(detailSubContract.id, formData);
+      } else if (detailContract) {
+        formData.append('contractId', String(detailContract.id));
+        await contractApi.uploadAttachment(formData);
+      }
       toast.success('附件上传成功');
-      if (detailContract) fetchAttachments(detailContract.id);
+      if (detailSubContract) fetchSubContractAttachments(detailSubContract.id);
+      else if (detailContract) fetchAttachments(detailContract.id);
     } catch { toast.error('附件上传失败'); }
     finally {
       setUploading(false);
       if (uploadRef.current) uploadRef.current.value = '';
     }
-  }, [detailContract, fetchAttachments, uploadCategory]);
+  }, [detailContract, detailSubContract, fetchAttachments, fetchSubContractAttachments, uploadCategory]);
 
   /**
    * 删除附件
@@ -430,9 +522,10 @@ const ContractList: React.FC = () => {
       await contractApi.deleteAttachment(attachmentId);
       toast.success('附件已删除');
       setAttachments(prev => prev.filter((a: any) => a.id !== attachmentId));
-      if (detailContract) fetchAttachments(detailContract.id);
+      if (detailSubContract) fetchSubContractAttachments(detailSubContract.id);
+      else if (detailContract) fetchAttachments(detailContract.id);
     } catch { toast.error('删除附件失败'); }
-  }, [detailContract, fetchAttachments]);
+  }, [detailContract, detailSubContract, fetchAttachments, fetchSubContractAttachments]);
 
   /**
    * 下载附件
@@ -454,7 +547,8 @@ const ContractList: React.FC = () => {
   useEffect(() => {
     fetchSuppliers();
     fetchConstructionContracts();
-  }, [fetchSuppliers, fetchConstructionContracts]);
+    fetchContractWorkTeams();
+  }, [fetchSuppliers, fetchConstructionContracts, fetchContractWorkTeams]);
 
   /* ========================================
    * 搜索与筛选方法
@@ -495,13 +589,59 @@ const ContractList: React.FC = () => {
    */
   const handleOpenCreate = useCallback(() => {
     if (activeTab === 'SUBCONTRACT') {
-      toast('分包合同新建将在下一切片接入班组/付款/结算凭证流程');
+      setEditingSubContract(null);
+      setSubFormData(DEFAULT_SUB_CONTRACT_FORM);
+      setShowSubFormModal(true);
       return;
     }
     setEditingContract(null);
     setFormData({ ...DEFAULT_CONTRACT_FORM, type: activeTab });
     setShowFormModal(true);
   }, [activeTab]);
+
+  const handleOpenSubEdit = useCallback((contract: SubContract) => {
+    setEditingSubContract(contract);
+    setSubFormData({
+      name: contract.name || '',
+      contractId: contract.contractId || contract.contract?.id || '',
+      workTeamId: contract.workTeamId || contract.workTeam?.id || '',
+      totalAmount: contract.totalAmount ? String(contract.totalAmount) : '',
+      description: contract.description || '',
+    });
+    setShowSubFormModal(true);
+  }, []);
+
+  const handleSubFormSubmit = useCallback(async () => {
+    if (!subFormData.name.trim()) return toast.error('请输入分包合同名称');
+    if (!subFormData.contractId) return toast.error('请选择关联承包合同');
+    if (!subFormData.workTeamId) return toast.error('请选择关联班组');
+
+    const submitData = {
+      name: subFormData.name.trim(),
+      contractId: subFormData.contractId,
+      workTeamId: subFormData.workTeamId,
+      totalAmount: subFormData.totalAmount ? Number(subFormData.totalAmount) : undefined,
+      description: subFormData.description.trim() || undefined,
+    };
+
+    try {
+      setFormLoading(true);
+      if (editingSubContract) {
+        await contractApi.updateSubContract(editingSubContract.id, submitData);
+        toast.success('分包合同更新成功');
+      } else {
+        await contractApi.createSubContract(submitData);
+        toast.success('分包合同创建成功');
+      }
+      setShowSubFormModal(false);
+      setEditingSubContract(null);
+      fetchContracts();
+    } catch (error: any) {
+      toast.error(error.message || '分包合同保存失败');
+    } finally {
+      setFormLoading(false);
+    }
+  }, [subFormData, editingSubContract, fetchContracts]);
 
   /**
    * 打开编辑合同弹窗
@@ -604,6 +744,16 @@ const ContractList: React.FC = () => {
     await fetchAttachments(contract.id);
   }, [fetchProgressPayments, fetchContractPayments, fetchAttachments]);
 
+  const handleOpenSubDetail = useCallback(async (contract: SubContract) => {
+    setDetailContract(null);
+    setDetailSubContract(contract);
+    setShowSubDetailModal(true);
+    setProgressPayments([]);
+    setContractPayments([]);
+    await fetchSubContractPayments(contract.id);
+    await fetchSubContractAttachments(contract.id);
+  }, [fetchSubContractPayments, fetchSubContractAttachments]);
+
   /**
    * 打开新增进度款弹窗
    * 重置进度款表单
@@ -618,20 +768,20 @@ const ContractList: React.FC = () => {
    */
   const handlePaymentSubmit = useCallback(async () => {
     /* 表单校验 */
-    if (detailContract?.type !== 'PROCUREMENT' && (!paymentForm.installment || isNaN(Number(paymentForm.installment)))) {
+    if (!detailSubContract && detailContract?.type !== 'PROCUREMENT' && (!paymentForm.installment || isNaN(Number(paymentForm.installment)))) {
       toast.error('请输入有效的期次');
       return;
     }
     if (!paymentForm.amount || isNaN(Number(paymentForm.amount))) {
-      toast.error(detailContract?.type === 'PROCUREMENT' ? '请输入有效的付款金额' : '请输入有效的收款金额');
+      toast.error(detailSubContract || detailContract?.type === 'PROCUREMENT' ? '请输入有效的付款金额' : '请输入有效的收款金额');
       return;
     }
-    if (detailContract?.type === 'PROCUREMENT' && !paymentForm.paymentDate) {
+    if ((detailSubContract || detailContract?.type === 'PROCUREMENT') && !paymentForm.paymentDate) {
       toast.error('请选择付款日期');
       return;
     }
 
-    if (!detailContract) return;
+    if (!detailContract && !detailSubContract) return;
 
     try {
       setPaymentLoading(true);
@@ -647,27 +797,35 @@ const ContractList: React.FC = () => {
         submitData.percentage = Number(paymentForm.percentage);
       }
 
-      if (detailContract.type === 'PROCUREMENT') {
+      if (detailSubContract) {
+        await contractApi.createSubContractPayment(detailSubContract.id, {
+          amount: Number(paymentForm.amount),
+          paidAt: paymentForm.paymentDate,
+          remark: paymentForm.description.trim() || undefined,
+        });
+        toast.success('分包付款记录创建成功');
+      } else if (detailContract?.type === 'PROCUREMENT') {
         await contractApi.createPayment(detailContract.id, {
           amount: Number(paymentForm.amount),
           paidAt: paymentForm.paymentDate,
           remark: paymentForm.description.trim() || undefined,
         });
         toast.success('付款记录创建成功');
-      } else {
+      } else if (detailContract) {
         await contractApi.createProgressPayment(detailContract.id, submitData);
         toast.success('进度款记录创建成功');
       }
       /* 关闭弹窗并刷新进度款列表 */
       setShowPaymentModal(false);
-      if (detailContract.type === 'PROCUREMENT') await fetchContractPayments(detailContract.id);
-      else await fetchProgressPayments(detailContract.id);
+      if (detailSubContract) await fetchSubContractPayments(detailSubContract.id);
+      else if (detailContract?.type === 'PROCUREMENT') await fetchContractPayments(detailContract.id);
+      else if (detailContract) await fetchProgressPayments(detailContract.id);
     } catch (error: any) {
       toast.error(error.message || '创建进度款记录失败');
     } finally {
       setPaymentLoading(false);
     }
-  }, [paymentForm, detailContract, fetchProgressPayments, fetchContractPayments]);
+  }, [paymentForm, detailContract, detailSubContract, fetchProgressPayments, fetchContractPayments, fetchSubContractPayments]);
 
   /* ========================================
    * 删除操作方法
@@ -679,6 +837,13 @@ const ContractList: React.FC = () => {
    */
   const handleOpenDelete = useCallback((contract: Contract) => {
     setDeletingContract(contract);
+    setDeletingSubContract(null);
+    setShowDeleteConfirm(true);
+  }, []);
+
+  const handleOpenSubDelete = useCallback((contract: SubContract) => {
+    setDeletingSubContract(contract);
+    setDeletingContract(null);
     setShowDeleteConfirm(true);
   }, []);
 
@@ -687,22 +852,28 @@ const ContractList: React.FC = () => {
    * 调用软删除接口
    */
   const handleConfirmDelete = useCallback(async () => {
-    if (!deletingContract) return;
+    if (!deletingContract && !deletingSubContract) return;
 
     try {
       setDeleteLoading(true);
-      await contractApi.delete(deletingContract.id);
-      toast.success('合同已删除');
+      if (deletingSubContract) {
+        await contractApi.deleteSubContract(deletingSubContract.id);
+        toast.success('分包合同已删除');
+      } else if (deletingContract) {
+        await contractApi.delete(deletingContract.id);
+        toast.success('合同已删除');
+      }
       /* 关闭确认弹窗并刷新列表 */
       setShowDeleteConfirm(false);
       setDeletingContract(null);
+      setDeletingSubContract(null);
       fetchContracts();
     } catch (error: any) {
       toast.error(error.message || '删除失败，请重试');
     } finally {
       setDeleteLoading(false);
     }
-  }, [deletingContract, fetchContracts]);
+  }, [deletingContract, deletingSubContract, fetchContracts]);
 
   /* ========================================
    * 计算进度款汇总数据
@@ -717,20 +888,30 @@ const ContractList: React.FC = () => {
     (sum, p) => sum + (p.amount || 0),
     0
   );
-  const visiblePaymentAmount = detailContract?.type === 'PROCUREMENT' ? totalContractPaymentAmount : totalPaymentAmount;
+  const totalSubContractPaymentAmount = subContractPayments.reduce(
+    (sum, p) => sum + (p.totalAmount || 0),
+    0
+  );
+  const visiblePaymentAmount = detailSubContract
+    ? totalSubContractPaymentAmount
+    : detailContract?.type === 'PROCUREMENT'
+      ? totalContractPaymentAmount
+      : totalPaymentAmount;
+  const visibleDetailTotalAmount = detailSubContract?.totalAmount || detailContract?.totalAmount || 0;
   const contractAttachments = attachments.filter((att: any) => (att.category || 'contract') === 'contract');
   const invoiceAttachments = attachments.filter((att: any) => att.category === 'invoice');
   const paymentVoucherAttachments = attachments.filter((att: any) => att.category === 'payment_voucher');
+  const settlementVoucherAttachments = attachments.filter((att: any) => att.category === 'settlement_voucher');
 
   /** 收款进度百分比 */
-  const paymentProgress = detailContract?.totalAmount
-    ? Math.min(100, (visiblePaymentAmount / detailContract.totalAmount) * 100)
+  const paymentProgress = visibleDetailTotalAmount
+    ? Math.min(100, (visiblePaymentAmount / visibleDetailTotalAmount) * 100)
     : 0;
 
   const renderAttachmentSection = (
     title: string,
     items: any[],
-    category: 'contract' | 'invoice' | 'payment_voucher',
+    category: 'contract' | 'invoice' | 'payment_voucher' | 'settlement_voucher',
     emptyText: string,
     uploadText: string,
   ) => (
@@ -863,11 +1044,11 @@ const ContractList: React.FC = () => {
               {subContracts.length === 0 ? (
                 <tr>
                   <td colSpan={7}>
-                    <EmptyState
-                      title="暂无分包合同数据"
-                      description="分包合同新建、付款凭证、结算凭证将在后续切片接入"
-                      icon={<FileText size={48} />}
-                    />
+	                    <EmptyState
+	                      title="暂无分包合同数据"
+	                      description={'点击"新增分包合同"按钮创建第一个分包合同'}
+	                      icon={<FileText size={48} />}
+	                    />
                   </td>
                 </tr>
               ) : (
@@ -875,13 +1056,31 @@ const ContractList: React.FC = () => {
                   <tr key={contract.id} className={index % 2 === 1 ? 'bg-gray-50' : ''}>
                     <td className="font-medium text-gray-800">{contract.name || '-'}</td>
                     <td className="text-gray-600">{contract.contract?.name || '-'}</td>
-                    <td className="text-gray-600">{contract.subcontractor?.companyName || contract.subcontractor?.contactName || '-'}</td>
+	                    <td className="text-gray-600">{contract.workTeam?.name || contract.subcontractor?.companyName || contract.subcontractor?.contactName || '-'}</td>
                     <td className="font-medium text-gray-800">{formatMoney(contract.totalAmount || 0)}</td>
                     <td>
                       <StatusBadge status={contract.isActive === false ? '已终止' : '生效中'} type={contract.isActive === false ? 'danger' : 'success'} />
                     </td>
                     <td className="text-gray-500">{contract.createdAt ? formatDate(contract.createdAt) : '-'}</td>
-                    <td className="text-xs text-gray-400">付款/结算凭证待接入</td>
+	                    <td>
+	                      <div className="flex gap-1">
+	                        {can('contract:view') && (
+	                          <button onClick={() => handleOpenSubDetail(contract)} className="btn-secondary btn-sm" title="查看详情">
+	                            <Eye size={14} />
+	                          </button>
+	                        )}
+	                        {can('contract:edit') && (
+	                          <button onClick={() => handleOpenSubEdit(contract)} className="btn-secondary btn-sm" title="编辑">
+	                            <Edit2 size={14} />
+	                          </button>
+	                        )}
+	                        {can('contract:delete') && (
+	                          <button onClick={() => handleOpenSubDelete(contract)} className="btn-danger btn-sm" title="删除">
+	                            <Trash2 size={14} />
+	                          </button>
+	                        )}
+	                      </div>
+	                    </td>
                   </tr>
                 ))
               )}
@@ -1005,10 +1204,93 @@ const ContractList: React.FC = () => {
             />
           </div>
         )}
-      </div>
+	      </div>
 
-      {/* ========== 新增/编辑合同弹窗 ========== */}
-      <Modal
+	      {/* ========== 新增/编辑分包合同弹窗 ========== */}
+	      <Modal
+	        isOpen={showSubFormModal}
+	        onClose={() => setShowSubFormModal(false)}
+	        title={editingSubContract ? '编辑分包合同' : '新增分包合同'}
+	        size="lg"
+	        footer={
+	          <>
+	            <button onClick={() => setShowSubFormModal(false)} className="btn-secondary" disabled={formLoading}>
+	              取消
+	            </button>
+	            <button onClick={handleSubFormSubmit} className="btn-primary" disabled={formLoading}>
+	              {formLoading ? '提交中...' : editingSubContract ? '保存修改' : '确认创建'}
+	            </button>
+	          </>
+	        }
+	      >
+	        <div className="space-y-4">
+	          <div className="grid grid-cols-2 gap-4">
+	            <div>
+	              <label className="form-label">分包合同名称 <span className="text-red-500">*</span></label>
+	              <input
+	                type="text"
+	                value={subFormData.name}
+	                onChange={(e) => setSubFormData({ ...subFormData, name: e.target.value })}
+	                className="input"
+	                placeholder="请输入分包合同名称"
+	              />
+	            </div>
+	            <div>
+	              <label className="form-label">总金额（元）</label>
+	              <input
+	                type="number"
+	                value={subFormData.totalAmount}
+	                onChange={(e) => setSubFormData({ ...subFormData, totalAmount: e.target.value })}
+	                className="input"
+	                placeholder="请输入合同总金额"
+	                min="0"
+	                step="0.01"
+	              />
+	            </div>
+	          </div>
+	          <div className="grid grid-cols-2 gap-4">
+	            <div>
+	              <label className="form-label">关联承包合同 <span className="text-red-500">*</span></label>
+	              <select
+	                value={subFormData.contractId}
+	                onChange={(e) => setSubFormData({ ...subFormData, contractId: e.target.value })}
+	                className="select"
+	              >
+	                <option value="">请选择承包合同</option>
+	                {constructionContracts.map(contract => (
+	                  <option key={contract.id} value={contract.id}>{contract.name}</option>
+	                ))}
+	              </select>
+	            </div>
+	            <div>
+	              <label className="form-label">关联班组 <span className="text-red-500">*</span></label>
+	              <select
+	                value={subFormData.workTeamId}
+	                onChange={(e) => setSubFormData({ ...subFormData, workTeamId: e.target.value })}
+	                className="select"
+	              >
+	                <option value="">请选择班组</option>
+	                {contractWorkTeams.map(team => (
+	                  <option key={team.id} value={team.id}>{team.name}</option>
+	                ))}
+	              </select>
+	            </div>
+	          </div>
+	          <div>
+	            <label className="form-label">描述</label>
+	            <textarea
+	              value={subFormData.description}
+	              onChange={(e) => setSubFormData({ ...subFormData, description: e.target.value })}
+	              className="textarea"
+	              placeholder="请输入分包合同描述（选填）"
+	              rows={3}
+	            />
+	          </div>
+	        </div>
+	      </Modal>
+
+	      {/* ========== 新增/编辑合同弹窗 ========== */}
+	      <Modal
         isOpen={showFormModal}
         onClose={() => setShowFormModal(false)}
         title={editingContract ? '编辑合同' : '新增合同'}
@@ -1388,13 +1670,111 @@ const ContractList: React.FC = () => {
             {detailContract.type === 'PROCUREMENT' && renderAttachmentSection('付款凭证', paymentVoucherAttachments, 'payment_voucher', '暂无付款凭证', '上传凭证')}
           </div>
         )}
-      </Modal>
+	      </Modal>
 
-      {/* ========== 新增进度款弹窗 ========== */}
-      <Modal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        title={detailContract?.type === 'PROCUREMENT' ? '新增采购付款' : '新增进度款收款'}
+	      {/* ========== 分包合同详情弹窗 ========== */}
+	      <Modal
+	        isOpen={showSubDetailModal}
+	        onClose={() => {
+	          setShowSubDetailModal(false);
+	          setDetailSubContract(null);
+	        }}
+	        title="分包合同详情"
+	        size="xl"
+	      >
+	        {detailSubContract && (
+	          <div className="space-y-5">
+	            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+	              <div className="grid grid-cols-2 gap-3 text-sm">
+	                <div>
+	                  <span className="text-gray-500">分包合同：</span>
+	                  <span className="font-medium text-gray-800">{detailSubContract.name || '-'}</span>
+	                </div>
+	                <div>
+	                  <span className="text-gray-500">合同金额：</span>
+	                  <span className="font-medium text-[#0066CC]">{formatMoney(detailSubContract.totalAmount || 0)}</span>
+	                </div>
+	                <div>
+	                  <span className="text-gray-500">关联承包合同：</span>
+	                  <span className="text-gray-800">{detailSubContract.contract?.name || '-'}</span>
+	                </div>
+	                <div>
+	                  <span className="text-gray-500">关联班组：</span>
+	                  <span className="text-gray-800">{detailSubContract.workTeam?.name || detailSubContract.subcontractor?.companyName || '-'}</span>
+	                </div>
+	              </div>
+	              {detailSubContract.description && (
+	                <div className="mt-3 text-sm">
+	                  <span className="text-gray-500">描述：</span>
+	                  <span className="text-gray-700">{detailSubContract.description}</span>
+	                </div>
+	              )}
+	            </div>
+
+	            <div>
+	              <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
+	                <h3 className="text-base font-semibold text-gray-800">分包付款记录</h3>
+	                <button onClick={handleOpenPaymentModal} className="btn-primary btn-sm">
+	                  <Plus size={14} className="mr-1" />
+	                  新增付款
+	                </button>
+	              </div>
+
+	              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+	                <div className="flex items-center justify-between text-sm mb-1.5">
+	                  <span className="text-gray-600">
+	                    付款进度：{formatMoney(visiblePaymentAmount)} / {formatMoney(detailSubContract.totalAmount || 0)}
+	                  </span>
+	                  <span className="font-medium text-[#0066CC]">{paymentProgress.toFixed(1)}%</span>
+	                </div>
+	                <div className="w-full bg-gray-200 rounded-full h-2.5">
+	                  <div className="h-2.5 rounded-full transition-all duration-300" style={{ width: `${paymentProgress}%`, backgroundColor: '#0066CC' }} />
+	                </div>
+	              </div>
+
+	              {paymentsLoading ? (
+	                <div className="flex items-center justify-center py-8">
+	                  <Loader2 size={24} className="animate-spin text-[#0066CC]" />
+	                  <span className="ml-2 text-sm text-gray-500">加载中...</span>
+	                </div>
+	              ) : subContractPayments.length === 0 ? (
+	                <EmptyState title="暂无付款记录" description="点击“新增付款”按钮添加付款记录" icon={<DollarSign size={40} />} />
+	              ) : (
+	                <div className="table-container">
+	                  <table className="table text-sm">
+	                    <thead>
+	                      <tr className="table-thead" style={{ backgroundColor: '#0066CC', color: '#fff' }}>
+	                        <th>付款金额</th>
+	                        <th>付款日期</th>
+	                        <th>备注</th>
+	                      </tr>
+	                    </thead>
+	                    <tbody className="table-tbody">
+	                      {subContractPayments.map((payment, index) => (
+	                        <tr key={payment.id} className={index % 2 === 1 ? 'bg-gray-50' : ''}>
+	                          <td className="font-medium text-[#0066CC]">{formatMoney(payment.totalAmount)}</td>
+	                          <td>{formatDate(payment.paidAt)}</td>
+	                          <td className="text-gray-500">{payment.remark || '-'}</td>
+	                        </tr>
+	                      ))}
+	                    </tbody>
+	                  </table>
+	                </div>
+	              )}
+	            </div>
+
+	            <input ref={uploadRef} type="file" multiple accept="image/*,.pdf" className="hidden" onChange={handleFileChange} />
+	            {renderAttachmentSection('付款凭证', paymentVoucherAttachments, 'payment_voucher', '暂无付款凭证', '上传凭证')}
+	            {renderAttachmentSection('结算凭证', settlementVoucherAttachments, 'settlement_voucher', '暂无结算凭证', '上传结算凭证')}
+	          </div>
+	        )}
+	      </Modal>
+
+	      {/* ========== 新增进度款弹窗 ========== */}
+	      <Modal
+	        isOpen={showPaymentModal}
+	        onClose={() => setShowPaymentModal(false)}
+	        title={detailSubContract ? '新增分包付款' : detailContract?.type === 'PROCUREMENT' ? '新增采购付款' : '新增进度款收款'}
         size="md"
         footer={
           <>
@@ -1416,9 +1796,9 @@ const ContractList: React.FC = () => {
         }
       >
         <div className="space-y-4">
-          <div className={detailContract?.type === 'PROCUREMENT' ? '' : 'grid grid-cols-2 gap-4'}>
-            {/* 期次 */}
-            {detailContract?.type !== 'PROCUREMENT' && <div>
+	          <div className={(detailSubContract || detailContract?.type === 'PROCUREMENT') ? '' : 'grid grid-cols-2 gap-4'}>
+	            {/* 期次 */}
+	            {!detailSubContract && detailContract?.type !== 'PROCUREMENT' && <div>
               <label className="form-label">
                 期次 <span className="text-red-500">*</span>
               </label>
@@ -1432,25 +1812,25 @@ const ContractList: React.FC = () => {
               />
             </div>}
             {/* 收款金额 */}
-            <div>
-              <label className="form-label">
-                {detailContract?.type === 'PROCUREMENT' ? '付款金额' : '收款金额'}（元） <span className="text-red-500">*</span>
-              </label>
+	            <div>
+	              <label className="form-label">
+	                {(detailSubContract || detailContract?.type === 'PROCUREMENT') ? '付款金额' : '收款金额'}（元） <span className="text-red-500">*</span>
+	              </label>
               <input
                 type="number"
                 value={paymentForm.amount}
                 onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
                 className="input"
-                placeholder={detailContract?.type === 'PROCUREMENT' ? '请输入付款金额' : '请输入收款金额'}
+	                placeholder={(detailSubContract || detailContract?.type === 'PROCUREMENT') ? '请输入付款金额' : '请输入收款金额'}
                 min="0"
                 step="0.01"
               />
             </div>
           </div>
 
-          <div className={detailContract?.type === 'PROCUREMENT' ? '' : 'grid grid-cols-2 gap-4'}>
-            {/* 占比 */}
-            {detailContract?.type !== 'PROCUREMENT' && <div>
+	          <div className={(detailSubContract || detailContract?.type === 'PROCUREMENT') ? '' : 'grid grid-cols-2 gap-4'}>
+	            {/* 占比 */}
+	            {!detailSubContract && detailContract?.type !== 'PROCUREMENT' && <div>
               <label className="form-label">占比（%）</label>
               <input
                 type="number"
@@ -1465,7 +1845,7 @@ const ContractList: React.FC = () => {
             </div>}
             {/* 收款日期 */}
             <div>
-              <label className="form-label">{detailContract?.type === 'PROCUREMENT' ? '付款日期' : '收款日期'} <span className="text-red-500">*</span></label>
+	              <label className="form-label">{(detailSubContract || detailContract?.type === 'PROCUREMENT') ? '付款日期' : '收款日期'} <span className="text-red-500">*</span></label>
               <input
                 type="date"
                 value={paymentForm.paymentDate}
@@ -1492,13 +1872,14 @@ const ContractList: React.FC = () => {
       {/* ========== 删除确认弹窗 ========== */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
-        onClose={() => {
-          setShowDeleteConfirm(false);
-          setDeletingContract(null);
-        }}
-        onConfirm={handleConfirmDelete}
-        title="删除合同"
-        message={`确定要删除合同"${deletingContract?.name}"吗？删除后数据将无法恢复。`}
+	        onClose={() => {
+	          setShowDeleteConfirm(false);
+	          setDeletingContract(null);
+	          setDeletingSubContract(null);
+	        }}
+	        onConfirm={handleConfirmDelete}
+	        title="删除合同"
+	        message={`确定要删除${deletingSubContract ? '分包合同' : '合同'}"${deletingSubContract?.name || deletingContract?.name || ''}"吗？删除后数据将无法恢复。`}
         confirmText="确认删除"
         type="danger"
         loading={deleteLoading}
