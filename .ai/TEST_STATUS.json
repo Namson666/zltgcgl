@@ -1,0 +1,54 @@
+{
+  "status": "partially_verified",
+  "build_green": "blocked",
+  "ci_green": "not_verified",
+  "runtime_smoke_green": "not_verified",
+  "product_green": "not_verified",
+  "user_green": "not_verified",
+  "evidence": [
+    {
+      "type": "state_file_validation",
+      "command": "for f in .ai/*.json .superpowers/loops/LOOP_LOCK.json; do node -e JSON.parse(...) ; done",
+      "status": "verified",
+      "result": "json_ok"
+    },
+    {
+      "type": "backend_test",
+      "command": "cd backend && npm test",
+      "status": "verified",
+      "result": "2 test files passed, 17 tests passed"
+    },
+    {
+      "type": "backend_build",
+      "command": "cd backend && npm run build",
+      "status": "blocked",
+      "result": "TypeScript build failed in src/common/utils/baidu-ocr.ts and src/common/utils/ocr-ai.ts"
+    },
+    {
+      "type": "frontend_test",
+      "command": "cd frontend && npm test",
+      "status": "verified",
+      "result": "2 test files passed, 36 tests passed"
+    },
+    {
+      "type": "frontend_build",
+      "command": "cd frontend && npm run build",
+      "status": "verified",
+      "result": "Vite production build completed"
+    },
+    {
+      "type": "backend_audit",
+      "command": "cd backend && npm audit --audit-level=high",
+      "status": "blocked",
+      "result": "15 vulnerabilities reported, including 6 high; xlsx has no fix available"
+    },
+    {
+      "type": "frontend_audit",
+      "command": "cd frontend && npm audit --audit-level=high",
+      "status": "blocked",
+      "result": "8 vulnerabilities reported, including 6 high"
+    }
+  ],
+  "notes": "Public clean baseline excludes tracked database and SQLite journal files. Backend tests pass, frontend tests/build pass, but backend TypeScript build and npm audit gates are blocked. No CI, runtime smoke, Product Green, or User Green has been claimed.",
+  "updated_at": "2026-06-22T09:25:00Z"
+}

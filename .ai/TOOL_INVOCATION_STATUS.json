@@ -1,0 +1,26 @@
+{
+  "required_tools": [
+    {
+      "tool": "git",
+      "required_for": "existing project and remote baseline discovery",
+      "status": "called",
+      "evidence": "git status and git remote -v inspected",
+      "gate": "yellow"
+    },
+    {
+      "tool": "gh",
+      "required_for": "read-only GitHub repository readiness check",
+      "status": "called",
+      "evidence": "gh repo view Namson666/zltgcgl shows repository exists, sshUrl git@github.com:Namson666/zltgcgl.git, isPrivate false; user approved public repository; git ls-remote returned no refs",
+      "gate": "yellow_public_repo_approved_push_still_blocked_by_tracked_database_files"
+    },
+    {
+      "tool": "local verification commands",
+      "required_for": "baseline verification planning",
+      "status": "called",
+      "evidence": "frontend/backend package scripts discovered; Pro JSON state files validated with node",
+      "gate": "yellow"
+    }
+  ],
+  "updated_at": "2026-06-22T09:06:07Z"
+}

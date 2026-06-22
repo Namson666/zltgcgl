@@ -1,0 +1,66 @@
+{
+  "current_phase": "S1_context_discovery",
+  "required_skills": [
+    {
+      "skill": "superpowers-pro-startup",
+      "trigger_type": "startup",
+      "trigger_reason": "User explicitly requested full Superpowers Pro usage.",
+      "required": true,
+      "status": "called",
+      "evidence": "Read SKILL.md from superpowers-pro-local 1.0.13.",
+      "called_at": "2026-06-22T09:06:07Z"
+    },
+    {
+      "skill": "mandatory-harness-runtime",
+      "trigger_type": "project_start",
+      "trigger_reason": "Long-lived existing project refactor preparation.",
+      "required": true,
+      "status": "called",
+      "evidence": "Read SKILL.md and created .ai harness files.",
+      "called_at": "2026-06-22T09:06:07Z"
+    },
+    {
+      "skill": "intent-to-skill-router",
+      "trigger_type": "routing",
+      "trigger_reason": "Project task requires skill routing before work begins.",
+      "required": true,
+      "status": "called",
+      "evidence": "Read SKILL.md and routed to brainstorming plus writing-plans.",
+      "called_at": "2026-06-22T09:06:07Z"
+    },
+    {
+      "skill": "codex-controller-harness",
+      "trigger_type": "codex_adaptation",
+      "trigger_reason": "Current harness is Codex.",
+      "required": true,
+      "status": "called",
+      "evidence": "Read SKILL.md; Codex remains final status authority.",
+      "called_at": "2026-06-22T09:06:07Z"
+    },
+    {
+      "skill": "brainstorming",
+      "trigger_type": "spec",
+      "trigger_reason": "Refactor design must be approved before implementation.",
+      "required": true,
+      "status": "called",
+      "evidence": "Read SKILL.md; currently in context exploration before user question.",
+      "called_at": "2026-06-22T09:06:07Z"
+    },
+    {
+      "skill": "writing-plans",
+      "trigger_type": "plan",
+      "trigger_reason": "Implementation plan required after approved design.",
+      "required": true,
+      "status": "called",
+      "evidence": "Read SKILL.md; full plan deferred until spec approval.",
+      "called_at": "2026-06-22T09:06:07Z"
+    }
+  ],
+  "blocked_transitions": [
+    {
+      "transition": "S1_context_discovery_to_S2_plan_ready",
+      "reason": "Refactor design has not yet been approved by user."
+    }
+  ],
+  "updated_at": "2026-06-22T09:06:07Z"
+}

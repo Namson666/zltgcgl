@@ -1,0 +1,1298 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "sqlite"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+/// 平台开发者/超级管理员
+/// 合并了原WMS的Developer和原Labor的SuperAdmin
+model Developer {
+  id            String         @id @default(cuid())
+  username      String         @unique
+  passwordHash  String
+  name          String
+  email         String?
+  phone         String?
+  isActive      Boolean        @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  aiConfigs         AiConfig[]
+  ocrConfigs         OcrConfig[]
+  operationLogs      OperationLog[]
+  integrationConfigs IntegrationConfig[]
+
+  @@map("developers")
+}
+
+/// AI模型配置（开发者后台统一管理）
+model AiConfig {
+  id          String    @id @default(cuid())
+  developerId String
+  provider    String
+  model       String
+  apiKey      String
+  baseUrl     String?
+  isEnabled   Boolean   @default(false)
+  config      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  developer   Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
+
+  @@map("ai_configs")
+}
+
+/// OCR配置（开发者后台统一管理）
+/// 合并了原WMS的OcrConfig和环境变量配置
+model OcrConfig {
+  id          String    @id @default(cuid())
+  developerId String
+  provider    String
+  secretId    String?
+  secretKey   String?
+  apiKey      String?
+  isEnabled   Boolean   @default(false)
+  config      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  developer   Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
+
+  @@map("ocr_configs")
+}
+
+/// 施工企业（租户）
+/// 合并了原WMS的Company和原Labor的Tenant
+model Tenant {
+  id             String          @id @default(cuid())
+  name           String
+  code           String          @unique
+  contactName    String?
+  contactPhone   String?
+  address        String?
+  isActive       Boolean         @default(true)
+  deletedAt      DateTime?       // 软删除时间，不为 null 表示已删除
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  attachments      Attachment[]
+  contracts        Contract[]
+  departments      Department[]
+  invoices         Invoice[]
+  materials        Material[]
+  operationLogs    OperationLog[]
+  personnel        Personnel[]
+  roles            Role[]
+  subcontractors   Subcontractor[]
+  subscription     Subscription?
+  suppliers        Supplier[]
+  users            User[]
+  workTeams        WorkTeam[]
+
+  @@map("tenants")
+}
+
+/// 订阅信息
+model Subscription {
+  id                 String                @id @default(cuid())
+  tenantId           String                @unique
+  plan               String                @default("FULL")
+  tier               String                @default("SMALL")
+  maxUsers           Int                   @default(5)
+  pricePerMonth      Float                 @default(888)
+  pricePerExtraUser  Float                 @default(100)
+  currentUsers       Int                   @default(0)
+  status             String                @default("TRIAL")
+  trialEndAt         DateTime
+  currentPeriodStart DateTime              @default(now())
+  currentPeriodEnd   DateTime
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  payments           SubscriptionPayment[]
+  tenant             Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+/// 订阅支付记录
+model SubscriptionPayment {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  amount         Float
+  paymentMethod  String
+  transactionId  String?
+  status         String       @default("pending")
+  paidAt         DateTime?
+  createdAt      DateTime     @default(now())
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("subscription_payments")
+}
+
+/// 合同（统一模型）
+/// 原WMS的Contract（供应商采购合同）和原Labor的Contract（承包合同）合并
+/// 通过 contractType 区分
+model Contract {
+  id               String            @id @default(cuid())
+  tenantId         String
+  type             String            @default("CONSTRUCTION")
+  name             String
+  code             String?
+  totalAmount      Float?
+  supplierId       String?
+  awardingParty    String?
+  description      String?
+  startDate        DateTime?
+  endDate          DateTime?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  supplier         Supplier?         @relation(fields: [supplierId], references: [id])
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deliveryOrders   DeliveryOrder[]
+  departments      Department[]
+  inboundOrders    InboundOrder[]
+  progressPayments ProgressPayment[]
+  subContracts     SubContract[]
+
+  @@unique([tenantId, code])
+  @@map("contracts")
+}
+
+/// 进度款收款记录（原Labor）
+model ProgressPayment {
+  id         String   @id @default(cuid())
+  contractId String
+  tenantId   String
+  amount     Float
+  receivedAt DateTime
+  remark     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@map("progress_payments")
+}
+
+/// 项目部（数据隔离核心单元）
+/// 新增模型，满足"合同→项目部→子项目"三级结构需求
+/// 项目部之间数据严格隔离
+model Department {
+  id                 String                    @id @default(cuid())
+  tenantId           String
+  contractId         String?
+  name               String
+  code               String
+  description        String?
+  isActive           Boolean                   @default(true)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  deliveryOrders     DeliveryOrder[]
+  authorizedUsers    DepartmentAuthorization[]
+  contract           Contract?                 @relation(fields: [contractId], references: [id])
+  tenant             Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inboundOrders      InboundOrder[]
+  inventories        Inventory[]
+  outboundOrders     OutboundOrder[]
+  personnel          Personnel[]
+  returnOrders       ReturnOrder[]
+  subProjects        SubProject[]               @relation("DepartmentSubProjects")
+  transferOrdersTo   TransferOrder[]           @relation("TransferTo")
+  transferOrdersFrom TransferOrder[]           @relation("TransferFrom")
+  users              User[]
+
+  @@unique([tenantId, code])
+  @@map("departments")
+}
+
+/// 子项目/项目名称
+/// 原WMS的Project降级为SubProject，归属Department
+model SubProject {
+  id                 String          @id @default(cuid())
+  tenantId           String
+  departmentId       String
+  name               String
+  code               String?
+  description        String?
+  isActive           Boolean         @default(true)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  inboundOrders      InboundOrder[]
+  inventories        Inventory[]
+  outboundOrders     OutboundOrder[]
+  returnOrders       ReturnOrder[]
+  department         Department      @relation("DepartmentSubProjects", fields: [departmentId], references: [id], onDelete: Cascade)
+  transferOrdersTo   TransferOrder[] @relation("TransferToSub")
+  transferOrdersFrom TransferOrder[] @relation("TransferFromSub")
+
+  @@unique([tenantId, departmentId, code])
+  @@map("sub_projects")
+}
+
+/// 系统用户（统一模型）
+/// 合并了原WMS的User和原Labor的TenantUser
+model User {
+  id                    String                    @id @default(cuid())
+  tenantId              String
+  departmentId          String?
+  username              String
+  passwordHash          String
+  name                  String
+  phone                 String?
+  email                 String?
+  roleId                String
+  dataScope             String                    @default("OWN_DEPARTMENT")
+  isActive              Boolean                   @default(true)
+  lastLoginAt           DateTime?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  authorizedDepartments DepartmentAuthorization[]
+  inboundOrders         InboundOrder[]            @relation("InboundCreator")
+  operationLogs         OperationLog[]
+  outboundOrders        OutboundOrder[]           @relation("OutboundCreator")
+  returnOrders          ReturnOrder[]             @relation("ReturnCreator")
+  role                  Role                      @relation(fields: [roleId], references: [id])
+  department            Department?               @relation(fields: [departmentId], references: [id])
+  tenant                Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, username])
+  @@map("users")
+}
+
+/// 角色（动态角色模型）
+/// 合并了原WMS的Role和原Labor的枚举TenantRole
+model Role {
+  id          String       @id @default(cuid())
+  tenantId    String
+  name        String
+  displayName String
+  description String?
+  isDefault   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  permissions Permission[]
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users       User[]
+
+  @@unique([tenantId, name])
+  @@map("roles")
+}
+
+/// 权限配置（细粒度权限控制）
+/// 合并了原WMS的Permission并扩展
+model Permission {
+  id                    String   @id @default(cuid())
+  roleId                String
+  canViewDashboard      Boolean  @default(false)
+  canManageSystem       Boolean  @default(false)
+  canViewLogs           Boolean  @default(false)
+  canExport             Boolean  @default(false)
+  canViewInventory      Boolean  @default(false)
+  canInbound            Boolean  @default(false)
+  canOutbound           Boolean  @default(false)
+  canReturn             Boolean  @default(false)
+  canTransfer           Boolean  @default(false)
+  canViewRecords        Boolean  @default(false)
+  canViewWorkTeamLedger Boolean  @default(false)
+  canManagePersonnel    Boolean  @default(false)
+  canManageAttendance   Boolean  @default(false)
+  canManageSalary       Boolean  @default(false)
+  canManagePayment      Boolean  @default(false)
+  canManageAnomaly      Boolean  @default(false)
+  canManageReport       Boolean  @default(false)
+  canManageContract     Boolean  @default(false)
+  canManageDepartment   Boolean  @default(false)
+  canFinanceView        Boolean  @default(false)
+  canFinanceEntryDept   Boolean  @default(false)
+  canFinanceEntryFinance Boolean @default(false)
+  canFinanceApprove     Boolean  @default(false)
+  canFinancePettyCash   Boolean  @default(false)
+  canFinanceInvoice     Boolean  @default(false)
+  canFinanceReceipt     Boolean  @default(false)
+  canFinancePnl         Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  role                  Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@map("permissions")
+}
+
+/// 用户-项目部授权表
+/// 用于 LABOR、MATERIAL 等角色的项目部授权
+/// 原 Labor 的 ContractAuthorization 扩展为 Department 维度
+model DepartmentAuthorization {
+  id           String     @id @default(cuid())
+  userId       String
+  departmentId String
+  createdAt    DateTime   @default(now())
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, departmentId])
+  @@map("department_authorizations")
+}
+
+/// 供应商（全租户共享，物资和劳资模块都可引用）
+/// 原WMS的Supplier
+model Supplier {
+  id             String          @id @default(cuid())
+  tenantId       String
+  name           String
+  contactName    String?
+  phone          String?
+  address        String?
+  bankAccount    String?
+  bankName       String?
+  remark         String?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  contracts      Contract[]
+  deliveryOrders DeliveryOrder[]
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("suppliers")
+}
+
+/// 班组（全租户共享，物资出库和劳资考勤都可引用）
+/// 原WMS的WorkTeam
+model WorkTeam {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  leaderName  String?
+  phone       String?
+  memberCount Int?
+  remark      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("work_teams")
+}
+
+/// 分包商（劳资模块专用）
+/// 原Labor的Subcontractor
+model Subcontractor {
+  id           String        @id @default(cuid())
+  tenantId     String
+  type         String        @default("COMPANY")
+  companyName  String
+  contactName  String?
+  contactPhone String?
+  idCardNo     String?
+  address      String?
+  bankAccount  String?
+  bankName     String?
+  remark       String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  personnel    Personnel[]
+  subContracts SubContract[]
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("subcontractors")
+}
+
+/// 物资目录
+/// 原WMS的Material
+model Material {
+  id                 String              @id @default(cuid())
+  tenantId           String
+  code               String?
+  name               String
+  spec               String?
+  unit               String
+  unitPrice          Float?
+  category           String?
+  alertThreshold     Int?
+  remark             String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  deliveryOrderItems DeliveryOrderItem[]
+  inboundItems       InboundItem[]
+  inventories        Inventory[]
+  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  outboundItems      OutboundItem[]
+  returnBorrowItems  ReturnBorrowItem[]
+  returnItems        ReturnItem[]
+  transferItems      TransferItem[]
+
+  @@map("materials")
+}
+
+/// 库存
+/// 原WMS的Inventory，增加departmentId和subProjectId
+model Inventory {
+  id           String      @id @default(cuid())
+  tenantId     String
+  departmentId String?
+  subProjectId String?
+  materialId   String
+  quantity     Float       @default(0)
+  projectName  String?
+  outQuantity  Float       @default(0)
+  isActive     Boolean     @default(true)
+  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime    @default(now())
+  material     Material    @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  subProject   SubProject? @relation(fields: [subProjectId], references: [id])
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  @@unique([subProjectId, materialId, projectName])
+  @@index([subProjectId, materialId])
+  @@map("inventories")
+}
+
+/// 送货单
+/// 原WMS的DeliveryOrder
+model DeliveryOrder {
+  id            String              @id @default(cuid())
+  tenantId      String
+  orderNo       String
+  supplierId    String?
+  contractId    String?
+  departmentId  String?
+  subProjectId  String?
+  deliveryDate  DateTime
+  source        String              @default("MANUAL")
+  ocrRawText    String?
+  remark        String?
+  isActive      Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  items         DeliveryOrderItem[]
+  department    Department?         @relation(fields: [departmentId], references: [id])
+  contract      Contract?           @relation(fields: [contractId], references: [id])
+  supplier      Supplier?           @relation(fields: [supplierId], references: [id])
+  inboundOrders InboundOrder[]
+
+  @@map("delivery_orders")
+}
+
+/// 送货单明细
+/// 原WMS的DeliveryOrderItem
+model DeliveryOrderItem {
+  id              String        @id @default(cuid())
+  deliveryOrderId String
+  materialId      String?
+  materialName    String
+  spec            String?
+  unit            String?
+  deliveryQty     Float
+  receivedQty     Float         @default(0)
+  actualQty       Float
+  unitPrice       Float?
+  projectName     String?
+  projectCode     String?
+  material        Material?     @relation(fields: [materialId], references: [id])
+  deliveryOrder   DeliveryOrder @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_order_items")
+}
+
+/// 入库单
+/// 原WMS的InboundOrder
+model InboundOrder {
+  id              String         @id @default(cuid())
+  tenantId        String
+  orderNo         String
+  contractId      String?
+  departmentId    String?
+  subProjectId    String?
+  deliveryOrderId String?
+  inboundDate     DateTime
+  source          String         @default("MANUAL")
+  createdBy       String?
+  supplierName    String?
+  remark          String?
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  items           InboundItem[]
+  creator         User?          @relation("InboundCreator", fields: [createdBy], references: [id])
+  deliveryOrder   DeliveryOrder? @relation(fields: [deliveryOrderId], references: [id])
+  subProject      SubProject?    @relation(fields: [subProjectId], references: [id])
+  department      Department?    @relation(fields: [departmentId], references: [id])
+  contract        Contract?      @relation(fields: [contractId], references: [id])
+
+  @@map("inbound_orders")
+}
+
+/// 入库明细
+/// 原WMS的InboundItem
+model InboundItem {
+  id             String       @id @default(cuid())
+  inboundOrderId String
+  materialId     String
+  quantity       Float
+  unitPrice      Float?
+  unit           String?
+  projectName    String?
+  material       Material     @relation(fields: [materialId], references: [id])
+  inboundOrder   InboundOrder @relation(fields: [inboundOrderId], references: [id], onDelete: Cascade)
+
+  @@map("inbound_items")
+}
+
+/// 出库单
+/// 原WMS的OutboundOrder
+model OutboundOrder {
+  id           String         @id @default(cuid())
+  tenantId     String
+  departmentId String?
+  subProjectId String?
+  workTeamId   String?
+  workTeamName String?
+  orderNo      String
+  outboundDate DateTime
+  createdBy    String?
+  remark       String?
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  items        OutboundItem[]
+  creator      User?          @relation("OutboundCreator", fields: [createdBy], references: [id])
+  subProject   SubProject?    @relation(fields: [subProjectId], references: [id])
+  department   Department?    @relation(fields: [departmentId], references: [id])
+  returnOrders ReturnOrder[]
+
+  @@map("outbound_orders")
+}
+
+/// 出库明细
+/// 原WMS的OutboundItem
+model OutboundItem {
+  id              String        @id @default(cuid())
+  outboundOrderId String
+  materialId      String
+  subProjectId    String?
+  subProjectName  String?
+  projectName     String?       /// 出库时物资对应的入库项目名称
+  quantity        Float
+  unitPrice       Float?
+  unit            String?
+  material        Material      @relation(fields: [materialId], references: [id])
+  outboundOrder   OutboundOrder @relation(fields: [outboundOrderId], references: [id], onDelete: Cascade)
+  returnItems     ReturnItem[]
+
+  @@map("outbound_items")
+}
+
+/// 退库单
+/// 原WMS的ReturnOrder
+model ReturnOrder {
+  id              String         @id @default(cuid())
+  tenantId        String
+  departmentId    String?
+  subProjectId    String?
+  workTeamId      String?
+  workTeamName    String?
+  outboundOrderId String?
+  orderNo         String
+  returnDate      DateTime
+  source          String         @default("manual")
+  createdBy       String?
+  remark          String?
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  items           ReturnItem[]
+  creator         User?          @relation("ReturnCreator", fields: [createdBy], references: [id])
+  outboundOrder   OutboundOrder? @relation(fields: [outboundOrderId], references: [id])
+  subProject      SubProject?    @relation(fields: [subProjectId], references: [id])
+  department      Department?    @relation(fields: [departmentId], references: [id])
+
+  @@map("return_orders")
+}
+
+/// 退库明细
+/// 原WMS的ReturnItem
+model ReturnItem {
+  id             String        @id @default(cuid())
+  returnOrderId  String
+  outboundItemId String?
+  materialId     String
+  quantity       Float
+  material       Material      @relation(fields: [materialId], references: [id])
+  outboundItem   OutboundItem? @relation(fields: [outboundItemId], references: [id])
+  returnOrder    ReturnOrder   @relation(fields: [returnOrderId], references: [id], onDelete: Cascade)
+
+  @@map("return_items")
+}
+
+/// 借调单（跨项目物资借调）
+/// 原WMS的TransferOrder
+model TransferOrder {
+  id                 String              @id @default(cuid())
+  tenantId           String
+  fromDepartmentId   String?
+  fromSubProjectId   String?
+  toDepartmentId     String?
+  toSubProjectId     String?
+  orderNo            String
+  transferDate       DateTime
+  remark             String?
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  returnBorrowOrders ReturnBorrowOrder[]
+  items              TransferItem[]
+  toSubProject       SubProject?         @relation("TransferToSub", fields: [toSubProjectId], references: [id])
+  toDepartment       Department?         @relation("TransferTo", fields: [toDepartmentId], references: [id])
+  fromSubProject     SubProject?         @relation("TransferFromSub", fields: [fromSubProjectId], references: [id])
+  fromDepartment     Department?         @relation("TransferFrom", fields: [fromDepartmentId], references: [id])
+
+  @@map("transfer_orders")
+}
+
+/// 借调明细
+/// 原WMS的TransferItem
+model TransferItem {
+  id              String        @id @default(cuid())
+  transferOrderId String
+  materialId      String
+  quantity        Float
+  material        Material      @relation(fields: [materialId], references: [id])
+  transferOrder   TransferOrder @relation(fields: [transferOrderId], references: [id], onDelete: Cascade)
+
+  @@map("transfer_items")
+}
+
+/// 借调归还单
+/// 原WMS的ReturnBorrowOrder
+model ReturnBorrowOrder {
+  id              String             @id @default(cuid())
+  tenantId        String
+  transferOrderId String
+  orderNo         String
+  returnDate      DateTime
+  remark          String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  items           ReturnBorrowItem[]
+  transferOrder   TransferOrder      @relation(fields: [transferOrderId], references: [id], onDelete: Cascade)
+
+  @@map("return_borrow_orders")
+}
+
+/// 借调归还明细
+/// 原WMS的ReturnBorrowItem
+model ReturnBorrowItem {
+  id                  String            @id @default(cuid())
+  returnBorrowOrderId String
+  materialId          String
+  quantity            Float
+  material            Material          @relation(fields: [materialId], references: [id])
+  returnBorrowOrder   ReturnBorrowOrder @relation(fields: [returnBorrowOrderId], references: [id], onDelete: Cascade)
+
+  @@map("return_borrow_items")
+}
+
+/// 分包合同
+/// 原Labor的SubContract
+model SubContract {
+  id                  String               @id @default(cuid())
+  tenantId            String
+  contractId          String
+  subcontractorId     String
+  name                String
+  totalAmount         Float?
+  description         String?
+  isActive            Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  outputValues        OutputValue[]
+  subcontractor       Subcontractor        @relation(fields: [subcontractorId], references: [id])
+  contract            Contract             @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  subProgressPayments SubProgressPayment[]
+
+  @@map("sub_contracts")
+}
+
+/// 产值记录
+/// 原Labor的OutputValue
+model OutputValue {
+  id                  String                          @id @default(cuid())
+  tenantId            String
+  subContractId       String
+  month               String
+  amount              Float
+  payableRatio        Float?
+  remark              String?
+  createdAt           DateTime                        @default(now())
+  updatedAt           DateTime                        @updatedAt
+  subContract         SubContract                     @relation(fields: [subContractId], references: [id], onDelete: Cascade)
+  subProgressPayments SubProgressPaymentOutputValue[]
+
+  @@map("output_values")
+}
+
+/// 分包进度款支付
+/// 原Labor的SubProgressPayment
+model SubProgressPayment {
+  id            String                          @id @default(cuid())
+  tenantId      String
+  subContractId String
+  totalAmount   Float
+  paidAt        DateTime
+  remark        String?
+  createdAt     DateTime                        @default(now())
+  updatedAt     DateTime                        @updatedAt
+  outputValues  SubProgressPaymentOutputValue[]
+  subContract   SubContract                     @relation(fields: [subContractId], references: [id], onDelete: Cascade)
+
+  @@map("sub_progress_payments")
+}
+
+/// 产值-支付多对多关联
+/// 原Labor的SubProgressPaymentOutputValue
+model SubProgressPaymentOutputValue {
+  subProgressPaymentId String
+  outputValueId        String
+  outputValue          OutputValue        @relation(fields: [outputValueId], references: [id], onDelete: Cascade)
+  subProgressPayment   SubProgressPayment @relation(fields: [subProgressPaymentId], references: [id], onDelete: Cascade)
+
+  @@id([subProgressPaymentId, outputValueId])
+  @@map("sub_progress_payment_output_values")
+}
+
+/// 人员信息
+/// 原Labor的Personnel，增加departmentId
+model Personnel {
+  id                    String             @id @default(cuid())
+  tenantId              String
+  departmentId          String?
+  type                  String             @default("WORKER")
+  name                  String
+  idCardNo              String
+  phone                 String?
+  salaryMode            String             @default("DAILY")
+  monthlySalary         Float?
+  dailySalary           Float?
+  workerDailySalary     Float?
+  socialInsurance       Float?
+  subcontractorId       String?
+  bankAccount           String?
+  bankName              String?
+  remark                String?
+  status                String             @default("active")
+  leftAt                DateTime?
+  rejoinAt              DateTime?
+  isUnderAge            Boolean            @default(false)
+  isOverAge             Boolean            @default(false)
+  isDuplicateId         Boolean            @default(false)
+  consecutiveAbsentDays Int?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  anomalies             Anomaly[]
+  attachments           Attachment[]
+  attendanceRecords     AttendanceRecord[]
+  paymentRecords        PaymentRecord[]
+  subcontractor         Subcontractor?     @relation(fields: [subcontractorId], references: [id])
+  department            Department?        @relation(fields: [departmentId], references: [id])
+  tenant                Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  salaryRecords         SalaryRecord[]
+
+  @@unique([tenantId, idCardNo])
+  @@map("personnel")
+}
+
+/// 考勤记录
+/// 原Labor的AttendanceRecord
+model AttendanceRecord {
+  id            String    @id @default(cuid())
+  tenantId      String
+  personnelId   String
+  date          DateTime
+  value         String    @default("FULL")
+  overtimeValue String    @default("NONE")
+  remark        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  personnel     Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+
+  @@unique([personnelId, date])
+  @@map("attendance_records")
+}
+
+/// 工资核算记录
+/// 原Labor的SalaryRecord
+model SalaryRecord {
+  id                       String    @id @default(cuid())
+  tenantId                 String
+  personnelId              String
+  month                    String
+  naturalDays              Int
+  attendanceDays           Float
+  absentDays               Float     @default(0)
+  overtimeDays             Float     @default(0)
+  dailyWage                Float?
+  basePayable              Float     @default(0)
+  absentDeduction          Float     @default(0)
+  overtimePay              Float     @default(0)
+  socialInsuranceDeduction Float     @default(0)
+  customAdditions          String?
+  customDeductions         String?
+  totalPayable             Float     @default(0)
+  totalPaid                Float     @default(0)
+  arrearsAmount            Float     @default(0)
+  needsRecalculation       Boolean   @default(false)
+  remark                   String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  personnel                Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+
+  @@unique([personnelId, month])
+  @@map("salary_records")
+}
+
+/// 工资发放记录
+/// 原Labor的PaymentRecord
+/// 注意：personnelId 为可选字段，因为发放记录可能针对未录入人员库的临时工/分包商工人。
+/// 当 personnelId 为 null 时，风控模块应使用 recipientName + idCardNo 进行身份比对。
+model PaymentRecord {
+  id            String     @id @default(cuid())
+  tenantId      String
+  personnelId   String?     // 可选：允许对未入库人员发薪，风控需用 recipientName/idCardNo 兜底
+  departmentId  String?
+  month         String?
+  recipientName String
+  idCardNo      String?
+  amount        Float
+  paymentMethod String?
+  paymentDate   DateTime
+  arrearsOffset String?
+  isAiMatched   Boolean    @default(false)
+  isConfirmed   Boolean    @default(false)
+  remark        String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  personnel     Personnel? @relation(fields: [personnelId], references: [id])
+
+  @@map("payment_records")
+}
+
+/// 异常风控记录
+/// 原Labor的Anomaly
+model Anomaly {
+  id             String    @id @default(cuid())
+  tenantId       String
+  personnelId    String
+  level          String    @default("YELLOW")
+  description    String
+  abnormalAmount Float?
+  isResolved     Boolean   @default(false)
+  resolvedAt     DateTime?
+  resolveReason  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  personnel      Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+
+  @@map("anomalies")
+}
+
+/// 操作日志（统一模型）
+/// 合并了原WMS和原Labor的OperationLog
+model OperationLog {
+  id          String     @id @default(cuid())
+  developerId String?
+  tenantId    String?
+  userId      String?
+  action      String
+  module      String
+  description String
+  detail      String?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime   @default(now())
+  user        User?      @relation(fields: [userId], references: [id])
+  tenant      Tenant?    @relation(fields: [tenantId], references: [id])
+  developer   Developer? @relation(fields: [developerId], references: [id])
+
+  @@map("operation_logs")
+}
+
+/// 附件（多态关联）
+/// 原Labor的Attachment
+model Attachment {
+  id          String     @id @default(cuid())
+  tenantId    String
+  personnelId String?
+  entityType  String
+  entityId    String
+  category    String?    @default("other")
+  fileName    String
+  storedName  String
+  filePath    String
+  fileSize    Int?
+  mimeType    String?
+  createdAt   DateTime   @default(now())
+  personnel   Personnel? @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+/// 短信验证码
+model SmsVerification {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  purpose   String
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("sms_verifications")
+}
+
+/// 三方平台账号绑定
+model ThirdPartyBinding {
+  id           String    @id @default(cuid())
+  tenantId     String
+  userId       String
+  platform     String
+  openId       String
+  unionId      String?
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([platform, openId])
+  @@map("third_party_bindings")
+}
+
+/// 系统配置（开发者后台可配置的键值对）
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_configs")
+}
+
+/// API 调用日志（用量统计和计费分析）
+model ApiUsageLog {
+  id         String   @id @default(cuid())
+  tenantId   String?
+  userId     String?
+  module     String
+  action     String
+  cost       Float?
+  modelUsed  String?
+  tokensIn   Int?
+  tokensOut  Int?
+  duration   Int?
+  status     Int      @default(200)
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([module, createdAt])
+  @@map("api_usage_logs")
+}
+
+/// 在线会话（记录当前在线用户）
+model OnlineSession {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  userId      String
+  userType    String
+  tokenId     String
+  ip          String?
+  userAgent   String?
+  lastActive  DateTime @default(now())
+  loggedOutAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, lastActive])
+  @@map("online_sessions")
+}
+
+/// 平台套餐定义（开发者后台管理的定价方案）
+model PlatformPlan {
+  id                String    @id @default(cuid())
+  name              String
+  tier              String    // 'SMALL' | 'MEDIUM' | 'LARGE'
+  type              String    @default("FULL") // 'FULL' | 'MODULE'
+  modules           String?   // JSON: 包含的模块列表 ["wms","labor","contract"]
+  pricePerMonth     Float
+  maxUsers          Int       @default(5)
+  pricePerExtraUser Float     @default(0)
+  description       String?
+  isActive          Boolean   @default(true)
+  sortOrder         Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("platform_plans")
+}
+
+/// 发票记录
+model Invoice {
+  id          String    @id @default(cuid())
+  tenantId    String
+  paymentId   String?   // 关联支付记录
+  invoiceNo   String    @unique
+  title       String    // 发票抬头
+  taxId       String?   // 税号
+  amount      Float
+  status      String    @default("pending") // pending / issued / cancelled
+  fileUrl     String?   // PDF文件URL
+  issuedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+/// 第三方平台集成配置（开发者后台）
+model IntegrationConfig {
+  id          String    @id @default(cuid())
+  developerId String
+  platform    String    // 'dingtalk' | 'wechat_work' | 'feishu'
+  config      String    // JSON配置
+  isEnabled   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  developer   Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
+
+  @@unique([developerId, platform])
+  @@map("integration_configs")
+}
+
+/// API 密钥（用于外部系统接入）
+model ApiKey {
+  id          String    @id @default(cuid())
+  tenantId    String
+  name        String
+  keyPrefix   String    // 密钥前缀
+  keyHash     String    // 哈希后的密钥
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@map("api_keys")
+}
+
+/// 系统公告
+model Announcement {
+  id          String     @id @default(cuid())
+  title       String
+  content     String
+  type        String     @default("info") // info / warning / maintenance
+  isPublished Boolean    @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("announcements")
+}
+
+/// 长期登录凭证（30天有效）
+/// 用户登录成功后签发，用于在 JWT 过期后免密续期
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  userType  String   // "developer" | "user"
+  tenantId  String?  // 租户用户必填
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  @@index([userId, userType])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+// ========== 财务模块 ==========
+
+/// 费用大类
+model FinCategory {
+  id           String            @id @default(cuid())
+  tenantId     String
+  name         String            // 大类名称（材料费、车辆费用等）
+  sortOrder    Int               @default(0)
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  subCategories FinSubCategory[]
+  expenses     FinExpense[]
+  monthlySummaries FinMonthlySummary[]
+
+  @@unique([tenantId, name])
+  @@map("fin_categories")
+}
+
+/// 费用子类
+model FinSubCategory {
+  id         String      @id @default(cuid())
+  tenantId   String
+  categoryId String
+  name       String      // 子类名称（油费、过路费等）
+  sortOrder  Int         @default(0)
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  category   FinCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  expenses   FinExpense[]
+
+  @@map("fin_sub_categories")
+}
+
+/// 备用金账户
+model FinPettyCashAccount {
+  id             String                  @id @default(cuid())
+  tenantId       String
+  contractId     String?
+  departmentId   String?
+  holderName     String                  // 备用金领取人姓名
+  holderIdCard   String?                 // 领取人身份证号
+  initialAdvance Float                   @default(0) // 初始领取金额
+  isActive       Boolean                 @default(true)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  advances       FinPettyCashAdvance[]
+  expenses       FinExpense[]
+
+  @@map("fin_petty_cash_accounts")
+}
+
+/// 备用金领取记录
+model FinPettyCashAdvance {
+  id          String              @id @default(cuid())
+  tenantId    String
+  accountId   String
+  amount      Float               // 本次领取金额
+  advanceDate String              // 领取日期
+  issuedBy    String?             // 发放人（财务人员）
+  remark      String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  account     FinPettyCashAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("fin_petty_cash_advances")
+}
+
+/// 费用记录（核心表）
+model FinExpense {
+  id                   String               @id @default(cuid())
+  tenantId             String
+  source               String               // 'project_department' or 'company_finance'
+  enteredBy            String               // 录入人ID或姓名
+  contractId           String?
+  departmentId         String?
+  handler              String               // 经办人姓名
+  categoryId           String
+  subCategoryId        String?
+  amount               Float
+  paymentMethod        String               // 'petty_cash' or 'company_direct'
+  pettyCashAccountId   String?
+  payer                String               // 支付人
+  expenseDate          String               // 报销/发生日期
+  detail               String?              // 费用描述
+  vehiclePlate         String?              // 关联车牌号
+  receiptPath          String?              // 凭证/发票图片路径
+  remark               String?
+  status               String               @default("pending") // pending/approved/rejected
+  reviewedBy           String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  category             FinCategory          @relation(fields: [categoryId], references: [id])
+  subCategory          FinSubCategory?      @relation(fields: [subCategoryId], references: [id])
+  pettyCashAccount     FinPettyCashAccount? @relation(fields: [pettyCashAccountId], references: [id])
+
+  @@map("fin_expenses")
+}
+
+/// 月度汇总快照
+model FinMonthlySummary {
+  id           String      @id @default(cuid())
+  tenantId     String
+  contractId   String?
+  departmentId String?
+  year         Int
+  month        Int
+  categoryId   String
+  totalAmount  Float       @default(0)
+  expenseCount Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  category     FinCategory @relation(fields: [categoryId], references: [id])
+
+  @@unique([tenantId, contractId, departmentId, year, month, categoryId])
+  @@map("fin_monthly_summaries")
+}
+
+/// 台账导入记录
+model FinImportLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  fileName    String
+  totalRows   Int      @default(0)
+  successRows Int      @default(0)
+  errorRows   Int      @default(0)
+  errorDetail String?
+  importedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@map("fin_import_logs")
+}
+
+/// 发票记录（财务模块，与订阅发票 Invoice 不同）
+model FinInvoice {
+  id          String       @id @default(cuid())
+  tenantId    String
+  contractId  String?
+  invoiceNo   String       // 发票号码
+  invoiceType String       @default("vat_special") // vat_special/vat_normal/general/other
+  invoiceDate String       // 开票日期
+  amount      Float        // 发票金额（含税）
+  taxRate     Float        @default(0) // 税率
+  taxAmount   Float        @default(0) // 税额
+  buyerName   String?      // 购买方（甲方）
+  description String?      // 发票项目/备注
+  imagePath   String?      // 发票图片路径
+  status      String       @default("issued") // draft/issued/void
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  receipts    FinReceipt[] // 关联的收款记录
+
+  @@map("fin_invoices")
+}
+
+/// 收款/进款记录
+model FinReceipt {
+  id            String     @id @default(cuid())
+  tenantId      String
+  contractId    String     // 关联合同（必填）
+  invoiceId     String?    // 关联发票（可选）
+  amount        Float      // 本次进款金额
+  receiptDate   String     // 收款日期
+  paymentMethod String     @default("bank_transfer") // bank_transfer/cash/check/other
+  payerName     String?    // 付款方
+  bankAccount   String?    // 收款账户
+  transactionNo String?    // 银行流水号
+  enteredBy     String     // 录入人
+  remark        String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  invoice       FinInvoice? @relation(fields: [invoiceId], references: [id])
+
+  @@map("fin_receipts")
+}

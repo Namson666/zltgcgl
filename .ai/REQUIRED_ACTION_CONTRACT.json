@@ -1,0 +1,47 @@
+{
+  "schema_version": "2.0",
+  "task_id": "zltgcgl-refactor-prep",
+  "mode": "Enhanced",
+  "stage": "spec",
+  "governance_mode": "EnforcedDelivery",
+  "required_skills": [
+    "superpowers-pro-startup",
+    "mandatory-harness-runtime",
+    "intent-to-skill-router",
+    "codex-controller-harness",
+    "enforced-harness-core",
+    "task-size-classifier",
+    "required-action-contract",
+    "brainstorming",
+    "writing-plans",
+    "verification-honesty-gate",
+    "completion-contract-gate"
+  ],
+  "required_tools": [
+    "git",
+    "gh read-only repository check",
+    "local package/build/test discovery",
+    "GitHub push/PR only after explicit safe gate"
+  ],
+  "required_files": [
+    ".ai/HARNESS_SESSION.json",
+    ".ai/REQUIRED_ACTION_CONTRACT.json",
+    ".ai/SKILL_INVOCATION_STATUS.json",
+    ".ai/TOOL_INVOCATION_STATUS.json",
+    ".ai/PROJECT_STATUS.json",
+    ".ai/SPEC_STATUS.json",
+    ".ai/TEST_STATUS.json",
+    ".ai/session/HANDOFF.md",
+    "README.md Superpowers Pro Handoff cursor"
+  ],
+  "required_verification": [
+    "git status and remote review",
+    "new GitHub repository existence/readiness check",
+    "frontend/backend package script discovery",
+    "baseline local verification plan before implementation"
+  ],
+  "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
+  "allow_skip": false,
+  "notes": "No business code changes are allowed until the refactor design is approved and implementation plan is written.",
+  "updated_at": "2026-06-22T09:06:07Z"
+}

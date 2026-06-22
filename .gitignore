@@ -1,0 +1,59 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物
+dist/
+build/
+
+# 环境变量
+.env
+.env.local
+.env.production
+
+# 上传文件
+uploads/*
+!uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+.claude/settings.local.json
+.codegraph/
+.worktrees/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+npm-debug.log*
+.ai/workers/*.log
+.ai/workers/*.patch
+
+# Prisma
+prisma/migrations/**/migration_lock.toml
+
+# Docker
+docker-compose.override.yml
+
+# 临时文件
+*.tmp
+*.bak
+
+# 后端
+backend/data/
+backend/dev.db
+backend/*.db
+backend/prisma/*.db
+backend/**/*.db-journal
+backend/**/*.db-shm
+backend/**/*.db-wal
+*.sqlite
+*.sqlite3
+
+# 前端类型缓存
+*.tsbuildinfo
