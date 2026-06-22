@@ -1,5 +1,5 @@
 {
-  "status": "inventory_alert_removed_labor_exports_green_pending_push",
+  "status": "inventory_alert_removed_labor_exports_green_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -528,5 +528,5 @@
     "Labor report export still writes the existing fixed workbook sheets; attendance/social preview is supported but adding those sheets to workbook export remains a non-blocking follow-up."
   ],
   "notes": "Inventory alert feature removed and labor export/report dead paths fixed. Real Chrome now passes 6 tests including labor salary/payment/report downloads, supplier/work-team CRUD, and full enterprise/developer route matrices. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining page and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-22T15:41:00Z"
+  "updated_at": "2026-06-22T15:46:00Z"
 }

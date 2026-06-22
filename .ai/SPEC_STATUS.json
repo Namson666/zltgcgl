@@ -1,9 +1,9 @@
 {
-  "stage": "S7_inventory_alert_removed_labor_exports_green_pending_push",
+  "stage": "S7_inventory_alert_removed_labor_exports_green_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "Inventory alert / 库存预警 has been removed per user request. Labor salary/payment/report export real downloads are fixed and verified. Real Chrome matrix now passes 6 tests including supplier/work-team CRUD, labor exports, enterprise route matrix without /wms/alerts, and developer route matrix. Deep CRUD/upload/download for every remaining page and real third-party face gateway credentials remain Yellow.",
-  "updated_at": "2026-06-22T15:41:00Z"
+  "updated_at": "2026-06-22T15:46:00Z"
 }

@@ -4,11 +4,11 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S7 inventory alert removed + labor exports green pending push
-- Current task: 库存预警已按新需求移除，劳资工资/发放/报表导出真实下载已修复；随后提交推送并继续补齐剩余页面深度 CRUD/上传下载验收
+- Current phase: S7 inventory alert removed + labor exports green pushed
+- Current task: 库存预警已按新需求移除，劳资工资/发放/报表导出真实下载已修复并推送；随后继续补齐剩余页面深度 CRUD/上传下载验收
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、库存预警移除、劳资导出修复均已通过真实 Chrome
-- In progress: 准备提交推送“删除库存预警 + 劳资导出修复”切片
-- Next action: 推送后继续把每个页面的 CRUD/上传下载/导入导出深度验收补齐，并配置真实第三方人脸识别网关/密钥
+- In progress: 准备进入下一轮剩余页面深度 CRUD/上传下载验收
+- Next action: 继续把每个页面的 CRUD/上传下载/导入导出深度验收补齐，并配置真实第三方人脸识别网关/密钥
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
 - Do not repeat: 不要在未确认重构设计前修改业务代码；不要把 Build Green 当 Product Green
 - Must read:
@@ -27,10 +27,11 @@
 - Claude worker evidence: latest `.ai/workers/20260622T150714Z-audit_worker.result.md` returned PASS after fixing the WorkTeam search field blocker found by `.ai/workers/20260622T150334Z-audit_worker.result.md`.
 - Claude worker evidence: latest `.ai/workers/20260622T153551Z-audit_worker.result.md` returned PASS for inventory alert removal and labor export fixes.
 - code-review-graph evidence: latest `code-review-graph build --skip-flows && code-review-graph detect-changes` ran; graph built 135 files / 1479 nodes / 16333 edges; risk score 0.50 because function-level gaps remain while changed product paths are covered by real Chrome.
-- Last pushed implementation commit: `ebf731c feat: add supplier and work team CRUD coverage`
+- Previous pushed implementation commit: `ebf731c feat: add supplier and work team CRUD coverage`
 - Safe rollback point: pushed commit `f171bc2 chore: mark full route matrix pushed`
 - Browser smoke evidence: `docs/smoke-evidence/playwright-results.json`, legacy screenshots, `docs/smoke-evidence/full-route-*.png`, `docs/smoke-evidence/供应商班组CRUD.png`, and `docs/smoke-evidence/劳资工资发放导出.png`; latest real Chrome smoke passed 6 tests
-- Updated at: 2026-06-22T15:41:00Z
+- Last pushed implementation commit: `e7c0772 feat: remove inventory alerts and fix labor exports`
+- Updated at: 2026-06-22T15:46:00Z
 
 ## 项目概览
 
