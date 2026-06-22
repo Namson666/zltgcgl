@@ -1,5 +1,5 @@
 {
-  "status": "supplier_workteam_crud_green_pending_push",
+  "status": "supplier_workteam_crud_green_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -484,5 +484,5 @@
     "Supplier/work-team CRUD has real Chrome create/edit/delete/search coverage; remaining admin/master-data pages still need equivalent deep CRUD where business rules support deletion."
   ],
   "notes": "Supplier/work-team CRUD slice completed after full route matrix. Real Chrome now covers supplier create/edit/delete and work-team create/search-by-leader/edit/delete. This improves Browser Regression Green but is not full Product Green; deep CRUD/upload/download per page and real third-party face gateway configuration remain Yellow.",
-  "updated_at": "2026-06-22T15:10:00Z"
+  "updated_at": "2026-06-22T15:13:00Z"
 }
