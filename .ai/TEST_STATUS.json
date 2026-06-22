@@ -1,5 +1,5 @@
 {
-  "status": "finance_petty_cash_voucher_browser_verified_pending_push",
+  "status": "finance_petty_cash_voucher_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
