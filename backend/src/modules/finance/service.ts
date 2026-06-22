@@ -212,12 +212,37 @@ export async function listExpenses(params: FinanceListParams) {
     prisma.finExpense.count({ where }),
   ]);
 
-  return { items, total, page, pageSize };
+  const contractIdsToHydrate = [...new Set(items.map(item => item.contractId).filter(Boolean))] as string[];
+  const departmentIdsToHydrate = [...new Set(items.map(item => item.departmentId).filter(Boolean))] as string[];
+  const [contracts, departments] = await Promise.all([
+    contractIdsToHydrate.length
+      ? prisma.contract.findMany({
+        where: { tenantId, id: { in: contractIdsToHydrate } },
+        select: { id: true, name: true, code: true },
+      })
+      : Promise.resolve([]),
+    departmentIdsToHydrate.length
+      ? prisma.department.findMany({
+        where: { tenantId, id: { in: departmentIdsToHydrate } },
+        select: { id: true, name: true, code: true },
+      })
+      : Promise.resolve([]),
+  ]);
+  const contractById = new Map(contracts.map(contract => [contract.id, contract]));
+  const departmentById = new Map(departments.map(department => [department.id, department]));
+  const hydratedItems = items.map(item => ({
+    ...item,
+    contract: item.contractId ? contractById.get(item.contractId) || null : null,
+    department: item.departmentId ? departmentById.get(item.departmentId) || null : null,
+    receiptUrl: item.receiptPath || null,
+  }));
+
+  return { items: hydratedItems, total, page, pageSize };
 }
 
-export async function getExpenseById(id: string) {
-  return prisma.finExpense.findUnique({
-    where: { id },
+export async function getExpenseById(tenantId: string, id: string) {
+  return prisma.finExpense.findFirst({
+    where: { id, tenantId },
     include: {
       category: true,
       subCategory: true,
@@ -260,8 +285,8 @@ export async function createExpense(data: CreateExpenseData) {
   });
 }
 
-export async function updateExpense(id: string, data: Partial<CreateExpenseData>) {
-  const expense = await prisma.finExpense.findUnique({ where: { id } });
+export async function updateExpense(tenantId: string, id: string, data: Partial<CreateExpenseData>) {
+  const expense = await prisma.finExpense.findFirst({ where: { id, tenantId } });
   if (!expense) {
     throw { status: 404, code: 'EXPENSE_NOT_FOUND', message: '费用记录不存在' };
   }
@@ -301,8 +326,8 @@ export async function updateExpense(id: string, data: Partial<CreateExpenseData>
   });
 }
 
-export async function deleteExpense(id: string) {
-  const expense = await prisma.finExpense.findUnique({ where: { id } });
+export async function deleteExpense(tenantId: string, id: string) {
+  const expense = await prisma.finExpense.findFirst({ where: { id, tenantId } });
   if (!expense) {
     throw { status: 404, code: 'EXPENSE_NOT_FOUND', message: '费用记录不存在' };
   }

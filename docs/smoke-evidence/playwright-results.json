@@ -108,12 +108,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 18423,
+                      "duration": 19185,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T16:40:25.315Z",
+                      "startTime": "2026-06-22T17:18:46.125Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -142,12 +142,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2277,
+                      "duration": 2302,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T16:40:44.161Z",
+                      "startTime": "2026-06-22T17:19:05.721Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -176,12 +176,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2879,
+                      "duration": 2853,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T16:40:46.444Z",
+                      "startTime": "2026-06-22T17:19:08.029Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -210,12 +210,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5089,
+                      "duration": 5006,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T16:40:49.329Z",
+                      "startTime": "2026-06-22T17:19:10.888Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -244,12 +244,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 12317,
+                      "duration": 12200,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T16:40:54.424Z",
+                      "startTime": "2026-06-22T17:19:15.899Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -278,12 +278,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2964,
+                      "duration": 2830,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T16:41:06.747Z",
+                      "startTime": "2026-06-22T17:19:28.105Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -294,6 +294,40 @@
               "id": "5a831c70b3774ee84c9d-5e144c39020d35cac64c",
               "file": "browser-smoke.spec.ts",
               "line": 778,
+              "column": 3
+            },
+            {
+              "title": "enterprise user can complete finance petty cash and expense voucher CRUD",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3505,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-22T17:19:30.941Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-35cab1c74bf8c9d124c2",
+              "file": "browser-smoke.spec.ts",
+              "line": 833,
               "column": 3
             },
             {
@@ -312,12 +346,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 32487,
+                      "duration": 32646,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T16:41:09.718Z",
+                      "startTime": "2026-06-22T17:19:34.452Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -327,7 +361,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-e982e543af9213ddde17",
               "file": "browser-smoke.spec.ts",
-              "line": 833,
+              "line": 928,
               "column": 3
             },
             {
@@ -346,12 +380,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 15929,
+                      "duration": 16109,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T16:41:42.211Z",
+                      "startTime": "2026-06-22T17:20:07.104Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -361,7 +395,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-d05a0faf5f199fe198ee",
               "file": "browser-smoke.spec.ts",
-              "line": 840,
+              "line": 935,
               "column": 3
             },
             {
@@ -380,12 +414,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3075,
+                      "duration": 3011,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T16:41:58.147Z",
+                      "startTime": "2026-06-22T17:20:23.219Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -395,7 +429,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-ebfd38f616fe9a7384f8",
               "file": "browser-smoke.spec.ts",
-              "line": 847,
+              "line": 942,
               "column": 3
             }
           ]
@@ -405,9 +439,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-06-22T16:40:22.077Z",
-    "duration": 99346.612,
-    "expected": 9,
+    "startTime": "2026-06-22T17:18:42.883Z",
+    "duration": 103565.48400000001,
+    "expected": 10,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

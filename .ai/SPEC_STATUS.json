@@ -1,9 +1,9 @@
 {
-  "stage": "S9_wms_main_flow_verified_committed",
+  "stage": "S10_finance_voucher_verified_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "Inventory alert / 库存预警 remains removed from active WMS product requirements and docs. Basic admin roles/users/departments deep CRUD/state-change flow is covered by real Chrome. WMS main product chain is now covered by real Chrome: inbound, outbound, outbound PDF download, return, transfer, transfer PDF download, and work-team ledger search. Backend now preserves WMS data associations by resolving manual inbound project names to SubProject and snapshots workTeamName for ledger display/export. Deep CRUD/upload/download for every remaining historical page, production DNS/logo polish, and real third-party face gateway credentials remain Yellow.",
-  "updated_at": "2026-06-22T16:45:00Z"
+  "updated_at": "2026-06-22T17:16:00Z"
 }

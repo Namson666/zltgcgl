@@ -1,13 +1,25 @@
 {
-  "status": "wms_main_flow_browser_verified_pushed",
+  "status": "finance_petty_cash_voucher_browser_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_exports_inventory_alert_removed_wms_main_flow",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_exports_inventory_alert_removed_wms_main_flow_finance_voucher",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "finance_petty_cash_voucher_flow",
+      "command": "bash scripts/verify.sh; bash scripts/browser-smoke.sh; Claude audit; code-review-graph",
+      "status": "verified",
+      "result": "财务备用金+费用凭证切片已通过真实 Chrome：新建备用金账户、记录领取、公司财务凭证上传、后端 receiptPath 校验、费用列表搜索、详情、编辑、删除。后端补 multipart 上传、receiptPath 安全校验、费用列表合同/项目部补齐、费用写入权限、更新/删除 tenantId 隔离。最终 Chrome smoke 10/10，Claude PASS，code-review-graph risk 0.55。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/财务备用金费用CRUD上传.png",
+        ".ai/workers/20260622T172026Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "wms_main_flow",
       "command": "real Chrome browser smoke + backend implementation review",

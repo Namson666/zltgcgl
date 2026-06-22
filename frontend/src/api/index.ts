@@ -1472,7 +1472,9 @@ export const financeApi = {
 
   /** 创建费用记录 */
   createExpense: (data: any) =>
-    http.post('/finance/expenses', data),
+    data instanceof FormData
+      ? http.upload('/finance/expenses', data)
+      : http.post('/finance/expenses', data),
 
   /** 更新费用记录 */
   updateExpense: (id: string, data: any) =>

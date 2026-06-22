@@ -5,10 +5,14 @@
 // routes.ts 只负责 HTTP 请求/响应
 
 import { Router, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
+import multer from 'multer';
 import { authenticate, requireUser } from '../../common/middleware/auth';
 import { requirePermission } from '../../common/middleware/permission';
 import { AuthenticatedRequest, ApiResponse, PaginatedResponse } from '../../common/types';
 import { createLog } from '../../common/services/log.service';
+import { prisma } from '../../common/utils/prisma';
 import * as finance from './service';
 
 // ============================================
@@ -16,6 +20,29 @@ import * as finance from './service';
 // ============================================
 
 const router = Router();
+
+const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `finance-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('INVALID_FILE_TYPE'));
+  },
+});
 
 // ============================================
 // 辅助函数
@@ -47,6 +74,45 @@ function wrapHandler(handler: (req: AuthenticatedRequest, res: Response) => Prom
   };
 }
 
+const requireAnyPermission = (permissionFields: string[]) => {
+  return async (req: AuthenticatedRequest, res: Response, next: (err?: any) => void): Promise<void> => {
+    try {
+      if (req.user!.type === 'developer' || req.user!.role === 'admin' || req.user!.role === 'boss') {
+        next();
+        return;
+      }
+      const user = await prisma.user.findUnique({
+        where: { id: req.user!.id },
+        select: { role: { select: { permissions: true } } },
+      });
+      const permission = user?.role?.permissions?.[0] as Record<string, any> | undefined;
+      const hasPermission = !!permission && permissionFields.some(field => permission[field] === true);
+      if (!hasPermission) {
+        res.status(403).json({
+          success: false,
+          error: 'PERMISSION_DENIED',
+          message: `权限不足，您没有执行此操作的权限（需要任一：${permissionFields.join(', ')}）`,
+        } as unknown as ApiResponse);
+        return;
+      }
+      next();
+    } catch (error: any) {
+      console.error('权限验证出错:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_ERROR',
+        message: '权限验证过程中发生错误',
+      } as unknown as ApiResponse);
+    }
+  };
+};
+
+const requireExpenseWritePermission = requireAnyPermission([
+  'canFinanceEntryDept',
+  'canFinanceEntryFinance',
+  'canFinanceApprove',
+]);
+
 function asPaginated(data: any, total: number, page: number, pageSize: number) {
   return {
     success: true,
@@ -62,6 +128,27 @@ function asPaginated(data: any, total: number, page: number, pageSize: number) {
 
 function asApi(data: any) {
   return { success: true, data } as unknown as ApiResponse;
+}
+
+function parseExpenseBody(req: AuthenticatedRequest) {
+  const raw = (req.body as any)?.data;
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      throw { status: 400, code: 'INVALID_FORM_DATA', message: '费用表单数据格式错误' };
+    }
+  }
+  return req.body || {};
+}
+
+function normalizeReceiptPath(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  const receiptPath = value.trim();
+  if (!receiptPath.startsWith('/uploads/') || receiptPath.includes('..') || receiptPath.includes('\\')) {
+    throw { status: 400, code: 'INVALID_RECEIPT_PATH', message: '凭证路径不合法' };
+  }
+  return receiptPath;
 }
 
 // ============================================
@@ -239,36 +326,54 @@ expenseRouter.get('/', wrapHandler(async (req, res) => {
 
 // 获取单条费用详情
 expenseRouter.get('/:id', wrapHandler(async (req, res) => {
-  const expense = await finance.getExpenseById(req.params.id);
+  const tenantId = getTenantId(req);
+  const expense = await finance.getExpenseById(tenantId, req.params.id);
   if (!expense) {
     throw { status: 404, code: 'EXPENSE_NOT_FOUND', message: '费用记录不存在' };
   }
   res.json(asApi(expense));
 }));
 
+function expenseUpload(req: AuthenticatedRequest, res: Response, next: (err?: any) => void) {
+  upload.single('file')(req, res, (error: any) => {
+    if (!error) {
+      next();
+      return;
+    }
+    const isSizeLimit = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE';
+    res.status(400).json({
+      success: false,
+      error: isSizeLimit ? 'FILE_TOO_LARGE' : 'INVALID_FILE_TYPE',
+      message: isSizeLimit ? '凭证文件不能超过 20MB' : '仅支持图片或 PDF 凭证文件',
+    } as unknown as ApiResponse);
+  });
+}
+
 // 创建费用记录
-expenseRouter.post('/', wrapHandler(async (req, res) => {
+expenseRouter.post('/', requireExpenseWritePermission, expenseUpload, wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
   const enteredBy = req.user?.id ?? '';
+  const body = parseExpenseBody(req);
+  const receiptPath = req.file ? `/uploads/${req.file.filename}` : normalizeReceiptPath(body.receiptPath);
 
   const expense = await finance.createExpense({
     tenantId,
-    source: req.body.source || 'project_department',
+    source: body.source || 'project_department',
     enteredBy,
-    contractId: req.body.contractId,
-    departmentId: req.body.departmentId,
-    handler: req.body.handler,
-    categoryId: req.body.categoryId,
-    subCategoryId: req.body.subCategoryId,
-    amount: req.body.amount,
-    paymentMethod: req.body.paymentMethod,
-    pettyCashAccountId: req.body.pettyCashAccountId,
-    payer: req.body.payer,
-    expenseDate: req.body.expenseDate,
-    detail: req.body.detail,
-    vehiclePlate: req.body.vehiclePlate,
-    receiptPath: req.body.receiptPath,
-    remark: req.body.remark,
+    contractId: body.contractId,
+    departmentId: body.departmentId,
+    handler: body.handler,
+    categoryId: body.categoryId,
+    subCategoryId: body.subCategoryId,
+    amount: body.amount,
+    paymentMethod: body.paymentMethod,
+    pettyCashAccountId: body.pettyCashAccountId,
+    payer: body.payer,
+    expenseDate: body.expenseDate,
+    detail: body.detail,
+    vehiclePlate: body.vehiclePlate,
+    receiptPath,
+    remark: body.remark,
   });
 
   await createLog({
@@ -285,9 +390,9 @@ expenseRouter.post('/', wrapHandler(async (req, res) => {
 }));
 
 // 更新费用记录
-expenseRouter.put('/:id', wrapHandler(async (req, res) => {
+expenseRouter.put('/:id', requireExpenseWritePermission, wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
-  const expense = await finance.updateExpense(req.params.id, {
+  const expense = await finance.updateExpense(tenantId, req.params.id, {
     contractId: req.body.contractId,
     departmentId: req.body.departmentId,
     handler: req.body.handler,
@@ -318,9 +423,9 @@ expenseRouter.put('/:id', wrapHandler(async (req, res) => {
 }));
 
 // 删除费用记录
-expenseRouter.delete('/:id', wrapHandler(async (req, res) => {
+expenseRouter.delete('/:id', requireExpenseWritePermission, wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
-  await finance.deleteExpense(req.params.id);
+  await finance.deleteExpense(tenantId, req.params.id);
   await createLog({
     tenantId,
     userId: getEffectiveUserId(req),

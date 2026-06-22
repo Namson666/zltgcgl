@@ -31,9 +31,9 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_wms_main_flow_pushed",
-  "updated_at": "2026-06-22T16:45:00Z",
-  "push_status": "wms_main_flow_pushed",
+  "status": "yellow_finance_voucher_verified_pending_push",
+  "updated_at": "2026-06-22T17:16:00Z",
+  "push_status": "finance_voucher_verified_pending_push",
   "last_pushed_commit": "current HEAD",
   "current_commit": "current HEAD",
   "notes": [
@@ -51,6 +51,7 @@
     "2026-06-22: Inventory alert feature removed per user request and labor export/report downloads fixed; verify passed, Chrome 6 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed at e7c0772.",
     "2026-06-22: Module entitlement and independent portal login real Chrome coverage added; verify passed, Chrome 7 tests passed, Claude audit PASS, code-review-graph risk 0.55; pushed at b122ebc.",
     "2026-06-22: User reconfirmed inventory alert must be deleted. Active WMS product docs were refreshed to remove remaining inventory alert/low-stock requirement text. Basic admin roles/users/departments deep CRUD/state-change coverage added; verify passed, Chrome 8 tests passed, Claude audit PASS, code-review-graph risk 0.55; implementation committed at 5fe8382.",
-    "2026-06-22: WMS main chain verified locally in real Chrome: inbound, outbound, outbound PDF download, return, transfer, transfer PDF download, and work-team ledger search. Backend fixed manual inbound project-to-subproject association, return item schema mismatch, work-team name snapshot, and ledger/export net quantity consistency. verify passed, Chrome 9 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed to public main."
+    "2026-06-22: WMS main chain verified locally in real Chrome: inbound, outbound, outbound PDF download, return, transfer, transfer PDF download, and work-team ledger search. Backend fixed manual inbound project-to-subproject association, return item schema mismatch, work-team name snapshot, and ledger/export net quantity consistency. verify passed, Chrome 9 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed to public main.",
+    "2026-06-22: Finance petty-cash/voucher slice verified locally in real Chrome: petty cash account, advance record, finance voucher upload, receiptPath assertion, expense detail/edit/delete. Backend added multipart voucher upload, receiptPath safety, contract/department hydration, expense write permission, and tenant-scoped update/delete. verify passed, Chrome 10 tests passed, Claude audit PASS, code-review-graph risk 0.55; pending commit/push."
   ]
 }

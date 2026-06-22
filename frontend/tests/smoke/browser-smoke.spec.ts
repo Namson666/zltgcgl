@@ -830,6 +830,101 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can complete finance petty cash and expense voucher CRUD', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const stamp = Date.now();
+    const holderName = `浏览器备用金-${stamp}`;
+    const issuedBy = `浏览器财务-${stamp}`;
+    const handler = `浏览器经办-${stamp}`;
+    const detail = `真实浏览器财务凭证-${stamp}`;
+    const editedDetail = `${detail}-已编辑`;
+
+    await page.goto('/finance/petty-cash');
+    await expect(page.getByRole('heading', { name: '备用金管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新建账户' }).first().click();
+    await page.getByPlaceholder('请输入持卡人姓名').fill(holderName);
+    await page.getByPlaceholder('请输入身份证号').fill(`110101199002${String(stamp).slice(-6)}`);
+    await page.locator('select').filter({ hasText: '请选择合同' }).selectOption({ label: 'XX市政道路改造工程' });
+    await page.locator('select').filter({ hasText: '请选择项目部' }).selectOption({ label: '第一项目部' });
+    await page.getByPlaceholder('请输入初始预支金额').fill('1000');
+    await page.getByRole('button', { name: '确认创建' }).click();
+    await expect(page.getByText('备用金账户创建成功')).toBeVisible();
+    await expect(page.getByText(holderName)).toBeVisible();
+
+    await page.getByText(holderName).click();
+    await expect(page.getByText('当前余额').first()).toBeVisible();
+    await page.getByRole('button', { name: '记录领取' }).click();
+    await page.getByPlaceholder('请输入领取金额').fill('250');
+    await page.getByPlaceholder('请输入发放人姓名').fill(issuedBy);
+    await page.getByPlaceholder('请输入备注信息（选填）').fill('真实浏览器备用金领取');
+    await page.getByRole('button', { name: '确认领取' }).click();
+    await expect(page.getByText('领取记录已保存')).toBeVisible();
+    await expect(page.locator('tr', { hasText: issuedBy })).toBeVisible();
+
+    await page.goto('/finance/finance-entry');
+    await expect(page.getByRole('heading', { name: '公司财务凭证' })).toBeVisible();
+    await page.locator('select').filter({ hasText: '请选择合同' }).selectOption({ label: 'XX市政道路改造工程' });
+    await page.locator('select').filter({ hasText: '请选择项目部' }).selectOption({ label: '第一项目部' });
+    await page.getByPlaceholder('请输入经办人姓名').fill(handler);
+    await page.locator('select').filter({ hasText: '请选择类别' }).selectOption({ label: '材料费' });
+    await page.getByPlaceholder('0.00').fill('123.45');
+    await page.getByPlaceholder('请详细描述费用用途和内容...').fill(detail);
+    await page.getByPlaceholder('公司付款方名称或支付人').fill('浏览器测试付款方');
+    await page.locator('input[type="file"]').setInputFiles(path.resolve(process.cwd(), 'tests/fixtures/checkin-face.svg'));
+    await page.getByRole('button', { name: '录入财务凭证' }).click();
+    await expect(page.getByText('财务凭证录入成功')).toBeVisible();
+
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const expenseResponse = await page.request.get(`/api/finance/expenses?keyword=${encodeURIComponent(detail)}&pageSize=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(expenseResponse.status()).toBe(200);
+    const expenseBody = await readJson(expenseResponse);
+    const createdExpense = (expenseBody?.data || []).find((item: any) => item.detail === detail);
+    expect(createdExpense?.receiptPath).toMatch(/^\/uploads\/finance-/);
+
+    await page.goto('/finance/expenses');
+    await expect(page.getByRole('heading', { name: '费用列表' })).toBeVisible();
+    await page.getByPlaceholder('经办人/明细...').fill(detail);
+    const row = page.locator('tr', { hasText: handler });
+    await expect(row).toBeVisible();
+    await expect(row).toContainText('XX市政道路改造工程');
+    await expect(row).toContainText('第一项目部');
+    await row.click();
+    await expect(page.getByRole('heading', { name: '费用详情' })).toBeVisible();
+    await expect(page.getByText(detail)).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await row.locator('button[title="编辑"]').click();
+    const editDialog = page.locator('.fixed').filter({ hasText: '编辑费用' }).last();
+    await expect(editDialog.getByText('编辑费用')).toBeVisible();
+    await editDialog.locator('input[type="number"]').fill('234.56');
+    await editDialog.locator('textarea').fill(editedDetail);
+    await editDialog.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('修改成功')).toBeVisible();
+    await page.getByPlaceholder('经办人/明细...').fill(editedDetail);
+    const editedRow = page.locator('tr', { hasText: handler });
+    await expect(editedRow).toBeVisible();
+    const editedExpenseResponse = await page.request.get(`/api/finance/expenses?keyword=${encodeURIComponent(editedDetail)}&pageSize=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(editedExpenseResponse.status()).toBe(200);
+    const editedExpenseBody = await readJson(editedExpenseResponse);
+    expect((editedExpenseBody?.data || []).some((item: any) => item.detail === editedDetail && Number(item.amount) === 234.56)).toBe(true);
+
+    await editedRow.locator('button[title="删除"]').click();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('删除成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: handler })).toHaveCount(0);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/财务备用金费用CRUD上传.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can open every enabled business route', async ({ page }) => {
     await loginEnterprise(page);
     for (const [label, route] of enterpriseRouteMatrix) {
