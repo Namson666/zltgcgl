@@ -4,11 +4,11 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S9 WMS main chain verified committed pending push
+- Current phase: S9 WMS main chain pushed
 - Current task: 物资主链路已补真实 Chrome 深度验收：入库、出库、出库单下载、退库、调拨、调拨单下载、班组台账搜索；后端同步修复手动入库项目关联、退库字段、班组名称快照、台账导出口径
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、库存预警移除、劳资导出修复、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路均已通过真实 Chrome
-- In progress: 准备推送 WMS 主链路验收切片
-- Next action: 推送后继续把每个剩余页面的 CRUD/上传下载/导入导出深度验收补齐，并配置真实第三方人脸识别网关/密钥
+- In progress: 准备进入下一轮剩余业务页面深度 CRUD/上传下载验收
+- Next action: 继续把每个剩余页面的 CRUD/上传下载/导入导出深度验收补齐，并配置真实第三方人脸识别网关/密钥
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
 - Do not repeat: 不要在未确认重构设计前修改业务代码；不要把 Build Green 当 Product Green
 - Must read:
@@ -36,7 +36,7 @@
 - Previous pushed implementation commit: `e7c0772 feat: remove inventory alerts and fix labor exports`
 - Last pushed implementation commit: `b122ebc test: cover module entitlements and portal login`
 - Latest implementation commit: `5fe8382 test: cover admin crud and remove inventory alert docs`
-- Latest implementation commit: `current HEAD test: cover wms main inventory flow`
+- Latest implementation commit: current HEAD `test: cover wms main inventory flow`
 - Updated at: 2026-06-22T16:45:00Z
 
 ## 项目概览
