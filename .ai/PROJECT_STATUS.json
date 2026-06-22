@@ -20,9 +20,9 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "face_provider_gateway_and_audit_reduction_pending_push",
+    "push_status": "face_provider_gateway_and_audit_reduction_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "last pushed: 79b1192 chore: mark phase4 hardening pushed; current face provider gateway and audit-reduction changes pending commit/push"
+    "pushed_commit": "30b3a9a feat: add face recognition gateway provider"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -31,14 +31,15 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_face_provider_gateway_and_audit_reduction_verified_pending_push",
-  "updated_at": "2026-06-22T14:34:00Z",
-  "push_status": "face_provider_gateway_and_audit_reduction_pending_push",
-  "last_pushed_commit": "8bb864e",
-  "current_commit": "79b1192+working-tree-face-provider-gateway-audit-reduction",
+  "status": "yellow_face_provider_gateway_and_audit_reduction_pushed",
+  "updated_at": "2026-06-22T14:38:00Z",
+  "push_status": "face_provider_gateway_and_audit_reduction_pushed",
+  "last_pushed_commit": "30b3a9a",
+  "current_commit": "30b3a9a",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
-    "2026-06-22: npm audit fix applied to backend/frontend; frontend clear, backend still Yellow for xlsx no-fix high and uuid breaking-force moderate; verify and Chrome smoke remain green."
+    "2026-06-22: npm audit fix applied to backend/frontend; frontend clear, backend still Yellow for xlsx no-fix high and uuid breaking-force moderate; verify and Chrome smoke remain green.",
+    "2026-06-22: Face provider gateway and audit reduction pushed at 30b3a9a."
   ]
 }

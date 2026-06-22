@@ -382,5 +382,5 @@
     "Backend uuid moderate remains through exceljs/node-cron; npm audit fix --force would introduce breaking uuid@14 and needs separate compatibility work."
   ],
   "notes": "Face provider gateway and dependency-audit reduction completed. Frontend audit is clear; backend still Yellow because xlsx has no fix and uuid force upgrade is breaking. Verify, Chrome smoke, Claude audit, and code-review-graph passed after changes.",
-  "updated_at": "2026-06-22T14:34:00Z"
+  "updated_at": "2026-06-22T14:38:00Z"
 }
