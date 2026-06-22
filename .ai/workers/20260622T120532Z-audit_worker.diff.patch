@@ -1,0 +1,260 @@
+diff --git a/.ai/SPEC_STATUS.json b/.ai/SPEC_STATUS.json
+index b9f0127..f5e639a 100644
+--- a/.ai/SPEC_STATUS.json
++++ b/.ai/SPEC_STATUS.json
+@@ -1,9 +1,9 @@
+ {
+-  "stage": "S3_phase2_tenant_portal_local_verification",
++  "stage": "S3_browser_smoke_harness_green",
+   "spec_frozen": true,
+   "design_approved_by_user": true,
+   "architecture_contract_present": true,
+   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
+-  "notes": "Phase 1 is pushed. Phase 2 independent tenant login page foundation is implemented locally with build/test/Claude evidence; browser regression remains open.",
+-  "updated_at": "2026-06-22T11:50:30Z"
++  "notes": "Phase 1 and Phase 2 are pushed. A reusable real Chrome browser smoke harness is implemented and passing for baseline login/navigation; full product regression remains open.",
++  "updated_at": "2026-06-22T12:05:00Z"
+ }
+diff --git a/.ai/TEST_STATUS.json b/.ai/TEST_STATUS.json
+index f4e9c07..55b3643 100644
+--- a/.ai/TEST_STATUS.json
++++ b/.ai/TEST_STATUS.json
+@@ -1,10 +1,10 @@
+ {
+-  "status": "phase_2_build_test_green",
++  "status": "browser_smoke_harness_green",
+   "build_green": "verified",
+   "test_green": "verified",
+   "ci_green": "not_verified",
+-  "runtime_smoke_green": "not_verified",
+-  "browser_regression_green": "not_verified",
++  "runtime_smoke_green": "verified_partial",
++  "browser_regression_green": "verified_partial",
+   "product_green": "not_verified",
+   "user_green": "not_verified",
+   "evidence": [
+@@ -50,15 +50,33 @@
+       "status": "verified",
+       "result": "PASS_WITH_NOTES; no blocking security or tenant isolation issues; portal loading UX note fixed after audit",
+       "evidence_file": ".ai/workers/20260622T114708Z-audit_worker.result.md"
++    },
++    {
++      "type": "real_chrome_browser_smoke",
++      "command": "bash scripts/browser-smoke.sh",
++      "status": "verified",
++      "result": "2 Playwright tests passed in system Google Chrome: enterprise login and core module navigation; developer login and tenant management navigation",
++      "evidence_files": [
++        "docs/smoke-evidence/playwright-results.json",
++        "docs/smoke-evidence/playwright-report/index.html",
++        "docs/smoke-evidence/合同管理.png",
++        "docs/smoke-evidence/物资总览.png",
++        "docs/smoke-evidence/人员管理.png",
++        "docs/smoke-evidence/项目部报账.png",
++        "docs/smoke-evidence/项目部管理.png",
++        "docs/smoke-evidence/用户管理.png",
++        "docs/smoke-evidence/角色权限.png",
++        "docs/smoke-evidence/开发者企业管理.png"
++      ]
+     }
+   ],
+   "known_yellow_items": [
+-    "Full real-browser regression has not yet been executed for all modules; do not claim Product Green.",
++    "Only baseline real Chrome smoke has passed; full real-browser regression for all CRUD/upload/download/anomaly flows has not yet been executed, so do not claim Product Green.",
+     "npm audit high vulnerabilities remain as technical debt from baseline; not resolved in Phase 2.",
+     "Prisma migrate deploy to a temporary SQLite DB previously returned an opaque Schema engine error while direct sqlite3 SQL execution succeeded; keep migration deployment as a Yellow follow-up before production rollout.",
+     "Independent login page DNS ownership/resolve verification and logo upload picker are not implemented in Phase 2 MVP.",
+-    "Browser E2E for portal login is still required before Product Green."
++    "Browser E2E for independent-domain portal login and unopen-module 403/menu-hidden matrix is still required before Product Green."
+   ],
+-  "notes": "Phase 2 independent tenant login foundation has Build Green and Test Green. Browser Regression Green, Product Green, and User Green remain open gates.",
+-  "updated_at": "2026-06-22T11:50:30Z"
++  "notes": "Reusable real Chrome smoke harness is in place and passed for baseline login/navigation. Product Green remains open until all required feature CRUD/upload/download/anomaly paths pass.",
++  "updated_at": "2026-06-22T12:05:00Z"
+ }
+diff --git a/.ai/session/HANDOFF.md b/.ai/session/HANDOFF.md
+index 0cf4bec..cc8d1ec 100644
+--- a/.ai/session/HANDOFF.md
++++ b/.ai/session/HANDOFF.md
+@@ -2,12 +2,12 @@
+ 
+ - Project: /Users/Namson/Documents/工程管理系统/资料通工程管理系统
+ - Requested repository: git@github.com:Namson666/zltgcgl.git
+-- Current phase: S3 phase 2 local verification complete
++- Current phase: S3 browser smoke harness green
+ - Current mode: Enforced Delivery, Enhanced
+ - Code changes allowed: yes
+ - Commit allowed: yes
+ - Push allowed: completed for public clean baseline only
+-- Last completed: phase 2 independent tenant login foundation implemented; `bash scripts/verify.sh` passed; Claude CLI audit returned PASS_WITH_NOTES and portal loading UX note was fixed
+-- Next action: commit/push phase 2, then start browser smoke harness or Phase 3 contract management tabs
+-- Blockers: full browser regression not yet implemented/executed; npm audit high vulnerabilities remain Yellow baseline debt
+-- Updated at: 2026-06-22T11:50:30Z
++- Last completed: reusable real Chrome smoke harness implemented and passed enterprise login/core navigation plus developer login/tenant management
++- Next action: commit/push browser smoke harness, then start Phase 3 contract management tabs
++- Blockers: full CRUD/upload/download/anomaly browser regression not yet implemented/executed; npm audit high vulnerabilities remain Yellow baseline debt
++- Updated at: 2026-06-22T12:05:00Z
+diff --git a/README.md b/README.md
+index 190bdd1..ef1e161 100644
+--- a/README.md
++++ b/README.md
+@@ -4,12 +4,12 @@
+ 
+ ### Resume Here / 最新接手点
+ - Current mode: Enforced Delivery
+-- Current phase: S3 phase 2 local verification complete
+-- Current task: 企业独立登录页底座 + Claude CLI worker 证据链
++- Current phase: S3 browser smoke harness green
++- Current task: 真实 Chrome 浏览器 smoke harness + 证据链
+ - Last completed: 用户批准实施计划，要求全程 Superpowers Pro、尽量调用 Claude CLI、最终真实浏览器全功能验收
+-- In progress: 准备提交并推送第二阶段实现
+-- Next action: 提交/推送 phase 2；随后进入 Phase 3 合同管理重构，或先补真实浏览器 smoke harness
+-- Blockers: 完整浏览器回归尚未建立/执行；前后端 npm audit 存在 high 漏洞，作为 Yellow 技术债记录
++- In progress: 准备提交并推送浏览器 smoke harness
++- Next action: 提交/推送 smoke harness；随后进入 Phase 3 合同管理重构
++- Blockers: 完整 CRUD/上传/下载/异常处理浏览器回归尚未建立/执行；前后端 npm audit 存在 high 漏洞，作为 Yellow 技术债记录
+ - Do not repeat: 不要在未确认重构设计前修改业务代码；不要把 Build Green 当 Product Green
+ - Must read:
+   1. .ai/REQUIRED_ACTION_CONTRACT.json
+@@ -22,11 +22,12 @@
+   8. .ai/session/HANDOFF.md
+ - Must read spec:
+   1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
+-- Last verified command: `bash scripts/verify.sh` passed: backend 24 tests, backend build, frontend 36 tests, frontend build
++- Last verified command: `bash scripts/browser-smoke.sh` passed in system Google Chrome: enterprise login/core navigation and developer login/tenant management
+ - Claude worker evidence: `.ai/workers/20260622T114708Z-audit_worker.result.md` returned PASS_WITH_NOTES; portal loading UX note fixed
+ - Last commit: 8b78ec0 feat: add tenant module entitlement foundation
+ - Safe rollback point: 8b78ec0
+-- Updated at: 2026-06-22T11:50:30Z
++- Browser smoke evidence: `docs/smoke-evidence/playwright-results.json` and screenshots under `docs/smoke-evidence/`
++- Updated at: 2026-06-22T12:05:00Z
+ 
+ ## 项目概览
+ 
+diff --git a/frontend/package-lock.json b/frontend/package-lock.json
+index 0264397..a603487 100644
+--- a/frontend/package-lock.json
++++ b/frontend/package-lock.json
+@@ -19,6 +19,7 @@
+         "zustand": "^5.0.0"
+       },
+       "devDependencies": {
++        "@playwright/test": "^1.61.0",
+         "@testing-library/jest-dom": "^6.9.1",
+         "@testing-library/react": "^16.3.2",
+         "@types/react": "^19.0.0",
+@@ -1308,6 +1309,22 @@
+         "node": ">= 8"
+       }
+     },
++    "node_modules/@playwright/test": {
++      "version": "1.61.0",
++      "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.61.0.tgz",
++      "integrity": "sha512-cKA5B6lpFEMyMGjxF54QihfYpB4FkEGH+qZhtArDEG+wezQAJY8Pq6C7T1SjWz+FFzt3TbyoXBQYk/0292TdJA==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "dependencies": {
++        "playwright": "1.61.0"
++      },
++      "bin": {
++        "playwright": "cli.js"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
+     "node_modules/@rolldown/pluginutils": {
+       "version": "1.0.0-beta.27",
+       "resolved": "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.0-beta.27.tgz",
+@@ -3991,6 +4008,53 @@
+         "node": ">= 6"
+       }
+     },
++    "node_modules/playwright": {
++      "version": "1.61.0",
++      "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.61.0.tgz",
++      "integrity": "sha512-Z+7BeeqQPRRzklHsVFP4KTGIyMxKUmfeRA4WisM6G3/XW6nwGeX6fX9qYaDa+CiUqpOkb2f6X3nar05R3kSuJQ==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "dependencies": {
++        "playwright-core": "1.61.0"
++      },
++      "bin": {
++        "playwright": "cli.js"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "optionalDependencies": {
++        "fsevents": "2.3.2"
++      }
++    },
++    "node_modules/playwright-core": {
++      "version": "1.61.0",
++      "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.61.0.tgz",
++      "integrity": "sha512-caX7TrY3Ml6egyDX0WUcTHDxodl/b51y5wJOdCEA36QviK/s2g081hvmGs8eaE3DWb6NYZQ6BjO/QkNRPenoPA==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "bin": {
++        "playwright-core": "cli.js"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/playwright/node_modules/fsevents": {
++      "version": "2.3.2",
++      "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz",
++      "integrity": "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==",
++      "dev": true,
++      "hasInstallScript": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^8.16.0 || ^10.6.0 || >=11.0.0"
++      }
++    },
+     "node_modules/postcss": {
+       "version": "8.5.10",
+       "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.10.tgz",
+diff --git a/frontend/package.json b/frontend/package.json
+index a45de53..26585b5 100644
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -25,6 +25,7 @@
+     "zustand": "^5.0.0"
+   },
+   "devDependencies": {
++    "@playwright/test": "^1.61.0",
+     "@testing-library/jest-dom": "^6.9.1",
+     "@testing-library/react": "^16.3.2",
+     "@types/react": "^19.0.0",
+diff --git a/frontend/vite.config.ts b/frontend/vite.config.ts
+index 70dfe60..39da757 100644
+--- a/frontend/vite.config.ts
++++ b/frontend/vite.config.ts
+@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
+ import react from '@vitejs/plugin-react'
+ import path from 'path'
+ 
++const apiTarget = process.env.VITE_API_TARGET || 'http://localhost:4001'
++
+ // https://vitejs.dev/config/
+ export default defineConfig({
+   plugins: [react()],
+@@ -14,11 +16,11 @@ export default defineConfig({
+     port: 5173,
+     proxy: {
+       '/api': {
+-        target: 'http://localhost:4001',
++        target: apiTarget,
+         changeOrigin: true,
+       },
+       '/uploads': {
+-        target: 'http://localhost:4001',
++        target: apiTarget,
+         changeOrigin: true,
+       },
+     },

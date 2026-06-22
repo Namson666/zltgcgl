@@ -1,9 +1,9 @@
 {
-  "stage": "S3_phase2_tenant_portal_local_verification",
+  "stage": "S3_browser_smoke_harness_green",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Phase 1 is pushed. Phase 2 independent tenant login page foundation is implemented locally with build/test/Claude evidence; browser regression remains open.",
-  "updated_at": "2026-06-22T11:50:30Z"
+  "notes": "Phase 1 and Phase 2 are pushed. A reusable real Chrome browser smoke harness is implemented and passing for baseline login/navigation; full product regression remains open.",
+  "updated_at": "2026-06-22T12:05:00Z"
 }

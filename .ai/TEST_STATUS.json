@@ -1,10 +1,10 @@
 {
-  "status": "phase_2_build_test_green",
+  "status": "browser_smoke_harness_green",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
-  "runtime_smoke_green": "not_verified",
-  "browser_regression_green": "not_verified",
+  "runtime_smoke_green": "verified_partial",
+  "browser_regression_green": "verified_partial",
   "product_green": "not_verified",
   "user_green": "not_verified",
   "evidence": [
@@ -50,15 +50,42 @@
       "status": "verified",
       "result": "PASS_WITH_NOTES; no blocking security or tenant isolation issues; portal loading UX note fixed after audit",
       "evidence_file": ".ai/workers/20260622T114708Z-audit_worker.result.md"
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "2 Playwright tests passed in system Google Chrome: enterprise login and core module navigation; developer login and tenant management navigation",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/合同管理.png",
+        "docs/smoke-evidence/物资总览.png",
+        "docs/smoke-evidence/人员管理.png",
+        "docs/smoke-evidence/项目部报账.png",
+        "docs/smoke-evidence/项目部管理.png",
+        "docs/smoke-evidence/用户管理.png",
+        "docs/smoke-evidence/角色权限.png",
+        "docs/smoke-evidence/开发者企业管理.png"
+      ]
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/browser-smoke-harness-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "PASS_WITH_NOTES; no blocking issue; confirmed temporary SQLite DB, test-only JWT_SECRET, system Chrome channel, and honest baseline smoke scope",
+      "evidence_file": ".ai/workers/20260622T120532Z-audit_worker.result.md"
     }
   ],
   "known_yellow_items": [
-    "Full real-browser regression has not yet been executed for all modules; do not claim Product Green.",
+    "Only baseline real Chrome smoke has passed; full real-browser regression for all CRUD/upload/download/anomaly flows has not yet been executed, so do not claim Product Green.",
     "npm audit high vulnerabilities remain as technical debt from baseline; not resolved in Phase 2.",
     "Prisma migrate deploy to a temporary SQLite DB previously returned an opaque Schema engine error while direct sqlite3 SQL execution succeeded; keep migration deployment as a Yellow follow-up before production rollout.",
     "Independent login page DNS ownership/resolve verification and logo upload picker are not implemented in Phase 2 MVP.",
-    "Browser E2E for portal login is still required before Product Green."
+    "Browser E2E for independent-domain portal login and unopen-module 403/menu-hidden matrix is still required before Product Green.",
+    "Browser smoke harness uses raw SQL migrations because Prisma migrate/db push returns an opaque Schema engine error in this environment.",
+    "Browser smoke screenshots use explicit docs/smoke-evidence paths; future full regression should use testInfo/outputDir for richer artifact grouping."
   ],
-  "notes": "Phase 2 independent tenant login foundation has Build Green and Test Green. Browser Regression Green, Product Green, and User Green remain open gates.",
-  "updated_at": "2026-06-22T11:50:30Z"
+  "notes": "Reusable real Chrome smoke harness is in place and passed for baseline login/navigation. Product Green remains open until all required feature CRUD/upload/download/anomaly paths pass.",
+  "updated_at": "2026-06-22T12:05:00Z"
 }
