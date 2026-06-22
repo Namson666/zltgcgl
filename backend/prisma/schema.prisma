@@ -85,6 +85,7 @@ model Tenant {
   materials        Material[]
   operationLogs    OperationLog[]
   personnel        Personnel[]
+  portalConfig      TenantPortalConfig?
   roles            Role[]
   subcontractors   Subcontractor[]
   subscription     Subscription?
@@ -114,6 +115,25 @@ model TenantModuleEntitlement {
   @@unique([tenantId, moduleKey])
   @@index([tenantId])
   @@map("tenant_module_entitlements")
+}
+
+/// 企业独立登录页配置
+/// 绑定独立域名后，企业用户可在该域名登录，无需输入企业代码。
+model TenantPortalConfig {
+  id          String   @id @default(cuid())
+  tenantId    String   @unique
+  domain      String?  @unique
+  logoUrl     String?
+  companyName String?
+  loginTitle  String?
+  themeColor  String?
+  isEnabled   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([domain])
+  @@map("tenant_portal_configs")
 }
 
 /// 订阅信息

@@ -13,6 +13,11 @@ import {
   TenantModuleKey,
   updateTenantModuleEntitlements,
 } from '../../common/services/module-entitlement.service';
+import {
+  getTenantPortalConfig,
+  TenantPortalInput,
+  updateTenantPortalConfig,
+} from '../../common/services/tenant-portal.service';
 
 // ============================================
 // 全局数据看板
@@ -313,6 +318,18 @@ export async function setTenantModules(tenantId: string, modules: Array<{ module
   });
 
   return updateTenantModuleEntitlements(tenantId, normalized);
+}
+
+export async function getTenantPortal(tenantId: string) {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
+  if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
+  return getTenantPortalConfig(tenantId);
+}
+
+export async function setTenantPortal(tenantId: string, input: TenantPortalInput) {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
+  if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
+  return updateTenantPortalConfig(tenantId, input);
 }
 
 // ============================================

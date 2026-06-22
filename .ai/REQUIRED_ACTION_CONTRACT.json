@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Phase 1 implementation completed through local verification: build stabilization, verification script, Claude CLI worker adapter, tenant module entitlement, backend guard, developer module controls, frontend module visibility, and self-registration enabledModules continuity. Later phases are out of this implementation slice.",
+  "notes": "Phase 2 implementation completed through local verification: tenant independent login portal config model/API, portal-host login, developer portal settings UI, public portal branding endpoint, and Claude CLI worker audit. Browser regression remains open.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-22T11:28:30Z"
+  "updated_at": "2026-06-22T11:50:30Z"
 }

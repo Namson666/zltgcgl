@@ -22,11 +22,21 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Building2, Lock, User, Eye, EyeOff, Briefcase } from 'lucide-react';
 import { useAuthStore } from '../../lib/AuthContext';
 import { LoadingSpinner } from '../../components/ui/Loading';
+import { authApi } from '../../api';
 
 /* ========================================
  * 登录模式类型
  * ======================================== */
 type LoginMode = 'developer' | 'enterprise';
+
+interface PortalConfig {
+  isEnabled: boolean;
+  domain?: string;
+  logoUrl?: string | null;
+  companyName?: string;
+  loginTitle?: string;
+  themeColor?: string | null;
+}
 
 /* ========================================
  * Login 登录页面组件
@@ -44,7 +54,14 @@ const Login: React.FC = () => {
   const [tenantCode, setTenantCode] = useState('');            /* 企业代码 */
   const [showPassword, setShowPassword] = useState(false);     /* 是否显示密码 */
   const [loading, setLoading] = useState(false);               /* 登录加载状态 */
+  const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
   const [error, setError] = useState('');                      /* 错误提示信息 */
+
+  const isPortalLogin = Boolean(portalConfig?.isEnabled);
+  const brandName = portalConfig?.companyName || '资料通工程管理系统';
+  const loginTitle = portalConfig?.loginTitle || brandName;
+  const themeColor = portalConfig?.themeColor || 'var(--primary)';
+  const logoSrc = portalConfig?.logoUrl || '/icon.png';
 
   /* ---------- 副作用 ---------- */
 
@@ -57,6 +74,30 @@ const Login: React.FC = () => {
       navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  /**
+   * 如果当前 hostname 绑定了企业独立登录页，则加载品牌配置。
+   * localhost / 未绑定域名会保持原统一登录页逻辑。
+   */
+  useEffect(() => {
+    let mounted = true;
+    const loadPortalConfig = async () => {
+      try {
+        const hostname = window.location.hostname;
+        const res = await authApi.getPortalConfig(hostname);
+        const body = res.data || res;
+        const data = body.data || body;
+        if (mounted && data?.isEnabled) {
+          setPortalConfig(data);
+          setMode('enterprise');
+        }
+      } catch {
+        // 独立登录页配置不可用时回落到统一登录页，不阻断登录。
+      }
+    };
+    loadPortalConfig();
+    return () => { mounted = false; };
+  }, []);
 
   /* ---------- 事件处理 ---------- */
 
@@ -77,7 +118,7 @@ const Login: React.FC = () => {
       setError('请输入密码');
       return;
     }
-    if (mode === 'enterprise' && !tenantCode.trim()) {
+    if (mode === 'enterprise' && !isPortalLogin && !tenantCode.trim()) {
       setError('请输入企业代码');
       return;
     }
@@ -91,7 +132,8 @@ const Login: React.FC = () => {
       } else {
         /* 企业用户登录 */
         await userLogin({
-          tenantCode: tenantCode.trim(),
+          tenantCode: isPortalLogin ? undefined : tenantCode.trim(),
+          portalHost: isPortalLogin ? window.location.hostname : undefined,
           username: username.trim(),
           password,
         });
@@ -112,6 +154,7 @@ const Login: React.FC = () => {
    * 切换时清除错误信息和密码
    */
   const handleModeChange = (newMode: LoginMode) => {
+    if (isPortalLogin && newMode !== 'enterprise') return;
     setMode(newMode);
     setError('');
     setPassword('');
@@ -128,11 +171,13 @@ const Login: React.FC = () => {
         <div className="text-center mb-8">
           {/* Logo 图标 */}
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 overflow-hidden" style={{ backgroundColor: 'var(--card)', boxShadow: 'var(--shadow-lg)' }}>
-            <img src="/icon.png" alt="资料通" className="w-14 h-14 object-contain" />
+            <img src={logoSrc} alt={brandName} className="w-14 h-14 object-contain" />
           </div>
           {/* 系统名称 */}
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>资料通工程管理系统</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>Construction Management System</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{loginTitle}</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
+            {isPortalLogin ? `${brandName} · 独立登录入口` : 'Construction Management System'}
+          </p>
         </div>
 
         {/* 登录表单卡片 */}
@@ -140,6 +185,7 @@ const Login: React.FC = () => {
           {/* ==========================================
            * 登录模式切换 Tab
            * ========================================== */}
+          {!isPortalLogin && (
           <div className="flex" style={{ borderBottom: '1px solid var(--border)' }}>
             {/* 企业登录 Tab */}
             <button
@@ -149,7 +195,7 @@ const Login: React.FC = () => {
                   ? ''
                   : 'hover:opacity-80'
               }`}
-              style={{ color: mode === 'enterprise' ? 'var(--primary)' : 'var(--muted-foreground)' }}
+              style={{ color: mode === 'enterprise' ? themeColor : 'var(--muted-foreground)' }}
             >
               <span className="flex items-center justify-center gap-2">
                 <Briefcase size={16} />
@@ -157,7 +203,7 @@ const Login: React.FC = () => {
               </span>
               {/* 激活指示条 */}
               {mode === 'enterprise' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: 'var(--primary)' }} />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: themeColor }} />
               )}
             </button>
 
@@ -169,7 +215,7 @@ const Login: React.FC = () => {
                   ? ''
                   : 'hover:opacity-80'
               }`}
-              style={{ color: mode === 'developer' ? 'var(--primary)' : 'var(--muted-foreground)' }}
+              style={{ color: mode === 'developer' ? themeColor : 'var(--muted-foreground)' }}
             >
               <span className="flex items-center justify-center gap-2">
                 <User size={16} />
@@ -177,10 +223,11 @@ const Login: React.FC = () => {
               </span>
               {/* 激活指示条 */}
               {mode === 'developer' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: 'var(--primary)' }} />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: themeColor }} />
               )}
             </button>
           </div>
+          )}
 
           {/* ==========================================
            * 登录表单
@@ -194,7 +241,7 @@ const Login: React.FC = () => {
             )}
 
             {/* 企业代码输入框（仅企业登录模式显示） */}
-            {mode === 'enterprise' && (
+            {mode === 'enterprise' && !isPortalLogin && (
               <div>
                 <label className="form-label">企业代码</label>
                 <div className="relative">
@@ -265,6 +312,7 @@ const Login: React.FC = () => {
               type="submit"
               disabled={loading}
               className="btn-primary w-full py-2.5 text-base mt-6"
+              style={portalConfig?.themeColor ? { backgroundColor: themeColor } : undefined}
             >
               {loading ? (
                 /* 加载状态 */
@@ -279,12 +327,14 @@ const Login: React.FC = () => {
           </form>
 
           {/* 注册入口 */}
+          {!isPortalLogin && (
           <div className="mt-4 text-center text-sm" style={{ color: 'var(--muted-foreground)' }}>
             还没有企业账号？
             <Link to="/register" className="hover:underline font-medium ml-1" style={{ color: 'var(--primary)' }}>
               立即注册
             </Link>
           </div>
+          )}
         </div>
 
         {/* 底部版权信息 */}

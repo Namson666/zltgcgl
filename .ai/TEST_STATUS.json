@@ -1,5 +1,5 @@
 {
-  "status": "phase_1_build_test_green",
+  "status": "phase_2_build_test_green",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -12,7 +12,7 @@
       "type": "backend_test",
       "command": "cd backend && npm test",
       "status": "verified",
-      "result": "3 test files passed, 20 tests passed; includes requireTenantModule 401/403/pass-through coverage"
+      "result": "4 test files passed, 24 tests passed; includes module guard and tenant portal service coverage"
     },
     {
       "type": "backend_build",
@@ -36,35 +36,29 @@
       "type": "unified_verify",
       "command": "bash scripts/verify.sh",
       "status": "verified",
-      "result": "Backend tests/build and frontend tests/build passed"
-    },
-    {
-      "type": "claude_cli_worker_audit",
-      "command": "scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/phase1-module-entitlement-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
-      "status": "verified",
-      "result": "PASS_WITH_NOTES; no blocking security or tenant isolation issues; self-registration enabledModules note fixed after audit",
-      "evidence_file": ".ai/workers/20260622T110950Z-audit_worker.result.md"
-    },
-    {
-      "type": "claude_cli_worker_budget_attempt",
-      "command": "scripts/run_claude_worker.py --role audit_worker --max-budget-usd 1.00",
-      "status": "recorded",
-      "result": "Initial worker failed only because Claude CLI exceeded the $1 budget cap",
-      "evidence_file": ".ai/workers/20260622T110522Z-audit_worker.result.md"
+      "result": "Backend tests/build and frontend tests/build passed after Phase 2 changes"
     },
     {
       "type": "migration_sql_check",
-      "command": "sqlite3 /private/tmp/zlt_phase1_sql_check.db '.read backend/prisma/migrations/20260424_init/migration.sql' '.read backend/prisma/migrations/20260622_add_tenant_module_entitlements/migration.sql' '.tables'",
+      "command": "sqlite3 /private/tmp/zlt_phase2_sql_check.db '.read backend/prisma/migrations/20260424_init/migration.sql' '.read backend/prisma/migrations/20260622_add_tenant_module_entitlements/migration.sql' '.read backend/prisma/migrations/20260622_add_tenant_portal_configs/migration.sql' '.schema tenant_portal_configs'",
       "status": "verified",
-      "result": "SQLite applied the baseline and tenant_module_entitlements migrations; table tenant_module_entitlements exists"
+      "result": "SQLite applied baseline, module entitlement, and portal config migrations; tenant_portal_configs schema exists"
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/phase2-tenant-portal-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "PASS_WITH_NOTES; no blocking security or tenant isolation issues; portal loading UX note fixed after audit",
+      "evidence_file": ".ai/workers/20260622T114708Z-audit_worker.result.md"
     }
   ],
   "known_yellow_items": [
     "Full real-browser regression has not yet been executed for all modules; do not claim Product Green.",
-    "npm audit high vulnerabilities remain as technical debt from baseline; not resolved in Phase 1.",
-    "Prisma migrate deploy to a temporary SQLite DB returned an opaque Schema engine error, while direct sqlite3 SQL execution succeeded; keep migration deployment as a Yellow follow-up before production rollout.",
-    "enabledAt currently resets when a disabled module is re-enabled; accepted as a Phase 1 semantic note unless business requires first-enabled timestamp preservation."
+    "npm audit high vulnerabilities remain as technical debt from baseline; not resolved in Phase 2.",
+    "Prisma migrate deploy to a temporary SQLite DB previously returned an opaque Schema engine error while direct sqlite3 SQL execution succeeded; keep migration deployment as a Yellow follow-up before production rollout.",
+    "Independent login page DNS ownership/resolve verification and logo upload picker are not implemented in Phase 2 MVP.",
+    "Browser E2E for portal login is still required before Product Green."
   ],
-  "notes": "Phase 1 implementation has Build Green and Test Green. Browser Regression Green, Product Green, and User Green remain open gates.",
-  "updated_at": "2026-06-22T11:28:30Z"
+  "notes": "Phase 2 independent tenant login foundation has Build Green and Test Green. Browser Regression Green, Product Green, and User Green remain open gates.",
+  "updated_at": "2026-06-22T11:50:30Z"
 }

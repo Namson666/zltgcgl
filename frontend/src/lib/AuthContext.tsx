@@ -56,7 +56,8 @@ interface DeveloperLoginParams {
 
 /** 企业用户登录参数 */
 interface UserLoginParams {
-  tenantCode: string;            /* 企业代码 */
+  tenantCode?: string;           /* 企业代码：统一登录页使用 */
+  portalHost?: string;           /* 独立登录页域名：企业独立域名使用 */
   username: string;              /* 用户名 */
   password: string;              /* 密码 */
 }

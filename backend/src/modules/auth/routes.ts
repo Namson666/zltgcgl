@@ -17,6 +17,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../common/utils/prisma';
 import { getTenantEnabledModules, TENANT_MODULE_KEYS } from '../../common/services/module-entitlement.service';
+import { findEnabledPortalByHost, getPublicPortalConfigByHost } from '../../common/services/tenant-portal.service';
 
 // 导入 JWT 工具函数
 import { signToken, signDevViewToken, storeRefreshToken, verifyAndConsumeRefreshToken } from '../../common/utils/jwt';
@@ -33,6 +34,28 @@ import { AuthenticatedRequest, ApiResponse } from '../../common/types';
  * 创建 Express 路由器实例
  */
 const router = Router();
+
+/**
+ * GET /api/auth/portal-config?hostname=tenant.example.com
+ * 独立登录页公开配置查询。仅返回展示信息，不返回企业代码。
+ */
+router.get('/portal-config', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const hostname = (req.query.hostname as string | undefined) || req.hostname || req.headers.host;
+    const config = await getPublicPortalConfigByHost(hostname);
+    res.json({
+      success: true,
+      data: config || { isEnabled: false },
+    } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取独立登录页配置失败:', error);
+    res.status(500).json({
+      success: false,
+      error: 'INTERNAL_ERROR',
+      message: '获取独立登录页配置失败',
+    } as ApiResponse);
+  }
+});
 
 // ============================================
 // 辅助函数
@@ -236,29 +259,29 @@ router.post('/developer/login', async (req: Request, res: Response): Promise<voi
 router.post('/user/login', async (req: Request, res: Response): Promise<void> => {
   try {
     // 从请求体中获取登录参数
-    const { tenantCode, username, password } = req.body;
+    const { tenantCode, username, password, portalHost } = req.body;
     // 参数校验：三个字段均为必填
-    if (!tenantCode || !username || !password) {
+    if ((!tenantCode && !portalHost) || !username || !password) {
       res.status(400).json({
         success: false,
         error: 'MISSING_PARAMS',
-        message: '企业代码、用户名和密码不能为空',
+        message: '企业代码或独立登录域名、用户名和密码不能为空',
       } as ApiResponse);
       return;
     }
 
-    // 第一步：通过企业代码查找租户
-    // 使用 Tenant.code 字段（唯一索引）查询
-    const tenant = await prisma.tenant.findUnique({
-      where: { code: tenantCode },
-    });
+    // 第一步：通过企业代码或独立登录域名查找租户
+    const portal = tenantCode ? null : await findEnabledPortalByHost(portalHost || req.hostname || req.headers.host);
+    const tenant = tenantCode
+      ? await prisma.tenant.findUnique({ where: { code: tenantCode } })
+      : portal?.tenant || null;
 
     // 租户不存在
     if (!tenant) {
       res.status(401).json({
         success: false,
         error: 'INVALID_TENANT',
-        message: '企业代码无效，请检查后重试',
+        message: tenantCode ? '企业代码无效，请检查后重试' : '独立登录域名无效或未启用，请联系管理员',
       } as ApiResponse);
       return;
     }

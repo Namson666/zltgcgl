@@ -11,6 +11,7 @@ import {
   Package, FileText, UserCog, Key, Truck, HardHat,
   CalendarCheck, Calculator, Banknote, ShieldCheck,
   FileSpreadsheet, AlertTriangle, CheckCircle2, XCircle,
+  Globe2, Image as ImageIcon, Palette,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { developerApi, tenantApi, authApi } from '../../api';
@@ -55,6 +56,15 @@ interface TenantModuleState {
   remark?: string | null;
 }
 
+interface TenantPortalConfig {
+  domain?: string | null;
+  logoUrl?: string | null;
+  companyName?: string | null;
+  loginTitle?: string | null;
+  themeColor?: string | null;
+  isEnabled: boolean;
+}
+
 /* ========================================
  * TenantView 组件
  * ======================================== */
@@ -66,9 +76,18 @@ const TenantView: React.FC = () => {
   const [tenant, setTenant] = useState<TenantDetail | null>(null);
   const [users, setUsers] = useState<TenantUser[]>([]);
   const [modules, setModules] = useState<TenantModuleState[]>([]);
+  const [portalConfig, setPortalConfig] = useState<TenantPortalConfig>({
+    domain: '',
+    logoUrl: '',
+    companyName: '',
+    loginTitle: '',
+    themeColor: '#2563EB',
+    isEnabled: false,
+  });
   const [loading, setLoading] = useState(true);
   const [entering, setEntering] = useState(false);
   const [savingModules, setSavingModules] = useState(false);
+  const [savingPortal, setSavingPortal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -86,9 +105,10 @@ const TenantView: React.FC = () => {
 
         // 获取该企业的用户列表和模块开通状态
         try {
-          const [usersRes, modulesRes] = await Promise.all([
+          const [usersRes, modulesRes, portalRes] = await Promise.all([
             developerApi.getTenantUsers(id),
             developerApi.getTenantModules(id),
+            developerApi.getTenantPortal(id),
           ]);
           const body = usersRes.data || usersRes;
           const usersData = body.data || body;
@@ -96,6 +116,16 @@ const TenantView: React.FC = () => {
           const modulesBody = modulesRes.data || modulesRes;
           const modulesData = modulesBody.data || modulesBody;
           setModules(Array.isArray(modulesData) ? modulesData : []);
+          const portalBody = portalRes.data || portalRes;
+          const portalData = portalBody.data || portalBody;
+          setPortalConfig({
+            domain: portalData.domain || '',
+            logoUrl: portalData.logoUrl || '',
+            companyName: portalData.companyName || found?.name || '',
+            loginTitle: portalData.loginTitle || '',
+            themeColor: portalData.themeColor || '#2563EB',
+            isEnabled: Boolean(portalData.isEnabled),
+          });
         } catch {
           // 用户列表或模块状态可能不可用
         }
@@ -150,6 +180,33 @@ const TenantView: React.FC = () => {
       toast.error(error.message || '保存模块开通状态失败');
     } finally {
       setSavingModules(false);
+    }
+  };
+
+  const handlePortalChange = (field: keyof TenantPortalConfig, value: string | boolean) => {
+    setPortalConfig((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSavePortal = async () => {
+    if (!id) return;
+    setSavingPortal(true);
+    try {
+      const res = await developerApi.updateTenantPortal(id, portalConfig);
+      const body = res.data || res;
+      const updated = body.data || body;
+      setPortalConfig({
+        domain: updated.domain || '',
+        logoUrl: updated.logoUrl || '',
+        companyName: updated.companyName || tenant?.name || '',
+        loginTitle: updated.loginTitle || '',
+        themeColor: updated.themeColor || '#2563EB',
+        isEnabled: Boolean(updated.isEnabled),
+      });
+      toast.success('独立登录页配置已保存');
+    } catch (error: any) {
+      toast.error(error.message || '保存独立登录页配置失败');
+    } finally {
+      setSavingPortal(false);
     }
   };
 
@@ -359,6 +416,109 @@ const TenantView: React.FC = () => {
               >
                 {savingModules ? '保存中...' : '保存模块设置'}
               </button>
+            </div>
+          </div>
+
+          {/* ==========================================
+           * 独立登录页配置
+           * ========================================== */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-6">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-base font-semibold" style={{ color: '#1A2B3C' }}>
+                  <Globe2 size={16} className="inline mr-1.5 text-indigo-500" />
+                  企业独立登录页
+                </h2>
+                <p className="text-xs text-gray-400 mt-1">
+                  绑定域名后，企业用户可直接在该域名登录，无需输入企业代码；原统一登录页仍可继续使用企业代码登录。
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={portalConfig.isEnabled}
+                  onChange={(e) => handlePortalChange('isEnabled', e.target.checked)}
+                  className="w-4 h-4"
+                />
+                启用
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="form-label">绑定域名</label>
+                <div className="relative">
+                  <Globe2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={portalConfig.domain || ''}
+                    onChange={(e) => handlePortalChange('domain', e.target.value)}
+                    placeholder="login.example.com"
+                    className="input pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="form-label">公司名称</label>
+                <div className="relative">
+                  <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={portalConfig.companyName || ''}
+                    onChange={(e) => handlePortalChange('companyName', e.target.value)}
+                    placeholder={tenant?.name || '企业名称'}
+                    className="input pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="form-label">登录页标题</label>
+                <div className="relative">
+                  <Key size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={portalConfig.loginTitle || ''}
+                    onChange={(e) => handlePortalChange('loginTitle', e.target.value)}
+                    placeholder="企业工程管理系统"
+                    className="input pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="form-label">Logo URL</label>
+                <div className="relative">
+                  <ImageIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={portalConfig.logoUrl || ''}
+                    onChange={(e) => handlePortalChange('logoUrl', e.target.value)}
+                    placeholder="/uploads/logo.png 或 https://..."
+                    className="input pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="form-label">主题色</label>
+                <div className="relative">
+                  <Palette size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={portalConfig.themeColor || ''}
+                    onChange={(e) => handlePortalChange('themeColor', e.target.value)}
+                    placeholder="#2563EB"
+                    className="input pl-9"
+                  />
+                </div>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={handleSavePortal}
+                  disabled={savingPortal}
+                  className="btn-primary text-sm w-full"
+                >
+                  {savingPortal ? '保存中...' : '保存独立登录配置'}
+                </button>
+              </div>
             </div>
           </div>
 

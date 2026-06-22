@@ -225,6 +225,50 @@ router.put('/tenants/:id/modules', async (req: AuthenticatedRequest, res: Respon
   }
 });
 
+router.get('/tenants/:id/portal', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const config = await devService.getTenantPortal(req.params.id);
+    res.json({ success: true, data: config } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取企业独立登录页配置失败:', error);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
+router.put('/tenants/:id/portal', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const config = await devService.setTenantPortal(req.params.id, {
+      domain: req.body?.domain,
+      logoUrl: req.body?.logoUrl,
+      companyName: req.body?.companyName,
+      loginTitle: req.body?.loginTitle,
+      themeColor: req.body?.themeColor,
+      isEnabled: req.body?.isEnabled,
+    });
+    await createLog(req.user!.id, {
+      tenantId: req.params.id,
+      action: 'UPDATE',
+      module: 'tenant_portal',
+      description: '更新企业独立登录页配置',
+      detail: {
+        domain: config.domain,
+        isEnabled: config.isEnabled,
+        companyName: config.companyName,
+        loginTitle: config.loginTitle,
+        themeColor: config.themeColor,
+      },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+    res.json({ success: true, data: config, message: '企业独立登录页配置已更新' } as ApiResponse);
+  } catch (error: any) {
+    console.error('更新企业独立登录页配置失败:', error);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
 // ============================================
 // 回收站
 // ============================================

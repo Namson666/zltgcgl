@@ -67,8 +67,14 @@ export const authApi = {
    * @param params - 企业代码、用户名和密码
    * @returns 登录令牌和用户信息
    */
-  userLogin: (params: { tenantCode: string; username: string; password: string }) =>
+  userLogin: (params: { tenantCode?: string; portalHost?: string; username: string; password: string }) =>
     http.post('/auth/user/login', params),
+
+  /**
+   * 按当前访问域名获取企业独立登录页配置
+   */
+  getPortalConfig: (hostname: string) =>
+    http.get('/auth/portal-config', { hostname }),
 
   /**
    * 获取当前登录用户信息
@@ -211,6 +217,25 @@ export const developerApi = {
    */
   updateTenantModules: (tenantId: string, modules: Array<{ moduleKey: string; isEnabled: boolean; expiresAt?: string | null; remark?: string | null }>) =>
     http.put(`/developer/tenants/${tenantId}/modules`, { modules }),
+
+  /**
+   * 获取企业独立登录页配置
+   */
+  getTenantPortal: (tenantId: string) =>
+    http.get(`/developer/tenants/${tenantId}/portal`),
+
+  /**
+   * 更新企业独立登录页配置
+   */
+  updateTenantPortal: (tenantId: string, data: {
+    domain?: string | null;
+    logoUrl?: string | null;
+    companyName?: string | null;
+    loginTitle?: string | null;
+    themeColor?: string | null;
+    isEnabled?: boolean;
+  }) =>
+    http.put(`/developer/tenants/${tenantId}/portal`, data),
 
   /* ---------- 回收站管理 ---------- */
 

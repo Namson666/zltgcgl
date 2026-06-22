@@ -1,0 +1,702 @@
+diff --git a/backend/prisma/schema.prisma b/backend/prisma/schema.prisma
+index 292de6e..2d7fa75 100644
+--- a/backend/prisma/schema.prisma
++++ b/backend/prisma/schema.prisma
+@@ -85,6 +85,7 @@ model Tenant {
+   materials        Material[]
+   operationLogs    OperationLog[]
+   personnel        Personnel[]
++  portalConfig      TenantPortalConfig?
+   roles            Role[]
+   subcontractors   Subcontractor[]
+   subscription     Subscription?
+@@ -116,6 +117,25 @@ model TenantModuleEntitlement {
+   @@map("tenant_module_entitlements")
+ }
+ 
++/// 企业独立登录页配置
++/// 绑定独立域名后，企业用户可在该域名登录，无需输入企业代码。
++model TenantPortalConfig {
++  id          String   @id @default(cuid())
++  tenantId    String   @unique
++  domain      String?  @unique
++  logoUrl     String?
++  companyName String?
++  loginTitle  String?
++  themeColor  String?
++  isEnabled   Boolean  @default(false)
++  createdAt   DateTime @default(now())
++  updatedAt   DateTime @updatedAt
++  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
++
++  @@index([domain])
++  @@map("tenant_portal_configs")
++}
++
+ /// 订阅信息
+ model Subscription {
+   id                 String                @id @default(cuid())
+diff --git a/backend/src/modules/auth/routes.ts b/backend/src/modules/auth/routes.ts
+index 13df249..f3daa61 100644
+--- a/backend/src/modules/auth/routes.ts
++++ b/backend/src/modules/auth/routes.ts
+@@ -17,6 +17,7 @@ import { Router, Request, Response } from 'express';
+ import bcrypt from 'bcryptjs';
+ import { prisma } from '../../common/utils/prisma';
+ import { getTenantEnabledModules, TENANT_MODULE_KEYS } from '../../common/services/module-entitlement.service';
++import { findEnabledPortalByHost, getPublicPortalConfigByHost } from '../../common/services/tenant-portal.service';
+ 
+ // 导入 JWT 工具函数
+ import { signToken, signDevViewToken, storeRefreshToken, verifyAndConsumeRefreshToken } from '../../common/utils/jwt';
+@@ -34,6 +35,28 @@ import { AuthenticatedRequest, ApiResponse } from '../../common/types';
+  */
+ const router = Router();
+ 
++/**
++ * GET /api/auth/portal-config?hostname=tenant.example.com
++ * 独立登录页公开配置查询。仅返回展示信息，不返回企业代码。
++ */
++router.get('/portal-config', async (req: Request, res: Response): Promise<void> => {
++  try {
++    const hostname = (req.query.hostname as string | undefined) || req.hostname || req.headers.host;
++    const config = await getPublicPortalConfigByHost(hostname);
++    res.json({
++      success: true,
++      data: config || { isEnabled: false },
++    } as ApiResponse);
++  } catch (error: any) {
++    console.error('获取独立登录页配置失败:', error);
++    res.status(500).json({
++      success: false,
++      error: 'INTERNAL_ERROR',
++      message: '获取独立登录页配置失败',
++    } as ApiResponse);
++  }
++});
++
+ // ============================================
+ // 辅助函数
+ // ============================================
+@@ -236,29 +259,29 @@ router.post('/developer/login', async (req: Request, res: Response): Promise<voi
+ router.post('/user/login', async (req: Request, res: Response): Promise<void> => {
+   try {
+     // 从请求体中获取登录参数
+-    const { tenantCode, username, password } = req.body;
++    const { tenantCode, username, password, portalHost } = req.body;
+     // 参数校验：三个字段均为必填
+-    if (!tenantCode || !username || !password) {
++    if ((!tenantCode && !portalHost) || !username || !password) {
+       res.status(400).json({
+         success: false,
+         error: 'MISSING_PARAMS',
+-        message: '企业代码、用户名和密码不能为空',
++        message: '企业代码或独立登录域名、用户名和密码不能为空',
+       } as ApiResponse);
+       return;
+     }
+ 
+-    // 第一步：通过企业代码查找租户
+-    // 使用 Tenant.code 字段（唯一索引）查询
+-    const tenant = await prisma.tenant.findUnique({
+-      where: { code: tenantCode },
+-    });
++    // 第一步：通过企业代码或独立登录域名查找租户
++    const portal = tenantCode ? null : await findEnabledPortalByHost(portalHost || req.hostname || req.headers.host);
++    const tenant = tenantCode
++      ? await prisma.tenant.findUnique({ where: { code: tenantCode } })
++      : portal?.tenant || null;
+ 
+     // 租户不存在
+     if (!tenant) {
+       res.status(401).json({
+         success: false,
+         error: 'INVALID_TENANT',
+-        message: '企业代码无效，请检查后重试',
++        message: tenantCode ? '企业代码无效，请检查后重试' : '独立登录域名无效或未启用，请联系管理员',
+       } as ApiResponse);
+       return;
+     }
+diff --git a/backend/src/modules/developer/routes.ts b/backend/src/modules/developer/routes.ts
+index 22952d5..e89288f 100644
+--- a/backend/src/modules/developer/routes.ts
++++ b/backend/src/modules/developer/routes.ts
+@@ -225,6 +225,50 @@ router.put('/tenants/:id/modules', async (req: AuthenticatedRequest, res: Respon
+   }
+ });
+ 
++router.get('/tenants/:id/portal', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
++  try {
++    const config = await devService.getTenantPortal(req.params.id);
++    res.json({ success: true, data: config } as ApiResponse);
++  } catch (error: any) {
++    console.error('获取企业独立登录页配置失败:', error);
++    const status = error.status || 500;
++    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
++  }
++});
++
++router.put('/tenants/:id/portal', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
++  try {
++    const config = await devService.setTenantPortal(req.params.id, {
++      domain: req.body?.domain,
++      logoUrl: req.body?.logoUrl,
++      companyName: req.body?.companyName,
++      loginTitle: req.body?.loginTitle,
++      themeColor: req.body?.themeColor,
++      isEnabled: req.body?.isEnabled,
++    });
++    await createLog(req.user!.id, {
++      tenantId: req.params.id,
++      action: 'UPDATE',
++      module: 'tenant_portal',
++      description: '更新企业独立登录页配置',
++      detail: {
++        domain: config.domain,
++        isEnabled: config.isEnabled,
++        companyName: config.companyName,
++        loginTitle: config.loginTitle,
++        themeColor: config.themeColor,
++      },
++      ip: req.ip,
++      userAgent: req.headers['user-agent'],
++    });
++    res.json({ success: true, data: config, message: '企业独立登录页配置已更新' } as ApiResponse);
++  } catch (error: any) {
++    console.error('更新企业独立登录页配置失败:', error);
++    const status = error.status || 500;
++    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
++  }
++});
++
+ // ============================================
+ // 回收站
+ // ============================================
+diff --git a/backend/src/modules/developer/service.ts b/backend/src/modules/developer/service.ts
+index 27fd5ad..6114be0 100644
+--- a/backend/src/modules/developer/service.ts
++++ b/backend/src/modules/developer/service.ts
+@@ -13,6 +13,11 @@ import {
+   TenantModuleKey,
+   updateTenantModuleEntitlements,
+ } from '../../common/services/module-entitlement.service';
++import {
++  getTenantPortalConfig,
++  TenantPortalInput,
++  updateTenantPortalConfig,
++} from '../../common/services/tenant-portal.service';
+ 
+ // ============================================
+ // 全局数据看板
+@@ -315,6 +320,18 @@ export async function setTenantModules(tenantId: string, modules: Array<{ module
+   return updateTenantModuleEntitlements(tenantId, normalized);
+ }
+ 
++export async function getTenantPortal(tenantId: string) {
++  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
++  if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
++  return getTenantPortalConfig(tenantId);
++}
++
++export async function setTenantPortal(tenantId: string, input: TenantPortalInput) {
++  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
++  if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
++  return updateTenantPortalConfig(tenantId, input);
++}
++
+ // ============================================
+ // 回收站
+ // ============================================
+diff --git a/frontend/src/api/index.ts b/frontend/src/api/index.ts
+index 656e552..d9602fd 100644
+--- a/frontend/src/api/index.ts
++++ b/frontend/src/api/index.ts
+@@ -67,9 +67,15 @@ export const authApi = {
+    * @param params - 企业代码、用户名和密码
+    * @returns 登录令牌和用户信息
+    */
+-  userLogin: (params: { tenantCode: string; username: string; password: string }) =>
++  userLogin: (params: { tenantCode?: string; portalHost?: string; username: string; password: string }) =>
+     http.post('/auth/user/login', params),
+ 
++  /**
++   * 按当前访问域名获取企业独立登录页配置
++   */
++  getPortalConfig: (hostname: string) =>
++    http.get('/auth/portal-config', { hostname }),
++
+   /**
+    * 获取当前登录用户信息
+    * 用于刷新用户数据和权限
+@@ -212,6 +218,25 @@ export const developerApi = {
+   updateTenantModules: (tenantId: string, modules: Array<{ moduleKey: string; isEnabled: boolean; expiresAt?: string | null; remark?: string | null }>) =>
+     http.put(`/developer/tenants/${tenantId}/modules`, { modules }),
+ 
++  /**
++   * 获取企业独立登录页配置
++   */
++  getTenantPortal: (tenantId: string) =>
++    http.get(`/developer/tenants/${tenantId}/portal`),
++
++  /**
++   * 更新企业独立登录页配置
++   */
++  updateTenantPortal: (tenantId: string, data: {
++    domain?: string | null;
++    logoUrl?: string | null;
++    companyName?: string | null;
++    loginTitle?: string | null;
++    themeColor?: string | null;
++    isEnabled?: boolean;
++  }) =>
++    http.put(`/developer/tenants/${tenantId}/portal`, data),
++
+   /* ---------- 回收站管理 ---------- */
+ 
+   /**
+diff --git a/frontend/src/lib/AuthContext.tsx b/frontend/src/lib/AuthContext.tsx
+index b1b322f..e53c2ff 100644
+--- a/frontend/src/lib/AuthContext.tsx
++++ b/frontend/src/lib/AuthContext.tsx
+@@ -56,7 +56,8 @@ interface DeveloperLoginParams {
+ 
+ /** 企业用户登录参数 */
+ interface UserLoginParams {
+-  tenantCode: string;            /* 企业代码 */
++  tenantCode?: string;           /* 企业代码：统一登录页使用 */
++  portalHost?: string;           /* 独立登录页域名：企业独立域名使用 */
+   username: string;              /* 用户名 */
+   password: string;              /* 密码 */
+ }
+diff --git a/frontend/src/pages/auth/Login.tsx b/frontend/src/pages/auth/Login.tsx
+index 7a42aa8..5ef8a5e 100644
+--- a/frontend/src/pages/auth/Login.tsx
++++ b/frontend/src/pages/auth/Login.tsx
+@@ -22,12 +22,22 @@ import { useNavigate, Link } from 'react-router-dom';
+ import { Building2, Lock, User, Eye, EyeOff, Briefcase } from 'lucide-react';
+ import { useAuthStore } from '../../lib/AuthContext';
+ import { LoadingSpinner } from '../../components/ui/Loading';
++import { authApi } from '../../api';
+ 
+ /* ========================================
+  * 登录模式类型
+  * ======================================== */
+ type LoginMode = 'developer' | 'enterprise';
+ 
++interface PortalConfig {
++  isEnabled: boolean;
++  domain?: string;
++  logoUrl?: string | null;
++  companyName?: string;
++  loginTitle?: string;
++  themeColor?: string | null;
++}
++
+ /* ========================================
+  * Login 登录页面组件
+  * ======================================== */
+@@ -44,8 +54,16 @@ const Login: React.FC = () => {
+   const [tenantCode, setTenantCode] = useState('');            /* 企业代码 */
+   const [showPassword, setShowPassword] = useState(false);     /* 是否显示密码 */
+   const [loading, setLoading] = useState(false);               /* 登录加载状态 */
++  const [portalLoading, setPortalLoading] = useState(true);     /* 独立登录页配置加载状态 */
++  const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
+   const [error, setError] = useState('');                      /* 错误提示信息 */
+ 
++  const isPortalLogin = Boolean(portalConfig?.isEnabled);
++  const brandName = portalConfig?.companyName || '资料通工程管理系统';
++  const loginTitle = portalConfig?.loginTitle || brandName;
++  const themeColor = portalConfig?.themeColor || 'var(--primary)';
++  const logoSrc = portalConfig?.logoUrl || '/icon.png';
++
+   /* ---------- 副作用 ---------- */
+ 
+   /**
+@@ -58,6 +76,33 @@ const Login: React.FC = () => {
+     }
+   }, [isAuthenticated, navigate]);
+ 
++  /**
++   * 如果当前 hostname 绑定了企业独立登录页，则加载品牌配置。
++   * localhost / 未绑定域名会保持原统一登录页逻辑。
++   */
++  useEffect(() => {
++    let mounted = true;
++    const loadPortalConfig = async () => {
++      setPortalLoading(true);
++      try {
++        const hostname = window.location.hostname;
++        const res = await authApi.getPortalConfig(hostname);
++        const body = res.data || res;
++        const data = body.data || body;
++        if (mounted && data?.isEnabled) {
++          setPortalConfig(data);
++          setMode('enterprise');
++        }
++      } catch {
++        // 独立登录页配置不可用时回落到统一登录页，不阻断登录。
++      } finally {
++        if (mounted) setPortalLoading(false);
++      }
++    };
++    loadPortalConfig();
++    return () => { mounted = false; };
++  }, []);
++
+   /* ---------- 事件处理 ---------- */
+ 
+   /**
+@@ -77,7 +122,7 @@ const Login: React.FC = () => {
+       setError('请输入密码');
+       return;
+     }
+-    if (mode === 'enterprise' && !tenantCode.trim()) {
++    if (mode === 'enterprise' && !isPortalLogin && !tenantCode.trim()) {
+       setError('请输入企业代码');
+       return;
+     }
+@@ -91,7 +136,8 @@ const Login: React.FC = () => {
+       } else {
+         /* 企业用户登录 */
+         await userLogin({
+-          tenantCode: tenantCode.trim(),
++          tenantCode: isPortalLogin ? undefined : tenantCode.trim(),
++          portalHost: isPortalLogin ? window.location.hostname : undefined,
+           username: username.trim(),
+           password,
+         });
+@@ -112,6 +158,7 @@ const Login: React.FC = () => {
+    * 切换时清除错误信息和密码
+    */
+   const handleModeChange = (newMode: LoginMode) => {
++    if (isPortalLogin && newMode !== 'enterprise') return;
+     setMode(newMode);
+     setError('');
+     setPassword('');
+@@ -128,11 +175,13 @@ const Login: React.FC = () => {
+         <div className="text-center mb-8">
+           {/* Logo 图标 */}
+           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 overflow-hidden" style={{ backgroundColor: 'var(--card)', boxShadow: 'var(--shadow-lg)' }}>
+-            <img src="/icon.png" alt="资料通" className="w-14 h-14 object-contain" />
++            <img src={logoSrc} alt={brandName} className="w-14 h-14 object-contain" />
+           </div>
+           {/* 系统名称 */}
+-          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>资料通工程管理系统</h1>
+-          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>Construction Management System</p>
++          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{loginTitle}</h1>
++          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
++            {isPortalLogin ? `${brandName} · 独立登录入口` : 'Construction Management System'}
++          </p>
+         </div>
+ 
+         {/* 登录表单卡片 */}
+@@ -140,6 +189,7 @@ const Login: React.FC = () => {
+           {/* ==========================================
+            * 登录模式切换 Tab
+            * ========================================== */}
++          {!isPortalLogin && (
+           <div className="flex" style={{ borderBottom: '1px solid var(--border)' }}>
+             {/* 企业登录 Tab */}
+             <button
+@@ -149,7 +199,7 @@ const Login: React.FC = () => {
+                   ? ''
+                   : 'hover:opacity-80'
+               }`}
+-              style={{ color: mode === 'enterprise' ? 'var(--primary)' : 'var(--muted-foreground)' }}
++              style={{ color: mode === 'enterprise' ? themeColor : 'var(--muted-foreground)' }}
+             >
+               <span className="flex items-center justify-center gap-2">
+                 <Briefcase size={16} />
+@@ -157,7 +207,7 @@ const Login: React.FC = () => {
+               </span>
+               {/* 激活指示条 */}
+               {mode === 'enterprise' && (
+-                <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: 'var(--primary)' }} />
++                <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: themeColor }} />
+               )}
+             </button>
+ 
+@@ -169,7 +219,7 @@ const Login: React.FC = () => {
+                   ? ''
+                   : 'hover:opacity-80'
+               }`}
+-              style={{ color: mode === 'developer' ? 'var(--primary)' : 'var(--muted-foreground)' }}
++              style={{ color: mode === 'developer' ? themeColor : 'var(--muted-foreground)' }}
+             >
+               <span className="flex items-center justify-center gap-2">
+                 <User size={16} />
+@@ -177,10 +227,11 @@ const Login: React.FC = () => {
+               </span>
+               {/* 激活指示条 */}
+               {mode === 'developer' && (
+-                <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: 'var(--primary)' }} />
++                <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: themeColor }} />
+               )}
+             </button>
+           </div>
++          )}
+ 
+           {/* ==========================================
+            * 登录表单
+@@ -194,7 +245,7 @@ const Login: React.FC = () => {
+             )}
+ 
+             {/* 企业代码输入框（仅企业登录模式显示） */}
+-            {mode === 'enterprise' && (
++            {mode === 'enterprise' && !isPortalLogin && (
+               <div>
+                 <label className="form-label">企业代码</label>
+                 <div className="relative">
+@@ -263,14 +314,15 @@ const Login: React.FC = () => {
+             {/* 登录按钮 */}
+             <button
+               type="submit"
+-              disabled={loading}
++              disabled={loading || portalLoading}
+               className="btn-primary w-full py-2.5 text-base mt-6"
++              style={portalConfig?.themeColor ? { backgroundColor: themeColor } : undefined}
+             >
+-              {loading ? (
++              {loading || portalLoading ? (
+                 /* 加载状态 */
+                 <span className="flex items-center justify-center gap-2">
+                   <LoadingSpinner size={18} className="text-white" />
+-                  登录中...
++                  {portalLoading ? '加载登录配置...' : '登录中...'}
+                 </span>
+               ) : (
+                 '登 录'
+@@ -279,12 +331,14 @@ const Login: React.FC = () => {
+           </form>
+ 
+           {/* 注册入口 */}
++          {!isPortalLogin && (
+           <div className="mt-4 text-center text-sm" style={{ color: 'var(--muted-foreground)' }}>
+             还没有企业账号？
+             <Link to="/register" className="hover:underline font-medium ml-1" style={{ color: 'var(--primary)' }}>
+               立即注册
+             </Link>
+           </div>
++          )}
+         </div>
+ 
+         {/* 底部版权信息 */}
+diff --git a/frontend/src/pages/developer/TenantView.tsx b/frontend/src/pages/developer/TenantView.tsx
+index 6d62948..9d0136e 100644
+--- a/frontend/src/pages/developer/TenantView.tsx
++++ b/frontend/src/pages/developer/TenantView.tsx
+@@ -11,6 +11,7 @@ import {
+   Package, FileText, UserCog, Key, Truck, HardHat,
+   CalendarCheck, Calculator, Banknote, ShieldCheck,
+   FileSpreadsheet, AlertTriangle, CheckCircle2, XCircle,
++  Globe2, Image as ImageIcon, Palette,
+ } from 'lucide-react';
+ import toast from 'react-hot-toast';
+ import { developerApi, tenantApi, authApi } from '../../api';
+@@ -55,6 +56,15 @@ interface TenantModuleState {
+   remark?: string | null;
+ }
+ 
++interface TenantPortalConfig {
++  domain?: string | null;
++  logoUrl?: string | null;
++  companyName?: string | null;
++  loginTitle?: string | null;
++  themeColor?: string | null;
++  isEnabled: boolean;
++}
++
+ /* ========================================
+  * TenantView 组件
+  * ======================================== */
+@@ -66,9 +76,18 @@ const TenantView: React.FC = () => {
+   const [tenant, setTenant] = useState<TenantDetail | null>(null);
+   const [users, setUsers] = useState<TenantUser[]>([]);
+   const [modules, setModules] = useState<TenantModuleState[]>([]);
++  const [portalConfig, setPortalConfig] = useState<TenantPortalConfig>({
++    domain: '',
++    logoUrl: '',
++    companyName: '',
++    loginTitle: '',
++    themeColor: '#2563EB',
++    isEnabled: false,
++  });
+   const [loading, setLoading] = useState(true);
+   const [entering, setEntering] = useState(false);
+   const [savingModules, setSavingModules] = useState(false);
++  const [savingPortal, setSavingPortal] = useState(false);
+ 
+   useEffect(() => {
+     const fetchData = async () => {
+@@ -86,9 +105,10 @@ const TenantView: React.FC = () => {
+ 
+         // 获取该企业的用户列表和模块开通状态
+         try {
+-          const [usersRes, modulesRes] = await Promise.all([
++          const [usersRes, modulesRes, portalRes] = await Promise.all([
+             developerApi.getTenantUsers(id),
+             developerApi.getTenantModules(id),
++            developerApi.getTenantPortal(id),
+           ]);
+           const body = usersRes.data || usersRes;
+           const usersData = body.data || body;
+@@ -96,6 +116,16 @@ const TenantView: React.FC = () => {
+           const modulesBody = modulesRes.data || modulesRes;
+           const modulesData = modulesBody.data || modulesBody;
+           setModules(Array.isArray(modulesData) ? modulesData : []);
++          const portalBody = portalRes.data || portalRes;
++          const portalData = portalBody.data || portalBody;
++          setPortalConfig({
++            domain: portalData.domain || '',
++            logoUrl: portalData.logoUrl || '',
++            companyName: portalData.companyName || found?.name || '',
++            loginTitle: portalData.loginTitle || '',
++            themeColor: portalData.themeColor || '#2563EB',
++            isEnabled: Boolean(portalData.isEnabled),
++          });
+         } catch {
+           // 用户列表或模块状态可能不可用
+         }
+@@ -153,6 +183,33 @@ const TenantView: React.FC = () => {
+     }
+   };
+ 
++  const handlePortalChange = (field: keyof TenantPortalConfig, value: string | boolean) => {
++    setPortalConfig((prev) => ({ ...prev, [field]: value }));
++  };
++
++  const handleSavePortal = async () => {
++    if (!id) return;
++    setSavingPortal(true);
++    try {
++      const res = await developerApi.updateTenantPortal(id, portalConfig);
++      const body = res.data || res;
++      const updated = body.data || body;
++      setPortalConfig({
++        domain: updated.domain || '',
++        logoUrl: updated.logoUrl || '',
++        companyName: updated.companyName || tenant?.name || '',
++        loginTitle: updated.loginTitle || '',
++        themeColor: updated.themeColor || '#2563EB',
++        isEnabled: Boolean(updated.isEnabled),
++      });
++      toast.success('独立登录页配置已保存');
++    } catch (error: any) {
++      toast.error(error.message || '保存独立登录页配置失败');
++    } finally {
++      setSavingPortal(false);
++    }
++  };
++
+   if (!isDeveloper) {
+     return (
+       <div className="flex flex-col items-center justify-center py-20">
+@@ -362,6 +419,109 @@ const TenantView: React.FC = () => {
+             </div>
+           </div>
+ 
++          {/* ==========================================
++           * 独立登录页配置
++           * ========================================== */}
++          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-6">
++            <div className="flex items-start justify-between gap-4 mb-4">
++              <div>
++                <h2 className="text-base font-semibold" style={{ color: '#1A2B3C' }}>
++                  <Globe2 size={16} className="inline mr-1.5 text-indigo-500" />
++                  企业独立登录页
++                </h2>
++                <p className="text-xs text-gray-400 mt-1">
++                  绑定域名后，企业用户可直接在该域名登录，无需输入企业代码；原统一登录页仍可继续使用企业代码登录。
++                </p>
++              </div>
++              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
++                <input
++                  type="checkbox"
++                  checked={portalConfig.isEnabled}
++                  onChange={(e) => handlePortalChange('isEnabled', e.target.checked)}
++                  className="w-4 h-4"
++                />
++                启用
++              </label>
++            </div>
++
++            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
++              <div>
++                <label className="form-label">绑定域名</label>
++                <div className="relative">
++                  <Globe2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
++                  <input
++                    type="text"
++                    value={portalConfig.domain || ''}
++                    onChange={(e) => handlePortalChange('domain', e.target.value)}
++                    placeholder="login.example.com"
++                    className="input pl-9"
++                  />
++                </div>
++              </div>
++              <div>
++                <label className="form-label">公司名称</label>
++                <div className="relative">
++                  <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
++                  <input
++                    type="text"
++                    value={portalConfig.companyName || ''}
++                    onChange={(e) => handlePortalChange('companyName', e.target.value)}
++                    placeholder={tenant?.name || '企业名称'}
++                    className="input pl-9"
++                  />
++                </div>
++              </div>
++              <div>
++                <label className="form-label">登录页标题</label>
++                <div className="relative">
++                  <Key size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
++                  <input
++                    type="text"
++                    value={portalConfig.loginTitle || ''}
++                    onChange={(e) => handlePortalChange('loginTitle', e.target.value)}
++                    placeholder="企业工程管理系统"
++                    className="input pl-9"
++                  />
++                </div>
++              </div>
++              <div>
++                <label className="form-label">Logo URL</label>
++                <div className="relative">
++                  <ImageIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
++                  <input
++                    type="text"
++                    value={portalConfig.logoUrl || ''}
++                    onChange={(e) => handlePortalChange('logoUrl', e.target.value)}
++                    placeholder="/uploads/logo.png 或 https://..."
++                    className="input pl-9"
++                  />
++                </div>
++              </div>
++              <div>
++                <label className="form-label">主题色</label>
++                <div className="relative">
++                  <Palette size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
++                  <input
++                    type="text"
++                    value={portalConfig.themeColor || ''}
++                    onChange={(e) => handlePortalChange('themeColor', e.target.value)}
++                    placeholder="#2563EB"
++                    className="input pl-9"
++                  />
++                </div>
++              </div>
++              <div className="flex items-end">
++                <button
++                  onClick={handleSavePortal}
++                  disabled={savingPortal}
++                  className="btn-primary text-sm w-full"
++                >
++                  {savingPortal ? '保存中...' : '保存独立登录配置'}
++                </button>
++              </div>
++            </div>
++          </div>
++
+           {/* ==========================================
+            * 用户列表
+            * ========================================== */}
