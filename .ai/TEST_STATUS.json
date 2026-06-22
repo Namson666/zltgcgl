@@ -1,5 +1,5 @@
 {
-  "status": "module_portal_browser_smoke_green_pending_push",
+  "status": "module_portal_browser_smoke_green_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -558,5 +558,5 @@
     "Labor report export still writes the existing fixed workbook sheets; attendance/social preview is supported but adding those sheets to workbook export remains a non-blocking follow-up."
   ],
   "notes": "Module entitlement and independent portal login smoke coverage added. Real Chrome now passes 7 tests including menu hiding, disabled route redirect, disabled API 403, enabled wms continuity, and portal login without tenant code. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-22T15:56:00Z"
+  "updated_at": "2026-06-22T16:00:00Z"
 }
