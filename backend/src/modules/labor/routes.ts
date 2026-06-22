@@ -255,7 +255,8 @@ attendanceRouter.put('/mobile/settings', authenticate, requireUser, requirePermi
     res.json({ success: true, data, message: '打卡规则已保存' } as ApiResponse);
   } catch (error: any) {
     console.error('保存打卡规则失败:', error);
-    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '保存打卡规则失败' } as ApiResponse);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '保存打卡规则失败' } as ApiResponse);
   }
 });
 

@@ -1,9 +1,9 @@
 {
-  "stage": "S6_phase4_mobile_checkin_hardened_green",
+  "stage": "S6_phase4_face_provider_gateway_green_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Phase 4 mini-program/personnel face/mobile check-in flows are hardened with photo preview/link, trusted-location list/delete, and developer/tenant mini-program config real Chrome coverage. Production face provider and dependency audit upgrades remain Yellow follow-ups.",
-  "updated_at": "2026-06-22T14:15:00Z"
+  "notes": "Phase 4 mobile check-in now includes production-ready face provider HTTP gateway contract with safe downgrade and verified UI selection. Real third-party vendor credentials/gateway deployment, npm audit remediation, and broader exhaustive regression remain Yellow follow-ups. Dependency audit reduction applied: frontend clear; backend xlsx high remains no-fix and uuid moderate force upgrade remains Yellow.",
+  "updated_at": "2026-06-22T14:34:00Z"
 }

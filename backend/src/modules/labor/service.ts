@@ -1105,10 +1105,15 @@ export async function getAttendanceSetting(tenantId: string) {
 
 export async function updateAttendanceSetting(tenantId: string, data: { checkInsPerDay?: number; faceProvider?: string }) {
   const checkInsPerDay = data.checkInsPerDay === 2 ? 2 : 1;
+  const allowedProviders = new Set(['stub', 'http', 'cloud', 'tencent', 'baidu', 'aliyun']);
+  const faceProvider = String(data.faceProvider || 'stub').trim().toLowerCase();
+  if (!allowedProviders.has(faceProvider)) {
+    throw { status: 400, code: 'INVALID_FACE_PROVIDER', message: `不支持的人脸识别服务：${data.faceProvider}` };
+  }
   return prisma.attendanceSetting.upsert({
     where: { tenantId },
-    update: { checkInsPerDay, faceProvider: data.faceProvider || 'stub' },
-    create: { tenantId, checkInsPerDay, faceProvider: data.faceProvider || 'stub' },
+    update: { checkInsPerDay, faceProvider },
+    create: { tenantId, checkInsPerDay, faceProvider },
   });
 }
 

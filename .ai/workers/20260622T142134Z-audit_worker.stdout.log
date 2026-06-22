@@ -1,0 +1,60 @@
+I've now read all five files and the E2E smoke spec. Let me synthesize the audit.
+
+---
+
+## AUDIT RESULT: **FAIL**
+
+### BLOCKER (1)
+
+**B1 — `readPhotoAsBase64` 文件读取失败抛异常，阻断打卡**
+
+在 `face-provider.ts:51`，`fs.readFile` 没有任何 try-catch。如果参考照片文件被删除、路径不对或权限不足，`readPhotoAsBase64` 抛出异常 → `verify()` 抛出 → `createMobileCheckIn` (service.ts:1310) 无外层兜底 → **HTTP 500 + 打卡数据丢失**。
+
+这违反了"第三方失败时不得丢打卡数据"的核心要求。文件损毁是生产环境的常态（磁盘故障、手动清理、迁移遗漏），不应出现。
+
+**修复**: 给 `readPhotoAsBase64` 加 try-catch，读取失败时返回 `null` 而非抛异常。
+
+---
+
+### YELLOW RISKS
+
+**Y1 — `{ url: string }` 返回值喂给 HTTP 网关可能解析失败**
+
+`readPhotoAsBase64` 对 HTTPS URL 返回 `{ url: "https://..." }` 对象 (line 47-49)，而非 base64 字符串。`HttpFaceRecognitionProvider.verify()` 在 line 133-136 不加区分地把这个对象放入 JSON body 的 `referencePhoto`/`checkInPhoto` 字段。网关期望 base64 字符串时会收到 `[object Object]` 或类型错误。
+
+**修复**: 在 `verify()` 中对对象类型做判断，如果 `readPhotoAsBase64` 返回非 string 类型（URL 对象），跳过 base64 发送或改发 URL 字段。
+
+**Y2 — 租户级 faceProvider 设置缺乏验证隔离**
+
+`updateAttendanceSetting` 在 service.ts:1108 硬编码了允许的 provider 集合，但所有用户只要有 `canManageAttendance` 权限即可修改整个租户的人脸识别配置。没有操作审计或二次确认。如果一个工点误切到未配置的 HTTP provider（`FACE_RECOGNITION_HTTP_ENDPOINT` 为空），所有该租户的小程序打卡都会走 `not_configured` 降级（虽然不丢数据），但产生大量异常打卡记录需要人工处理。
+
+**Y3 — URL schema 验证缺失**
+
+`readPhotoAsBase64` 对 HTTP URL 判断只用 `startsWith('https?://')`，未校验端口、完整 schema 或做 SSRF 防护。照片 URL 可能来自用户上传路径，如果攻击者能控制 photoUrl 字段，可能被利用对内网服务发起请求。当前威胁较低（photoUrl 来自后端 /uploads/ 路径），但若未来支持用户上传自定义 URL 则成为风险。
+
+Y4 — `enrollPersonnelFace` 未暴露 `provider` 选择
+
+service.ts:1084 的 `enrollPersonnelFace` 参数默认 `provider = 'stub'`，但 routes.ts:160 调用时没有传入 provider。用户在前端录入人脸照片时未能选择使用的 provider，始终使用 stub。
+
+---
+
+### 测试覆盖缺口
+
+| 路径 | 是否覆盖 | 备注 |
+|------|---------|------|
+| stub verify | ✅ | face-provider.test.ts:30 |
+| endpoint 未配置 → not_configured | ✅ | :42 |
+| HTTP 网关正常返回 → verified | ✅ | :56 |
+| 低分 → mismatch | ✅ | :90 |
+| 网关失败 → provider_error | ✅ | :110 |
+| **readPhotoAsBase64 文件读失败** | ❌ | 未测试 |
+| **readPhotoAsBase64 HTTPS URL 路径** | ❌ | 未测试 |
+| **readPhotoAsBase64 data:image base64 路径** | ❌ | 未测试 |
+| **前端 provider 下拉 → 保存 → 打卡完整 smoke** | ❌ | 未测试 |
+
+### 建议最小修复 (按优先级)
+
+1. **修复 B1**: `readPhotoAsBase64` 中 wrap `fs.readFile` 在 try-catch 内，失败时返回 `null`
+2. **修复 Y1**: `HttpFaceRecognitionProvider.verify()` 中对 `readPhotoAsBase64` 返回值做类型判断——如果是对象（URL 类型），skip 或改发 URL 字段而非混乱的 base64
+3. **补测试**: 文件读失败、HTTPS URL、data URI 三条路径的测试用例
+4. **补 E2E smoke**: 确认前端 provider 切换能正确保存，并且 stub 模式下打卡仍然走通

@@ -128,6 +128,7 @@ const Attendance: React.FC = () => {
   const [mobileCheckIns, setMobileCheckIns] = useState<MobileCheckInRecord[]>([]);
   const [loadingMobile, setLoadingMobile] = useState(false);
   const [checkInsPerDay, setCheckInsPerDay] = useState(1);
+  const [faceProvider, setFaceProvider] = useState('stub');
   const [savingRule, setSavingRule] = useState(false);
   const [selectedMobileIds, setSelectedMobileIds] = useState<Set<string>>(new Set());
   const [trustedLocations, setTrustedLocations] = useState<TrustedLocation[]>([]);
@@ -156,6 +157,7 @@ const Attendance: React.FC = () => {
       ]);
       const setting = (settingRes.data as any)?.data || {};
       setCheckInsPerDay(setting.checkInsPerDay || 1);
+      setFaceProvider(setting.faceProvider || 'stub');
       const data = (checkInRes.data as any)?.data || {};
       setMobileCheckIns(data.records || []);
       const trustedData = (trustedRes.data as any)?.data || [];
@@ -170,7 +172,7 @@ const Attendance: React.FC = () => {
   const saveMobileRule = async () => {
     setSavingRule(true);
     try {
-      await laborApi.updateAttendanceSetting({ checkInsPerDay, faceProvider: 'stub' });
+      await laborApi.updateAttendanceSetting({ checkInsPerDay, faceProvider });
       toast.success('小程序打卡规则已保存');
     } catch (err: any) {
       toast.error(err.response?.data?.message || '保存规则失败');
@@ -330,6 +332,18 @@ const Attendance: React.FC = () => {
               <option value={1}>每天一次</option>
               <option value={2}>每天两次</option>
             </select>
+          </div>
+          <div>
+            <label className="label">人脸识别服务</label>
+            <select className="select w-44" value={faceProvider} onChange={e => setFaceProvider(e.target.value)}>
+              <option value="stub">本地测试 / Stub</option>
+              <option value="http">生产 HTTP 网关</option>
+              <option value="cloud">通用云网关</option>
+              <option value="tencent">腾讯云网关别名</option>
+              <option value="baidu">百度云网关别名</option>
+              <option value="aliyun">阿里云网关别名</option>
+            </select>
+            <p className="text-[11px] text-gray-400 mt-1">生产网关由后端环境变量配置；异常时保留打卡数据</p>
           </div>
           <button className="btn-primary btn-sm" onClick={saveMobileRule} disabled={savingRule}>
             {savingRule ? '保存中...' : '保存打卡规则'}

@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "phase4_mobile_checkin_hardened_green",
+  "stage": "phase4_face_provider_gateway_green_pending_push",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Phase 4 mobile check-in hardening completed: trusted-location list/delete, check-in photo link, personnel face photo preview, and developer/tenant mini-program config Chrome coverage. Production third-party face provider and dependency audit upgrades remain Yellow follow-ups.",
+  "notes": "Phase 4 face provider gateway completed and verified locally: HTTP/cloud/tencent/baidu/aliyun provider adapter, safe downgrade, UI setting, tests, Chrome smoke, Claude audit, and code-review-graph. Real vendor gateway credentials and dependency audit remediation remain Yellow before production Product Green. Dependency audit reduction applied: frontend clear; backend xlsx high remains no-fix and uuid moderate force upgrade remains Yellow.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-22T14:15:00Z"
+  "updated_at": "2026-06-22T14:34:00Z"
 }

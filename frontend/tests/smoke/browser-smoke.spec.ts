@@ -209,6 +209,10 @@ test.describe('browser smoke: authenticated core navigation', () => {
 	        await expect(page).toHaveURL(/\/labor\/attendance/);
 	        await expect(page.getByRole('heading', { name: '小程序打卡', exact: true })).toBeVisible();
 	        await page.locator('select').filter({ hasText: '每天一次' }).selectOption('2');
+	        await page.locator('select').filter({ hasText: '本地测试 / Stub' }).selectOption('http');
+	        await page.getByRole('button', { name: '保存打卡规则' }).click();
+	        await expect(page.getByText('小程序打卡规则已保存')).toBeVisible();
+	        await page.locator('select').filter({ hasText: '本地测试 / Stub' }).selectOption('stub');
 	        await page.getByRole('button', { name: '保存打卡规则' }).click();
 	        await expect(page.getByText('小程序打卡规则已保存')).toBeVisible();
 

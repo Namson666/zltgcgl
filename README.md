@@ -4,12 +4,12 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S6 Phase 4 mobile check-in hardened green
-- Current task: 小程序接入、人员人脸、微信打卡、异常批量处理、个人信任打卡地 V1 与强化项已完成，准备提交推送
-- Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖
-- In progress: Phase 4 强化项已完成验证，待提交推送
-- Next action: 提交并推送 Phase 4 hardening；随后决定生产级第三方人脸识别服务与依赖漏洞升级策略
-- Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：人脸识别目前是 stub 适配层、npm audit high 漏洞、全量所有模块穷举点击回归尚未扩展到每个历史页面
+- Current phase: S6 Phase 4 face provider gateway green pending push
+- Current task: 小程序接入、人员人脸、微信打卡、异常批量处理、个人信任打卡地 V1、强化项与人脸识别 HTTP 网关接入点已完成验证，准备提交推送
+- Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择
+- In progress: Phase 4 face provider gateway 已完成验证，待提交推送
+- Next action: 提交并推送 Phase 4 face provider gateway + audit reduction；随后替换/隔离 backend `xlsx` 并评估 `uuid` breaking force upgrade，再扩展全量所有模块穷举点击回归
+- Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：真实第三方人脸识别网关/密钥未在仓库中配置、frontend audit 已清但 backend 仍有 `xlsx` no-fix high 与 `uuid` breaking-force moderate、全量所有模块穷举点击回归尚未扩展到每个历史页面
 - Do not repeat: 不要在未确认重构设计前修改业务代码；不要把 Build Green 当 Product Green
 - Must read:
   1. .ai/REQUIRED_ACTION_CONTRACT.json
@@ -22,13 +22,13 @@
   8. .ai/session/HANDOFF.md
 - Must read spec:
   1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
-- Last verified command: `bash scripts/verify.sh`, `bash scripts/browser-smoke.sh`, and `cd backend && DATABASE_URL=file:/tmp/zlt_prisma_validate.db npx prisma validate` passed after Phase 4 mobile check-in hardening slice
-- Claude worker evidence: `.ai/workers/20260622T141044Z-audit_worker.result.md` returned PASS; BLOCKERS none; suggested tenant-scoped trusted-location delete hardening was applied and reverified
-- code-review-graph evidence: `code-review-graph build --skip-flows && code-review-graph detect-changes` ran; graph built 135 files / 1470 nodes / 15534 edges; risk score 0.50 due direct unit-test gaps, covered by current real Chrome smoke for this slice
-- Last commit: current pushed HEAD `e6090b7 chore: mark phase4 mobile checkin pushed`; Phase 4 hardening changes pending commit
-- Safe rollback point: pushed commit `e6090b7 chore: mark phase4 mobile checkin pushed`
+- Last verified command: `bash scripts/verify.sh`, `bash scripts/browser-smoke.sh`, and `code-review-graph build --skip-flows && code-review-graph detect-changes` passed after Phase 4 face provider gateway slice
+- Claude worker evidence: `.ai/workers/20260622T142134Z-audit_worker.result.md` first found a blocker-risk around photo read failure; fixed. `.ai/workers/20260622T142430Z-audit_worker.result.md` returned PASS / BLOCKERS none; path traversal Yellow was also fixed and reverified.
+- code-review-graph evidence: `code-review-graph build --skip-flows && code-review-graph detect-changes` ran; graph built 135 files / 1479 nodes / 15621 edges; risk score 0.50. Helper-level test gaps are covered by `backend/src/modules/labor/face-provider.test.ts` and real Chrome smoke.
+- Last commit: current pushed HEAD `79b1192 chore: mark phase4 hardening pushed`; Phase 4 face provider gateway changes pending commit
+- Safe rollback point: pushed commit `79b1192 chore: mark phase4 hardening pushed`
 - Browser smoke evidence: `docs/smoke-evidence/playwright-results.json` and screenshots under `docs/smoke-evidence/`
-- Updated at: 2026-06-22T14:15:00Z
+- Updated at: 2026-06-22T14:30:00Z
 
 ## 项目概览
 
