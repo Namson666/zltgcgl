@@ -20,9 +20,9 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "dependency_audit_green_pending_push",
+    "push_status": "dependency_audit_green_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "last pushed: d2808b2 chore: mark xlsx removal pushed; uuid audit override pending commit/push"
+    "pushed_commit": "68cdeec fix: clear backend uuid audit findings"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -31,11 +31,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_project_dependency_audit_green_pending_push",
-  "updated_at": "2026-06-22T14:50:00Z",
-  "push_status": "dependency_audit_green_pending_push",
-  "last_pushed_commit": "fad50e3",
-  "current_commit": "d2808b2+working-tree-uuid-override",
+  "status": "yellow_dependency_audit_green_pushed",
+  "updated_at": "2026-06-22T14:54:00Z",
+  "push_status": "dependency_audit_green_pushed",
+  "last_pushed_commit": "68cdeec",
+  "current_commit": "68cdeec",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -43,6 +43,7 @@
     "2026-06-22: Face provider gateway and audit reduction pushed at 30b3a9a.",
     "2026-06-22: Backend xlsx high removed via exceljs labor report export; verify, Claude audit, and code-review-graph passed; pending commit/push.",
     "2026-06-22: Backend xlsx high removal pushed at fad50e3; remaining audit Yellow is uuid moderate breaking-force.",
-    "2026-06-22: Backend/frontend npm audit now 0 vulnerabilities after uuid override; verify, Chrome smoke, and code-review-graph passed; pending commit/push."
+    "2026-06-22: Backend/frontend npm audit now 0 vulnerabilities after uuid override; verify, Chrome smoke, and code-review-graph passed; pending commit/push.",
+    "2026-06-22: Backend/frontend dependency audit green pushed at 68cdeec."
   ]
 }
