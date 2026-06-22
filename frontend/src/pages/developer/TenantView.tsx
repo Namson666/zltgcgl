@@ -49,6 +49,12 @@ interface TenantUser {
   department?: { name: string };
 }
 
+interface TenantModuleState {
+  moduleKey: 'wms' | 'labor' | 'finance';
+  isEnabled: boolean;
+  remark?: string | null;
+}
+
 /* ========================================
  * TenantView 组件
  * ======================================== */
@@ -59,8 +65,10 @@ const TenantView: React.FC = () => {
 
   const [tenant, setTenant] = useState<TenantDetail | null>(null);
   const [users, setUsers] = useState<TenantUser[]>([]);
+  const [modules, setModules] = useState<TenantModuleState[]>([]);
   const [loading, setLoading] = useState(true);
   const [entering, setEntering] = useState(false);
+  const [savingModules, setSavingModules] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,14 +84,20 @@ const TenantView: React.FC = () => {
         const found = tenantsList.find((t: any) => t.id === id || String(t.id) === id);
         if (found) setTenant(found);
 
-        // 获取该企业的用户列表
+        // 获取该企业的用户列表和模块开通状态
         try {
-          const usersRes = await developerApi.getTenantUsers(id);
+          const [usersRes, modulesRes] = await Promise.all([
+            developerApi.getTenantUsers(id),
+            developerApi.getTenantModules(id),
+          ]);
           const body = usersRes.data || usersRes;
           const usersData = body.data || body;
           setUsers(Array.isArray(usersData) ? usersData : []);
+          const modulesBody = modulesRes.data || modulesRes;
+          const modulesData = modulesBody.data || modulesBody;
+          setModules(Array.isArray(modulesData) ? modulesData : []);
         } catch {
-          // 用户列表可能不可用
+          // 用户列表或模块状态可能不可用
         }
       } catch (error) {
         console.error('加载企业数据失败:', error);
@@ -117,6 +131,28 @@ const TenantView: React.FC = () => {
     navigate('/dev/tenants');
   };
 
+  const handleToggleModule = (moduleKey: TenantModuleState['moduleKey']) => {
+    setModules((prev) => prev.map((item) => (
+      item.moduleKey === moduleKey ? { ...item, isEnabled: !item.isEnabled } : item
+    )));
+  };
+
+  const handleSaveModules = async () => {
+    if (!id) return;
+    setSavingModules(true);
+    try {
+      const res = await developerApi.updateTenantModules(id, modules.map(({ moduleKey, isEnabled, remark }) => ({ moduleKey, isEnabled, remark })));
+      const body = res.data || res;
+      const updated = body.data || body;
+      if (Array.isArray(updated)) setModules(updated);
+      toast.success('模块开通状态已保存');
+    } catch (error: any) {
+      toast.error(error.message || '保存模块开通状态失败');
+    } finally {
+      setSavingModules(false);
+    }
+  };
+
   if (!isDeveloper) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -130,8 +166,9 @@ const TenantView: React.FC = () => {
   /* ---------- 权限模块列表 ---------- */
   const permissionModules = [
     { key: 'dashboard', label: '数据看板', icon: <Eye size={18} />, enabled: true },
-    { key: 'wms', label: '物资管理', icon: <Package size={18} />, enabled: true },
-    { key: 'labor', label: '劳资管理', icon: <Users size={18} />, enabled: true },
+    { key: 'wms', label: '物资管理', icon: <Package size={18} />, enabled: modules.find((item) => item.moduleKey === 'wms')?.isEnabled ?? true, configurable: true },
+    { key: 'labor', label: '劳资管理', icon: <Users size={18} />, enabled: modules.find((item) => item.moduleKey === 'labor')?.isEnabled ?? true, configurable: true },
+    { key: 'finance', label: '财务管理', icon: <Banknote size={18} />, enabled: modules.find((item) => item.moduleKey === 'finance')?.isEnabled ?? true, configurable: true },
     { key: 'contract', label: '合同管理', icon: <FileText size={18} />, enabled: true },
     { key: 'department', label: '项目部管理', icon: <Building2 size={18} />, enabled: true },
     { key: 'admin', label: '系统管理', icon: <UserCog size={18} />, enabled: true },
@@ -285,13 +322,16 @@ const TenantView: React.FC = () => {
           <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-6">
             <h2 className="text-base font-semibold mb-4" style={{ color: '#1A2B3C' }}>
               <ShieldCheck size={16} className="inline mr-1.5 text-emerald-500" />
-              模块权限状态
+              模块开通状态
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {permissionModules.map((mod) => (
-                <div
+                <button
                   key={mod.key}
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors"
+                  type="button"
+                  disabled={!mod.configurable}
+                  onClick={() => mod.configurable && handleToggleModule(mod.key as TenantModuleState['moduleKey'])}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors disabled:cursor-default"
                   style={{
                     borderColor: mod.enabled ? '#D1FAE5' : '#FEE2E2',
                     backgroundColor: mod.enabled ? '#F0FDF4' : '#FEF2F2',
@@ -307,8 +347,18 @@ const TenantView: React.FC = () => {
                   }}>
                     {mod.enabled ? '已启用' : '未启用'}
                   </span>
-                </div>
+                </button>
               ))}
+            </div>
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-xs text-gray-400">合同、用户、角色、项目部为默认基础功能；物资、劳资、财务可单独开通。</p>
+              <button
+                onClick={handleSaveModules}
+                disabled={savingModules}
+                className="btn-primary text-sm"
+              >
+                {savingModules ? '保存中...' : '保存模块设置'}
+              </button>
             </div>
           </div>
 

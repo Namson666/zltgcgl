@@ -11,6 +11,8 @@ import morgan from 'morgan';
 import path from 'path';
 import { globalRateLimit } from './common/middleware/rateLimit';
 import { errorHandler } from './common/middleware/errorHandler';
+import { requireTenantModule } from './common/middleware/module';
+import { authenticate, requireUser } from './common/middleware/auth';
 import authRoutes from './modules/auth/routes';
 import developerRoutes from './modules/developer/routes';
 import tenantRoutes from './modules/tenant/routes';
@@ -95,16 +97,16 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/v1/departments', departmentRoutes);
 
 // 物资管理路由
-app.use('/api/wms', wmsRoutes);
-app.use('/api/v1/wms', wmsRoutes);
+app.use('/api/wms', authenticate, requireUser, requireTenantModule('wms'), wmsRoutes);
+app.use('/api/v1/wms', authenticate, requireUser, requireTenantModule('wms'), wmsRoutes);
 
 // 劳资管理路由
-app.use('/api/labor', laborRoutes);
-app.use('/api/v1/labor', laborRoutes);
+app.use('/api/labor', authenticate, requireUser, requireTenantModule('labor'), laborRoutes);
+app.use('/api/v1/labor', authenticate, requireUser, requireTenantModule('labor'), laborRoutes);
 
 // 财务管理路由
-app.use('/api/finance', financeRoutes);
-app.use('/api/v1/finance', financeRoutes);
+app.use('/api/finance', authenticate, requireUser, requireTenantModule('finance'), financeRoutes);
+app.use('/api/v1/finance', authenticate, requireUser, requireTenantModule('finance'), financeRoutes);
 
 // 操作日志路由
 app.use('/api/logs', logRoutes);

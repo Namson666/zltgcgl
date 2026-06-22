@@ -16,6 +16,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../common/utils/prisma';
+import { getTenantEnabledModules, TENANT_MODULE_KEYS } from '../../common/services/module-entitlement.service';
 
 // 导入 JWT 工具函数
 import { signToken, signDevViewToken, storeRefreshToken, verifyAndConsumeRefreshToken } from '../../common/utils/jwt';
@@ -340,6 +341,8 @@ router.post('/user/login', async (req: Request, res: Response): Promise<void> =>
           .map(([key]) => key)
       : [];
 
+    const enabledModules = await getTenantEnabledModules(user.tenantId);
+
     // 签发 JWT Token（短期）+ 长期凭证
     const token = signToken({
       id: user.id,
@@ -394,6 +397,7 @@ router.post('/user/login', async (req: Request, res: Response): Promise<void> =>
           displayName: user.role?.displayName,
           dataScope: user.dataScope,
           permissions: permissionFields,
+          enabledModules,
           isActive: user.isActive,
           lastLoginAt: user.lastLoginAt,
         },
@@ -665,6 +669,8 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response)
             .map(([key]) => key)
         : [];
 
+      const enabledModules = await getTenantEnabledModules(user.tenantId);
+
       res.json({
         success: true,
         data: {
@@ -682,6 +688,7 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response)
           displayName: user.role?.displayName,
           dataScope: user.dataScope,
           permissions: permissionFields,
+          enabledModules,
           isActive: user.isActive,
           lastLoginAt: user.lastLoginAt,
           createdAt: user.createdAt,
@@ -957,6 +964,17 @@ router.post('/register', async (req: Request, res: Response) => {
         },
       });
 
+      // 新注册企业默认开通三大业务模块，保持与开发者后台创建企业一致。
+      await tx.tenantModuleEntitlement.createMany({
+        data: TENANT_MODULE_KEYS.map(moduleKey => ({
+          tenantId: tenant.id,
+          moduleKey,
+          isEnabled: true,
+          enabledAt: new Date(),
+          remark: '新企业默认试用开通',
+        })),
+      });
+
       // 3. 创建管理员角色（含全部权限）
       const adminRole = await tx.role.create({
         data: {
@@ -1016,6 +1034,7 @@ router.post('/register', async (req: Request, res: Response) => {
       role: 'admin',
       dataScope: 'ALL',
     });
+    const enabledModules = await getTenantEnabledModules(result.tenant.id);
 
     // 记录操作日志
     await createLog({
@@ -1041,6 +1060,7 @@ router.post('/register', async (req: Request, res: Response) => {
           phone: result.user.phone,
           role: 'admin',
           dataScope: 'ALL',
+          enabledModules,
         },
         tenant: {
           id: result.tenant.id,

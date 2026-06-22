@@ -6,6 +6,13 @@
 
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../common/utils/prisma';
+import {
+  ensureTenantModuleEntitlements,
+  isTenantModuleKey,
+  TENANT_MODULE_KEYS,
+  TenantModuleKey,
+  updateTenantModuleEntitlements,
+} from '../../common/services/module-entitlement.service';
 
 // ============================================
 // 全局数据看板
@@ -248,6 +255,16 @@ export async function createTenant(input: CreateTenantInput) {
       await tx.permission.create({ data: { roleId: createdRole.id } });
     }
 
+    await tx.tenantModuleEntitlement.createMany({
+      data: TENANT_MODULE_KEYS.map(moduleKey => ({
+        tenantId: newTenant.id,
+        moduleKey,
+        isEnabled: true,
+        enabledAt: new Date(),
+        remark: '新企业默认试用开通',
+      })),
+    });
+
     return newTenant;
   });
 
@@ -271,6 +288,31 @@ export async function toggleTenant(id: string) {
   if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
   const updated = await prisma.tenant.update({ where: { id }, data: { isActive: !tenant.isActive } });
   return { updated, wasActive: tenant.isActive, tenantName: tenant.name };
+}
+
+export async function getTenantModules(tenantId: string) {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
+  if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
+  return ensureTenantModuleEntitlements(tenantId);
+}
+
+export async function setTenantModules(tenantId: string, modules: Array<{ moduleKey: string; isEnabled: boolean; expiresAt?: string | null; remark?: string | null }>) {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
+  if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
+
+  const normalized = modules.map((item) => {
+    if (!isTenantModuleKey(item.moduleKey)) {
+      throw { status: 400, code: 'INVALID_MODULE', message: `不支持的模块：${item.moduleKey}` };
+    }
+    return {
+      moduleKey: item.moduleKey as TenantModuleKey,
+      isEnabled: Boolean(item.isEnabled),
+      expiresAt: item.expiresAt ? new Date(item.expiresAt) : null,
+      remark: item.remark ?? null,
+    };
+  });
+
+  return updateTenantModuleEntitlements(tenantId, normalized);
 }
 
 // ============================================

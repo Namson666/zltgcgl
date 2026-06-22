@@ -41,6 +41,7 @@ export interface User {
   avatar?: string;               /* 头像 URL */
   role?: string;                 /* 角色名称 */
   permissions?: string[];        /* 权限列表 */
+  enabledModules?: string[];     /* 企业已开通业务模块：wms/labor/finance */
   tenantId?: number;             /* 所属项目部 ID */
   tenantName?: string;           /* 所属项目部名称 */
   tenantCode?: string;           /* 企业代码 */
@@ -99,6 +100,8 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void;
   /** 检查是否拥有指定权限 */
   can: (permission: string) => boolean;
+  /** 检查企业是否开通指定模块 */
+  hasModule: (moduleKey: string) => boolean;
   /** 切换开发者视角 */
   toggleDevView: () => void;
   /** 进入企业视角（保存开发者凭证，切换到企业 token） */
@@ -435,6 +438,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     /* 检查用户权限列表 */
     return user.permissions?.includes(permission) ?? false;
+  },
+
+  hasModule: (moduleKey: string): boolean => {
+    const { user, isDeveloper, isDevView } = get();
+    if (isDeveloper && !isDevView) return true;
+    if (!user) return false;
+    return user.enabledModules?.includes(moduleKey) ?? false;
   },
 
   /**

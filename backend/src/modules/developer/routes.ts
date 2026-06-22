@@ -193,6 +193,38 @@ router.patch('/tenants/:id/toggle', async (req: AuthenticatedRequest, res: Respo
   }
 });
 
+router.get('/tenants/:id/modules', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const modules = await devService.getTenantModules(req.params.id);
+    res.json({ success: true, data: modules } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取企业模块开通状态失败:', error);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
+router.put('/tenants/:id/modules', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const modules = Array.isArray(req.body?.modules) ? req.body.modules : [];
+    const updated = await devService.setTenantModules(req.params.id, modules);
+    await createLog(req.user!.id, {
+      tenantId: req.params.id,
+      action: 'UPDATE',
+      module: 'tenant_modules',
+      description: '更新企业模块开通状态',
+      detail: { modules },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+    res.json({ success: true, data: updated, message: '企业模块开通状态已更新' } as ApiResponse);
+  } catch (error: any) {
+    console.error('更新企业模块开通状态失败:', error);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
 // ============================================
 // 回收站
 // ============================================

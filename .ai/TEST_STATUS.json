@@ -1,28 +1,24 @@
 {
-  "status": "partially_verified",
-  "build_green": "blocked",
+  "status": "phase_1_build_test_green",
+  "build_green": "verified",
+  "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "not_verified",
+  "browser_regression_green": "not_verified",
   "product_green": "not_verified",
   "user_green": "not_verified",
   "evidence": [
     {
-      "type": "state_file_validation",
-      "command": "for f in .ai/*.json .superpowers/loops/LOOP_LOCK.json; do node -e JSON.parse(...) ; done",
-      "status": "verified",
-      "result": "json_ok"
-    },
-    {
       "type": "backend_test",
       "command": "cd backend && npm test",
       "status": "verified",
-      "result": "2 test files passed, 17 tests passed"
+      "result": "3 test files passed, 20 tests passed; includes requireTenantModule 401/403/pass-through coverage"
     },
     {
       "type": "backend_build",
       "command": "cd backend && npm run build",
-      "status": "blocked",
-      "result": "TypeScript build failed in src/common/utils/baidu-ocr.ts and src/common/utils/ocr-ai.ts"
+      "status": "verified",
+      "result": "TypeScript build passed"
     },
     {
       "type": "frontend_test",
@@ -37,18 +33,38 @@
       "result": "Vite production build completed"
     },
     {
-      "type": "backend_audit",
-      "command": "cd backend && npm audit --audit-level=high",
-      "status": "blocked",
-      "result": "15 vulnerabilities reported, including 6 high; xlsx has no fix available"
+      "type": "unified_verify",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests/build and frontend tests/build passed"
     },
     {
-      "type": "frontend_audit",
-      "command": "cd frontend && npm audit --audit-level=high",
-      "status": "blocked",
-      "result": "8 vulnerabilities reported, including 6 high"
+      "type": "claude_cli_worker_audit",
+      "command": "scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/phase1-module-entitlement-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "PASS_WITH_NOTES; no blocking security or tenant isolation issues; self-registration enabledModules note fixed after audit",
+      "evidence_file": ".ai/workers/20260622T110950Z-audit_worker.result.md"
+    },
+    {
+      "type": "claude_cli_worker_budget_attempt",
+      "command": "scripts/run_claude_worker.py --role audit_worker --max-budget-usd 1.00",
+      "status": "recorded",
+      "result": "Initial worker failed only because Claude CLI exceeded the $1 budget cap",
+      "evidence_file": ".ai/workers/20260622T110522Z-audit_worker.result.md"
+    },
+    {
+      "type": "migration_sql_check",
+      "command": "sqlite3 /private/tmp/zlt_phase1_sql_check.db '.read backend/prisma/migrations/20260424_init/migration.sql' '.read backend/prisma/migrations/20260622_add_tenant_module_entitlements/migration.sql' '.tables'",
+      "status": "verified",
+      "result": "SQLite applied the baseline and tenant_module_entitlements migrations; table tenant_module_entitlements exists"
     }
   ],
-  "notes": "Public clean baseline excludes tracked database and SQLite journal files. Backend tests pass, frontend tests/build pass, but backend TypeScript build and npm audit gates are blocked. No CI, runtime smoke, Product Green, or User Green has been claimed.",
-  "updated_at": "2026-06-22T09:25:00Z"
+  "known_yellow_items": [
+    "Full real-browser regression has not yet been executed for all modules; do not claim Product Green.",
+    "npm audit high vulnerabilities remain as technical debt from baseline; not resolved in Phase 1.",
+    "Prisma migrate deploy to a temporary SQLite DB returned an opaque Schema engine error, while direct sqlite3 SQL execution succeeded; keep migration deployment as a Yellow follow-up before production rollout.",
+    "enabledAt currently resets when a disabled module is re-enabled; accepted as a Phase 1 semantic note unless business requires first-enabled timestamp preservation."
+  ],
+  "notes": "Phase 1 implementation has Build Green and Test Green. Browser Regression Green, Product Green, and User Green remain open gates.",
+  "updated_at": "2026-06-22T11:28:30Z"
 }

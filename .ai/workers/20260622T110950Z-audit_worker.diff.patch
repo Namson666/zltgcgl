@@ -1,0 +1,866 @@
+diff --git a/.ai/HARNESS_SESSION.json b/.ai/HARNESS_SESSION.json
+index 497094a..6fb45eb 100644
+--- a/.ai/HARNESS_SESSION.json
++++ b/.ai/HARNESS_SESSION.json
+@@ -6,15 +6,15 @@
+   "risk_level": "enhanced",
+   "project_root": "/Users/Namson/Documents/工程管理系统/资料通工程管理系统",
+   "required_state_files_checked": true,
+-  "current_phase": "S1_context_discovery",
+-  "research_probe_only": true,
+-  "may_modify_code": false,
+-  "may_commit": false,
++  "current_phase": "S3_phase1_implementation",
++  "research_probe_only": false,
++  "may_modify_code": true,
++  "may_commit": true,
+   "required_skills_pending": [
+     "superpowers-pro:brainstorming user approval of refactor design",
+     "superpowers-pro:writing-plans after approved design",
+     "superpowers-pro:executing-plans before implementation",
+     "superpowers-pro:verification-before-completion before completion"
+   ],
+-  "updated_at": "2026-06-22T09:06:07Z"
++  "updated_at": "2026-06-22T10:28:03Z"
+ }
+diff --git a/.ai/REQUIRED_ACTION_CONTRACT.json b/.ai/REQUIRED_ACTION_CONTRACT.json
+index bf8c7a6..20dbb09 100644
+--- a/.ai/REQUIRED_ACTION_CONTRACT.json
++++ b/.ai/REQUIRED_ACTION_CONTRACT.json
+@@ -2,7 +2,7 @@
+   "schema_version": "2.0",
+   "task_id": "zltgcgl-refactor-prep",
+   "mode": "Enhanced",
+-  "stage": "spec",
++  "stage": "build",
+   "governance_mode": "EnforcedDelivery",
+   "required_skills": [
+     "superpowers-pro-startup",
+@@ -42,6 +42,15 @@
+   ],
+   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
+   "allow_skip": false,
+-  "notes": "No business code changes are allowed until the refactor design is approved and implementation plan is written.",
+-  "updated_at": "2026-06-22T09:06:07Z"
++  "notes": "Executing phase 1: build stabilization, verification script, tenant module entitlement, backend guard, developer module controls, frontend module visibility. Later phases are out of this implementation slice.",
++  "phase_1_required_gates": [
++    "backend npm test",
++    "backend npm run build",
++    "frontend npm test",
++    "frontend npm run build",
++    "bash scripts/verify.sh",
++    "Claude CLI worker audit or test evidence",
++    "browser smoke for module visibility when feasible"
++  ],
++  "updated_at": "2026-06-22T10:28:03Z"
+ }
+diff --git a/.ai/SPEC_STATUS.json b/.ai/SPEC_STATUS.json
+index 74721d1..f03e083 100644
+--- a/.ai/SPEC_STATUS.json
++++ b/.ai/SPEC_STATUS.json
+@@ -1,9 +1,9 @@
+ {
+-  "stage": "S1_design_draft",
+-  "spec_frozen": false,
+-  "design_approved_by_user": false,
++  "stage": "S3_phase1_implementation",
++  "spec_frozen": true,
++  "design_approved_by_user": true,
+   "architecture_contract_present": true,
+   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
+-  "notes": "Architecture contract updated with personal trusted check-in locations and batch anomaly handling. Awaiting user review before implementation planning.",
+-  "updated_at": "2026-06-22T10:08:00Z"
++  "notes": "User requested implementation of the approved plan. Phase 1 implementation is active; later phases remain planned.",
++  "updated_at": "2026-06-22T10:28:03Z"
+ }
+diff --git a/.ai/TEST_STATUS.json b/.ai/TEST_STATUS.json
+index 001e110..5229e8e 100644
+--- a/.ai/TEST_STATUS.json
++++ b/.ai/TEST_STATUS.json
+@@ -1,5 +1,5 @@
+ {
+-  "status": "partially_verified",
++  "status": "implementation_in_progress",
+   "build_green": "blocked",
+   "ci_green": "not_verified",
+   "runtime_smoke_green": "not_verified",
+@@ -49,6 +49,6 @@
+       "result": "8 vulnerabilities reported, including 6 high"
+     }
+   ],
+-  "notes": "Public clean baseline excludes tracked database and SQLite journal files. Backend tests pass, frontend tests/build pass, but backend TypeScript build and npm audit gates are blocked. No CI, runtime smoke, Product Green, or User Green has been claimed.",
+-  "updated_at": "2026-06-22T09:25:00Z"
++  "notes": "Phase 1 implementation started. Existing backend build is blocked before fixes. No CI, browser regression, Product Green, or User Green has been claimed.",
++  "updated_at": "2026-06-22T10:28:03Z"
+ }
+diff --git a/.ai/session/HANDOFF.md b/.ai/session/HANDOFF.md
+index 1f1f135..b1134ca 100644
+--- a/.ai/session/HANDOFF.md
++++ b/.ai/session/HANDOFF.md
+@@ -2,12 +2,12 @@
+ 
+ - Project: /Users/Namson/Documents/工程管理系统/资料通工程管理系统
+ - Requested repository: git@github.com:Namson666/zltgcgl.git
+-- Current phase: S1 design draft / architecture contract
++- Current phase: S3 phase 1 implementation
+ - Current mode: Enforced Delivery, Enhanced
+ - Code changes allowed: no
+ - Commit allowed: no
+ - Push allowed: completed for public clean baseline only
+-- Last completed: updated refactor architecture contract with personal trusted check-in locations and batch anomaly handling
+-- Next action: user reviews architecture contract; after approval, write implementation plan
+-- Blockers: backend TypeScript build fails; backend/frontend npm audit have high vulnerabilities; architecture contract not yet approved by user
+-- Updated at: 2026-06-22T10:08:00Z
++- Last completed: user approved implementation plan and requested execution with Superpowers Pro, Claude CLI, and browser regression gates
++- Next action: fix backend build and add verification/worker harness
++- Blockers: backend TypeScript build fails; backend/frontend npm audit have high vulnerabilities; full browser regression not yet implemented
++- Updated at: 2026-06-22T10:28:03Z
+diff --git a/README.md b/README.md
+index 241bd53..816ccfe 100644
+--- a/README.md
++++ b/README.md
+@@ -4,12 +4,12 @@
+ 
+ ### Resume Here / 最新接手点
+ - Current mode: Enforced Delivery
+-- Current phase: S1 design draft / architecture contract
+-- Current task: 模块化 SaaS 重构设计：基础功能、模块开通、合同板块、独立登录页、小程序打卡
+-- Last completed: 已补充个人信任打卡地和异常批量处理规则
+-- In progress: 等待用户审阅架构合同
+-- Next action: 用户确认后，写实施计划
+-- Blockers: 后端 TypeScript build 失败；前后端 npm audit 存在 high 漏洞；架构合同未最终确认
++- Current phase: S3 phase 1 implementation
++- Current task: 工程稳定 + 企业模块开通底座 + Claude CLI worker 证据链
++- Last completed: 用户批准实施计划，要求全程 Superpowers Pro、尽量调用 Claude CLI、最终真实浏览器全功能验收
++- In progress: 修复后端 build，新增验证脚本和模块开通底座
++- Next action: 实现 phase 1 后运行 verify、Claude worker 审查和浏览器 smoke
++- Blockers: 后端 TypeScript build 失败；前后端 npm audit 存在 high 漏洞；完整浏览器回归尚未建立
+ - Do not repeat: 不要在未确认重构设计前修改业务代码；不要把 Build Green 当 Product Green
+ - Must read:
+   1. .ai/REQUIRED_ACTION_CONTRACT.json
+@@ -25,7 +25,7 @@
+ - Last verified command: backend npm test passed; backend npm run build failed; frontend npm test passed; frontend npm run build passed; backend/frontend npm audit --audit-level=high failed
+ - Last commit: 931dd69 chore(prisma): add initial migration (62 tables)
+ - Safe rollback point: 931dd69
+-- Updated at: 2026-06-22T10:08:00Z
++- Updated at: 2026-06-22T10:28:03Z
+ 
+ ## 项目概览
+ 
+diff --git a/backend/prisma/schema.prisma b/backend/prisma/schema.prisma
+index 09f59ab..292de6e 100644
+--- a/backend/prisma/schema.prisma
++++ b/backend/prisma/schema.prisma
+@@ -88,6 +88,7 @@ model Tenant {
+   roles            Role[]
+   subcontractors   Subcontractor[]
+   subscription     Subscription?
++  moduleEntitlements TenantModuleEntitlement[]
+   suppliers        Supplier[]
+   users            User[]
+   workTeams        WorkTeam[]
+@@ -95,6 +96,26 @@ model Tenant {
+   @@map("tenants")
+ }
+ 
++/// 企业模块开通记录
++/// 合同管理是默认基础功能，不进入该表；这里只控制 wms / labor / finance。
++model TenantModuleEntitlement {
++  id         String    @id @default(cuid())
++  tenantId   String
++  moduleKey  String
++  isEnabled  Boolean   @default(true)
++  enabledAt  DateTime  @default(now())
++  disabledAt DateTime?
++  expiresAt  DateTime?
++  remark     String?
++  createdAt  DateTime  @default(now())
++  updatedAt  DateTime  @updatedAt
++  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
++
++  @@unique([tenantId, moduleKey])
++  @@index([tenantId])
++  @@map("tenant_module_entitlements")
++}
++
+ /// 订阅信息
+ model Subscription {
+   id                 String                @id @default(cuid())
+diff --git a/backend/src/app.ts b/backend/src/app.ts
+index adbf3c5..97365e8 100644
+--- a/backend/src/app.ts
++++ b/backend/src/app.ts
+@@ -11,6 +11,8 @@ import morgan from 'morgan';
+ import path from 'path';
+ import { globalRateLimit } from './common/middleware/rateLimit';
+ import { errorHandler } from './common/middleware/errorHandler';
++import { requireTenantModule } from './common/middleware/module';
++import { authenticate, requireUser } from './common/middleware/auth';
+ import authRoutes from './modules/auth/routes';
+ import developerRoutes from './modules/developer/routes';
+ import tenantRoutes from './modules/tenant/routes';
+@@ -95,16 +97,16 @@ app.use('/api/departments', departmentRoutes);
+ app.use('/api/v1/departments', departmentRoutes);
+ 
+ // 物资管理路由
+-app.use('/api/wms', wmsRoutes);
+-app.use('/api/v1/wms', wmsRoutes);
++app.use('/api/wms', authenticate, requireUser, requireTenantModule('wms'), wmsRoutes);
++app.use('/api/v1/wms', authenticate, requireUser, requireTenantModule('wms'), wmsRoutes);
+ 
+ // 劳资管理路由
+-app.use('/api/labor', laborRoutes);
+-app.use('/api/v1/labor', laborRoutes);
++app.use('/api/labor', authenticate, requireUser, requireTenantModule('labor'), laborRoutes);
++app.use('/api/v1/labor', authenticate, requireUser, requireTenantModule('labor'), laborRoutes);
+ 
+ // 财务管理路由
+-app.use('/api/finance', financeRoutes);
+-app.use('/api/v1/finance', financeRoutes);
++app.use('/api/finance', authenticate, requireUser, requireTenantModule('finance'), financeRoutes);
++app.use('/api/v1/finance', authenticate, requireUser, requireTenantModule('finance'), financeRoutes);
+ 
+ // 操作日志路由
+ app.use('/api/logs', logRoutes);
+diff --git a/backend/src/common/utils/baidu-ocr.ts b/backend/src/common/utils/baidu-ocr.ts
+index 18f574d..9c1ae85 100644
+--- a/backend/src/common/utils/baidu-ocr.ts
++++ b/backend/src/common/utils/baidu-ocr.ts
+@@ -15,6 +15,16 @@ interface BaiduOcrResponse {
+   log_id: number;
+ }
+ 
++interface BaiduTokenResponse {
++  access_token?: string;
++}
++
++function isBaiduOcrResponse(data: unknown): data is BaiduOcrResponse {
++  return typeof data === 'object'
++    && data !== null
++    && Array.isArray((data as { words_result?: unknown }).words_result);
++}
++
+ /**
+  * 获取百度 OCR access token
+  */
+@@ -28,7 +38,7 @@ async function getAccessToken(apiKey: string, secretKey: string): Promise<string
+     const errText = await res.text();
+     throw new Error(`百度 OCR 获取 token 失败 (${res.status}): ${errText.slice(0, 200)}`);
+   }
+-  const data = await res.json();
++  const data = await res.json() as BaiduTokenResponse;
+   if (!data.access_token) {
+     throw new Error(`百度 OCR 获取 token 失败: ${JSON.stringify(data).slice(0, 200)}`);
+   }
+@@ -69,9 +79,9 @@ export async function baiduOcr(imageBase64: string, apiKey: string, secretKey: s
+     throw new Error(`百度 OCR 识别失败 (${res.status}): ${errText.slice(0, 200)}`);
+   }
+ 
+-  const data: BaiduOcrResponse = await res.json();
++  const data = await res.json() as unknown;
+ 
+-  if (!data.words_result) {
++  if (!isBaiduOcrResponse(data)) {
+     throw new Error(`百度 OCR 返回异常: ${JSON.stringify(data).slice(0, 200)}`);
+   }
+ 
+diff --git a/backend/src/common/utils/ocr-ai.ts b/backend/src/common/utils/ocr-ai.ts
+index 9666892..82e6122 100644
+--- a/backend/src/common/utils/ocr-ai.ts
++++ b/backend/src/common/utils/ocr-ai.ts
+@@ -33,6 +33,26 @@ interface OcrResult {
+   parsedBy: string;
+ }
+ 
++interface AiResponseShape {
++  choices?: Array<{ message?: { content?: string } }>;
++  content?: string;
++  reply?: string;
++  output?: { text?: string };
++}
++
++function normalizeOptionalString(value: string | null | undefined): string | undefined {
++  return value ?? undefined;
++}
++
++function extractAiContent(data: unknown): string {
++  const response = data as AiResponseShape;
++  return response?.choices?.[0]?.message?.content
++    || response?.content
++    || response?.reply
++    || response?.output?.text
++    || '';
++}
++
+ /**
+  * 文本结构化提取提示词
+  *
+@@ -209,7 +229,8 @@ export async function aiOcr(imageBase64: string, mimeType: string, tenantId: str
+     throw new Error('请先在开发者后台的「AI 模型配置」中配置并启用 AI 模型（需要配置 OpenAI 或 MiniMax 的 API Key）');
+   }
+ 
+-  const { provider, model, apiKey, baseUrl } = aiConfig;
++  const { provider, model, apiKey } = aiConfig;
++  const baseUrl = normalizeOptionalString(aiConfig.baseUrl);
+ 
+   if (provider === 'openai') {
+     return await callOpenAI(imageBase64, mimeType, model || 'gpt-4o', apiKey, baseUrl, `OpenAI ${model || 'gpt-4o'}`);
+@@ -241,7 +262,8 @@ export async function aiExtractFromText(ocrText: string, tenantId: string): Prom
+     throw new Error('请先在开发者后台的「AI 模型配置」中配置并启用 AI 模型');
+   }
+ 
+-  const { provider, model, apiKey, baseUrl } = aiConfig;
++  const { provider, model, apiKey } = aiConfig;
++  const baseUrl = normalizeOptionalString(aiConfig.baseUrl);
+ 
+   if (provider === 'openai') {
+     return await callOpenAIText(ocrText, model || 'gpt-4o-mini', apiKey, baseUrl, `OpenAI ${model || 'gpt-4o-mini'}`);
+@@ -381,15 +403,10 @@ async function sendTextRequest(
+     throw new Error(`AI API 错误 (${res.status}): ${errText.slice(0, 200)}`);
+   }
+ 
+-  const data = await res.json();
++  const data = await res.json() as unknown;
+ 
+   // 提取 AI 回复内容
+-  let content = '';
+-  if (data?.choices?.[0]?.message?.content) {
+-    content = data.choices[0].message.content;
+-  } else if (data?.reply) {
+-    content = data.reply;
+-  }
++  const content = extractAiContent(data);
+ 
+   // 写入调试日志
+   const charCount = content.length;
+@@ -432,19 +449,10 @@ async function sendRequest(
+     throw new Error(`AI API 错误 (${res.status}): ${errText.slice(0, 200)}`);
+   }
+ 
+-  const data = await res.json();
++  const data = await res.json() as unknown;
+ 
+   // 兼容多种响应格式：OpenAI 格式、MiniMax VLM 格式
+-  let content = '';
+-  if (data?.choices?.[0]?.message?.content) {
+-    content = data.choices[0].message.content;
+-  } else if (data?.content) {
+-    content = data.content;
+-  } else if (data?.reply) {
+-    content = data.reply;
+-  } else if (data?.output?.text) {
+-    content = data.output.text;
+-  }
++  const content = extractAiContent(data);
+ 
+   // 写入调试日志
+   const debugLog = `[${new Date().toISOString()}]
+diff --git a/backend/src/modules/auth/routes.ts b/backend/src/modules/auth/routes.ts
+index 0fdf6f6..d1ab06f 100644
+--- a/backend/src/modules/auth/routes.ts
++++ b/backend/src/modules/auth/routes.ts
+@@ -16,6 +16,7 @@
+ import { Router, Request, Response } from 'express';
+ import bcrypt from 'bcryptjs';
+ import { prisma } from '../../common/utils/prisma';
++import { getTenantEnabledModules } from '../../common/services/module-entitlement.service';
+ 
+ // 导入 JWT 工具函数
+ import { signToken, signDevViewToken, storeRefreshToken, verifyAndConsumeRefreshToken } from '../../common/utils/jwt';
+@@ -340,6 +341,8 @@ router.post('/user/login', async (req: Request, res: Response): Promise<void> =>
+           .map(([key]) => key)
+       : [];
+ 
++    const enabledModules = await getTenantEnabledModules(user.tenantId);
++
+     // 签发 JWT Token（短期）+ 长期凭证
+     const token = signToken({
+       id: user.id,
+@@ -394,6 +397,7 @@ router.post('/user/login', async (req: Request, res: Response): Promise<void> =>
+           displayName: user.role?.displayName,
+           dataScope: user.dataScope,
+           permissions: permissionFields,
++          enabledModules,
+           isActive: user.isActive,
+           lastLoginAt: user.lastLoginAt,
+         },
+@@ -665,6 +669,8 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response)
+             .map(([key]) => key)
+         : [];
+ 
++      const enabledModules = await getTenantEnabledModules(user.tenantId);
++
+       res.json({
+         success: true,
+         data: {
+@@ -682,6 +688,7 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response)
+           displayName: user.role?.displayName,
+           dataScope: user.dataScope,
+           permissions: permissionFields,
++          enabledModules,
+           isActive: user.isActive,
+           lastLoginAt: user.lastLoginAt,
+           createdAt: user.createdAt,
+diff --git a/backend/src/modules/developer/routes.ts b/backend/src/modules/developer/routes.ts
+index 86806d5..22952d5 100644
+--- a/backend/src/modules/developer/routes.ts
++++ b/backend/src/modules/developer/routes.ts
+@@ -193,6 +193,38 @@ router.patch('/tenants/:id/toggle', async (req: AuthenticatedRequest, res: Respo
+   }
+ });
+ 
++router.get('/tenants/:id/modules', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
++  try {
++    const modules = await devService.getTenantModules(req.params.id);
++    res.json({ success: true, data: modules } as ApiResponse);
++  } catch (error: any) {
++    console.error('获取企业模块开通状态失败:', error);
++    const status = error.status || 500;
++    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
++  }
++});
++
++router.put('/tenants/:id/modules', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
++  try {
++    const modules = Array.isArray(req.body?.modules) ? req.body.modules : [];
++    const updated = await devService.setTenantModules(req.params.id, modules);
++    await createLog(req.user!.id, {
++      tenantId: req.params.id,
++      action: 'UPDATE',
++      module: 'tenant_modules',
++      description: '更新企业模块开通状态',
++      detail: { modules },
++      ip: req.ip,
++      userAgent: req.headers['user-agent'],
++    });
++    res.json({ success: true, data: updated, message: '企业模块开通状态已更新' } as ApiResponse);
++  } catch (error: any) {
++    console.error('更新企业模块开通状态失败:', error);
++    const status = error.status || 500;
++    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
++  }
++});
++
+ // ============================================
+ // 回收站
+ // ============================================
+diff --git a/backend/src/modules/developer/service.ts b/backend/src/modules/developer/service.ts
+index afdfa31..27fd5ad 100644
+--- a/backend/src/modules/developer/service.ts
++++ b/backend/src/modules/developer/service.ts
+@@ -6,6 +6,13 @@
+ 
+ import bcrypt from 'bcryptjs';
+ import { prisma } from '../../common/utils/prisma';
++import {
++  ensureTenantModuleEntitlements,
++  isTenantModuleKey,
++  TENANT_MODULE_KEYS,
++  TenantModuleKey,
++  updateTenantModuleEntitlements,
++} from '../../common/services/module-entitlement.service';
+ 
+ // ============================================
+ // 全局数据看板
+@@ -248,6 +255,16 @@ export async function createTenant(input: CreateTenantInput) {
+       await tx.permission.create({ data: { roleId: createdRole.id } });
+     }
+ 
++    await tx.tenantModuleEntitlement.createMany({
++      data: TENANT_MODULE_KEYS.map(moduleKey => ({
++        tenantId: newTenant.id,
++        moduleKey,
++        isEnabled: true,
++        enabledAt: new Date(),
++        remark: '新企业默认试用开通',
++      })),
++    });
++
+     return newTenant;
+   });
+ 
+@@ -273,6 +290,31 @@ export async function toggleTenant(id: string) {
+   return { updated, wasActive: tenant.isActive, tenantName: tenant.name };
+ }
+ 
++export async function getTenantModules(tenantId: string) {
++  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
++  if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
++  return ensureTenantModuleEntitlements(tenantId);
++}
++
++export async function setTenantModules(tenantId: string, modules: Array<{ moduleKey: string; isEnabled: boolean; expiresAt?: string | null; remark?: string | null }>) {
++  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
++  if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
++
++  const normalized = modules.map((item) => {
++    if (!isTenantModuleKey(item.moduleKey)) {
++      throw { status: 400, code: 'INVALID_MODULE', message: `不支持的模块：${item.moduleKey}` };
++    }
++    return {
++      moduleKey: item.moduleKey as TenantModuleKey,
++      isEnabled: Boolean(item.isEnabled),
++      expiresAt: item.expiresAt ? new Date(item.expiresAt) : null,
++      remark: item.remark ?? null,
++    };
++  });
++
++  return updateTenantModuleEntitlements(tenantId, normalized);
++}
++
+ // ============================================
+ // 回收站
+ // ============================================
+diff --git a/frontend/src/App.tsx b/frontend/src/App.tsx
+index 6e917e6..e9f54cd 100644
+--- a/frontend/src/App.tsx
++++ b/frontend/src/App.tsx
+@@ -42,6 +42,7 @@
+ 
+ import React, { lazy, Suspense } from 'react';
+ import { Routes, Route, Navigate } from 'react-router-dom';
++import { useAuthStore } from './lib/AuthContext';
+ 
+ /* 导入布局组件 */
+ import Layout from './components/layout/Layout';
+@@ -128,6 +129,14 @@ const SubscriptionPlans = lazy(() => import('./pages/subscription/Plans'));
+ /* 404 页面 */
+ const NotFound = lazy(() => import('./pages/NotFound'));
+ 
++const ModuleRoute: React.FC<{ moduleKey: 'wms' | 'labor' | 'finance'; children: React.ReactNode }> = ({ moduleKey, children }) => {
++  const hasModule = useAuthStore((state) => state.hasModule);
++  if (!hasModule(moduleKey)) {
++    return <Navigate to="/dashboard" replace />;
++  }
++  return <>{children}</>;
++};
++
+ /* ========================================
+  * App 根组件
+  * ======================================== */
+@@ -156,36 +165,36 @@ const App: React.FC = () => {
+           <Route path="/dashboard" element={<Dashboard />} />
+ 
+           {/* ---------- 物资管理模块 ---------- */}
+-          <Route path="/wms/materials" element={<WmsMaterials />} />
+-          <Route path="/wms/inbound" element={<WmsInbound />} />
+-          <Route path="/wms/outbound" element={<WmsOutbound />} />
+-          <Route path="/wms/returns" element={<WmsReturns />} />
+-          <Route path="/wms/transfers" element={<WmsTransfers />} />
+-          <Route path="/wms/ledger" element={<WmsLedger />} />
+-          <Route path="/wms/alerts" element={<WmsAlerts />} />
++          <Route path="/wms/materials" element={<ModuleRoute moduleKey="wms"><WmsMaterials /></ModuleRoute>} />
++          <Route path="/wms/inbound" element={<ModuleRoute moduleKey="wms"><WmsInbound /></ModuleRoute>} />
++          <Route path="/wms/outbound" element={<ModuleRoute moduleKey="wms"><WmsOutbound /></ModuleRoute>} />
++          <Route path="/wms/returns" element={<ModuleRoute moduleKey="wms"><WmsReturns /></ModuleRoute>} />
++          <Route path="/wms/transfers" element={<ModuleRoute moduleKey="wms"><WmsTransfers /></ModuleRoute>} />
++          <Route path="/wms/ledger" element={<ModuleRoute moduleKey="wms"><WmsLedger /></ModuleRoute>} />
++          <Route path="/wms/alerts" element={<ModuleRoute moduleKey="wms"><WmsAlerts /></ModuleRoute>} />
+ 
+           {/* ---------- 劳资管理模块 ---------- */}
+-          <Route path="/labor/personnel" element={<LaborPersonnel />} />
+-          <Route path="/labor/attendance" element={<LaborAttendance />} />
+-          <Route path="/labor/salary" element={<LaborSalary />} />
+-          <Route path="/labor/payment" element={<LaborPayment />} />
+-          <Route path="/labor/risk" element={<LaborRisk />} />
+-          <Route path="/labor/reports" element={<LaborReports />} />
++          <Route path="/labor/personnel" element={<ModuleRoute moduleKey="labor"><LaborPersonnel /></ModuleRoute>} />
++          <Route path="/labor/attendance" element={<ModuleRoute moduleKey="labor"><LaborAttendance /></ModuleRoute>} />
++          <Route path="/labor/salary" element={<ModuleRoute moduleKey="labor"><LaborSalary /></ModuleRoute>} />
++          <Route path="/labor/payment" element={<ModuleRoute moduleKey="labor"><LaborPayment /></ModuleRoute>} />
++          <Route path="/labor/risk" element={<ModuleRoute moduleKey="labor"><LaborRisk /></ModuleRoute>} />
++          <Route path="/labor/reports" element={<ModuleRoute moduleKey="labor"><LaborReports /></ModuleRoute>} />
+ 
+           {/* ---------- 财务管理模块 ---------- */}
+-          <Route path="/finance/dept-entry" element={<FinanceExpenseEntryDept />} />
+-          <Route path="/finance/finance-entry" element={<FinanceExpenseEntryFinance />} />
+-          <Route path="/finance/expenses" element={<FinanceExpenseList />} />
+-          <Route path="/finance/settings" element={<FinanceCategorySettings />} />
+-          <Route path="/finance/petty-cash" element={<FinancePettyCashManage />} />
+-          <Route path="/finance/dashboard" element={<FinanceDashboard />} />
+-          <Route path="/finance/import" element={<FinanceImportExcel />} />
+-          <Route path="/finance/invoices" element={<FinanceInvoices />} />
+-          <Route path="/finance/invoices/form" element={<FinanceInvoiceForm />} />
+-          <Route path="/finance/receipts" element={<FinanceReceipts />} />
+-          <Route path="/finance/receipts/form" element={<FinanceReceiptForm />} />
+-          <Route path="/finance/contract-pnl" element={<FinanceContractPnl />} />
+-          <Route path="/finance/contract-pnl/:contractId" element={<FinanceContractPnlDetail />} />
++          <Route path="/finance/dept-entry" element={<ModuleRoute moduleKey="finance"><FinanceExpenseEntryDept /></ModuleRoute>} />
++          <Route path="/finance/finance-entry" element={<ModuleRoute moduleKey="finance"><FinanceExpenseEntryFinance /></ModuleRoute>} />
++          <Route path="/finance/expenses" element={<ModuleRoute moduleKey="finance"><FinanceExpenseList /></ModuleRoute>} />
++          <Route path="/finance/settings" element={<ModuleRoute moduleKey="finance"><FinanceCategorySettings /></ModuleRoute>} />
++          <Route path="/finance/petty-cash" element={<ModuleRoute moduleKey="finance"><FinancePettyCashManage /></ModuleRoute>} />
++          <Route path="/finance/dashboard" element={<ModuleRoute moduleKey="finance"><FinanceDashboard /></ModuleRoute>} />
++          <Route path="/finance/import" element={<ModuleRoute moduleKey="finance"><FinanceImportExcel /></ModuleRoute>} />
++          <Route path="/finance/invoices" element={<ModuleRoute moduleKey="finance"><FinanceInvoices /></ModuleRoute>} />
++          <Route path="/finance/invoices/form" element={<ModuleRoute moduleKey="finance"><FinanceInvoiceForm /></ModuleRoute>} />
++          <Route path="/finance/receipts" element={<ModuleRoute moduleKey="finance"><FinanceReceipts /></ModuleRoute>} />
++          <Route path="/finance/receipts/form" element={<ModuleRoute moduleKey="finance"><FinanceReceiptForm /></ModuleRoute>} />
++          <Route path="/finance/contract-pnl" element={<ModuleRoute moduleKey="finance"><FinanceContractPnl /></ModuleRoute>} />
++          <Route path="/finance/contract-pnl/:contractId" element={<ModuleRoute moduleKey="finance"><FinanceContractPnlDetail /></ModuleRoute>} />
+ 
+           {/* ---------- 合同管理 ---------- */}
+           <Route path="/contracts" element={<Contracts />} />
+diff --git a/frontend/src/api/index.ts b/frontend/src/api/index.ts
+index e0b254a..656e552 100644
+--- a/frontend/src/api/index.ts
++++ b/frontend/src/api/index.ts
+@@ -200,6 +200,18 @@ export const developerApi = {
+   toggleTenant: (id: number) =>
+     http.patch(`/developer/tenants/${id}/toggle`),
+ 
++  /**
++   * 获取企业模块开通状态
++   */
++  getTenantModules: (tenantId: string) =>
++    http.get(`/developer/tenants/${tenantId}/modules`),
++
++  /**
++   * 更新企业模块开通状态
++   */
++  updateTenantModules: (tenantId: string, modules: Array<{ moduleKey: string; isEnabled: boolean; expiresAt?: string | null; remark?: string | null }>) =>
++    http.put(`/developer/tenants/${tenantId}/modules`, { modules }),
++
+   /* ---------- 回收站管理 ---------- */
+ 
+   /**
+diff --git a/frontend/src/components/layout/Layout.tsx b/frontend/src/components/layout/Layout.tsx
+index 001dea2..44ce68c 100644
+--- a/frontend/src/components/layout/Layout.tsx
++++ b/frontend/src/components/layout/Layout.tsx
+@@ -76,6 +76,7 @@ interface MenuItem {
+   icon: React.ReactNode;           /* 菜单图标 */
+   permission?: string;             /* 所需权限（不设置则所有人可见） */
+   developerOnly?: boolean;         /* 是否仅开发者可见 */
++  moduleKey?: 'wms' | 'labor' | 'finance'; /* 所属开通模块 */
+ }
+ 
+ /** 菜单分组接口 */
+@@ -85,6 +86,7 @@ interface MenuGroup {
+   items: MenuItem[];               /* 分组下的菜单项 */
+   permission?: string;             /* 所需权限 */
+   developerOnly?: boolean;         /* 是否仅开发者可见 */
++  moduleKey?: 'wms' | 'labor' | 'finance'; /* 所属开通模块 */
+ }
+ 
+ /* ========================================
+@@ -119,6 +121,7 @@ const menuGroups: MenuGroup[] = [
+   {
+     name: '物资管理',
+     permission: 'wms:view',
++    moduleKey: 'wms',
+     items: [
+       {
+         name: '物资总览',
+@@ -167,6 +170,7 @@ const menuGroups: MenuGroup[] = [
+   {
+     name: '劳资管理',
+     permission: 'labor:view',
++    moduleKey: 'labor',
+     items: [
+       {
+         name: '人员管理',
+@@ -209,6 +213,7 @@ const menuGroups: MenuGroup[] = [
+   {
+     name: '财务管理',
+     permission: 'finance:view',
++    moduleKey: 'finance',
+     items: [
+       {
+         name: '项目部报账',
+@@ -427,7 +432,7 @@ const Layout: React.FC = () => {
+   const location = useLocation();
+ 
+   /* 从认证 Store 获取状态和方法 */
+-  const { user, isAuthenticated, isDeveloper, isDevView, can, logout, toggleDevView, exitEnterpriseView } =
++  const { user, isAuthenticated, isDeveloper, isDevView, can, hasModule, logout, toggleDevView, exitEnterpriseView } =
+     useAuthStore();
+ 
+   /* ---------- 本地状态 ---------- */
+@@ -495,6 +500,8 @@ const Layout: React.FC = () => {
+   const isMenuItemVisible = (item: MenuItem): boolean => {
+     /* 开发者专属菜单仅开发者可见 */
+     if (item.developerOnly && !isDeveloper) return false;
++    /* 企业未开通模块时隐藏对应菜单项 */
++    if (item.moduleKey && !hasModule(item.moduleKey)) return false;
+     /* 权限检查 */
+     if (item.permission && !can(item.permission)) return false;
+     return true;
+@@ -510,6 +517,8 @@ const Layout: React.FC = () => {
+     if (isDeveloper && isDevView && group.developerOnly) return false;
+     /* 开发者专属分组仅开发者可见 */
+     if (group.developerOnly && !isDeveloper) return false;
++    /* 企业未开通模块时隐藏对应分组 */
++    if (group.moduleKey && !hasModule(group.moduleKey)) return false;
+     /* 权限检查 */
+     if (group.permission && !can(group.permission)) return false;
+     /* 分组内至少有一个可见菜单项 */
+diff --git a/frontend/src/lib/AuthContext.tsx b/frontend/src/lib/AuthContext.tsx
+index c411dd4..b1b322f 100644
+--- a/frontend/src/lib/AuthContext.tsx
++++ b/frontend/src/lib/AuthContext.tsx
+@@ -41,6 +41,7 @@ export interface User {
+   avatar?: string;               /* 头像 URL */
+   role?: string;                 /* 角色名称 */
+   permissions?: string[];        /* 权限列表 */
++  enabledModules?: string[];     /* 企业已开通业务模块：wms/labor/finance */
+   tenantId?: number;             /* 所属项目部 ID */
+   tenantName?: string;           /* 所属项目部名称 */
+   tenantCode?: string;           /* 企业代码 */
+@@ -99,6 +100,8 @@ interface AuthState {
+   updateUser: (user: Partial<User>) => void;
+   /** 检查是否拥有指定权限 */
+   can: (permission: string) => boolean;
++  /** 检查企业是否开通指定模块 */
++  hasModule: (moduleKey: string) => boolean;
+   /** 切换开发者视角 */
+   toggleDevView: () => void;
+   /** 进入企业视角（保存开发者凭证，切换到企业 token） */
+@@ -437,6 +440,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
+     return user.permissions?.includes(permission) ?? false;
+   },
+ 
++  hasModule: (moduleKey: string): boolean => {
++    const { user, isDeveloper, isDevView } = get();
++    if (isDeveloper && !isDevView) return true;
++    if (!user) return false;
++    return user.enabledModules?.includes(moduleKey) ?? false;
++  },
++
+   /**
+    * 切换开发者视角
+    * 开发者可以在开发者后台和企业视角之间切换
+diff --git a/frontend/src/pages/developer/TenantView.tsx b/frontend/src/pages/developer/TenantView.tsx
+index d344a4d..6d62948 100644
+--- a/frontend/src/pages/developer/TenantView.tsx
++++ b/frontend/src/pages/developer/TenantView.tsx
+@@ -49,6 +49,12 @@ interface TenantUser {
+   department?: { name: string };
+ }
+ 
++interface TenantModuleState {
++  moduleKey: 'wms' | 'labor' | 'finance';
++  isEnabled: boolean;
++  remark?: string | null;
++}
++
+ /* ========================================
+  * TenantView 组件
+  * ======================================== */
+@@ -59,8 +65,10 @@ const TenantView: React.FC = () => {
+ 
+   const [tenant, setTenant] = useState<TenantDetail | null>(null);
+   const [users, setUsers] = useState<TenantUser[]>([]);
++  const [modules, setModules] = useState<TenantModuleState[]>([]);
+   const [loading, setLoading] = useState(true);
+   const [entering, setEntering] = useState(false);
++  const [savingModules, setSavingModules] = useState(false);
+ 
+   useEffect(() => {
+     const fetchData = async () => {
+@@ -76,14 +84,20 @@ const TenantView: React.FC = () => {
+         const found = tenantsList.find((t: any) => t.id === id || String(t.id) === id);
+         if (found) setTenant(found);
+ 
+-        // 获取该企业的用户列表
++        // 获取该企业的用户列表和模块开通状态
+         try {
+-          const usersRes = await developerApi.getTenantUsers(id);
++          const [usersRes, modulesRes] = await Promise.all([
++            developerApi.getTenantUsers(id),
++            developerApi.getTenantModules(id),
++          ]);
+           const body = usersRes.data || usersRes;
+           const usersData = body.data || body;
+           setUsers(Array.isArray(usersData) ? usersData : []);
++          const modulesBody = modulesRes.data || modulesRes;
++          const modulesData = modulesBody.data || modulesBody;
++          setModules(Array.isArray(modulesData) ? modulesData : []);
+         } catch {
+-          // 用户列表可能不可用
++          // 用户列表或模块状态可能不可用
+         }
+       } catch (error) {
+         console.error('加载企业数据失败:', error);
+@@ -117,6 +131,28 @@ const TenantView: React.FC = () => {
+     navigate('/dev/tenants');
+   };
+ 
++  const handleToggleModule = (moduleKey: TenantModuleState['moduleKey']) => {
++    setModules((prev) => prev.map((item) => (
++      item.moduleKey === moduleKey ? { ...item, isEnabled: !item.isEnabled } : item
++    )));
++  };
++
++  const handleSaveModules = async () => {
++    if (!id) return;
++    setSavingModules(true);
++    try {
++      const res = await developerApi.updateTenantModules(id, modules.map(({ moduleKey, isEnabled, remark }) => ({ moduleKey, isEnabled, remark })));
++      const body = res.data || res;
++      const updated = body.data || body;
++      if (Array.isArray(updated)) setModules(updated);
++      toast.success('模块开通状态已保存');
++    } catch (error: any) {
++      toast.error(error.message || '保存模块开通状态失败');
++    } finally {
++      setSavingModules(false);
++    }
++  };
++
+   if (!isDeveloper) {
+     return (
+       <div className="flex flex-col items-center justify-center py-20">
+@@ -130,8 +166,9 @@ const TenantView: React.FC = () => {
+   /* ---------- 权限模块列表 ---------- */
+   const permissionModules = [
+     { key: 'dashboard', label: '数据看板', icon: <Eye size={18} />, enabled: true },
+-    { key: 'wms', label: '物资管理', icon: <Package size={18} />, enabled: true },
+-    { key: 'labor', label: '劳资管理', icon: <Users size={18} />, enabled: true },
++    { key: 'wms', label: '物资管理', icon: <Package size={18} />, enabled: modules.find((item) => item.moduleKey === 'wms')?.isEnabled ?? true, configurable: true },
++    { key: 'labor', label: '劳资管理', icon: <Users size={18} />, enabled: modules.find((item) => item.moduleKey === 'labor')?.isEnabled ?? true, configurable: true },
++    { key: 'finance', label: '财务管理', icon: <Banknote size={18} />, enabled: modules.find((item) => item.moduleKey === 'finance')?.isEnabled ?? true, configurable: true },
+     { key: 'contract', label: '合同管理', icon: <FileText size={18} />, enabled: true },
+     { key: 'department', label: '项目部管理', icon: <Building2 size={18} />, enabled: true },
+     { key: 'admin', label: '系统管理', icon: <UserCog size={18} />, enabled: true },
+@@ -285,13 +322,16 @@ const TenantView: React.FC = () => {
+           <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-6">
+             <h2 className="text-base font-semibold mb-4" style={{ color: '#1A2B3C' }}>
+               <ShieldCheck size={16} className="inline mr-1.5 text-emerald-500" />
+-              模块权限状态
++              模块开通状态
+             </h2>
+             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+               {permissionModules.map((mod) => (
+-                <div
++                <button
+                   key={mod.key}
+-                  className="flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors"
++                  type="button"
++                  disabled={!mod.configurable}
++                  onClick={() => mod.configurable && handleToggleModule(mod.key as TenantModuleState['moduleKey'])}
++                  className="flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors disabled:cursor-default"
+                   style={{
+                     borderColor: mod.enabled ? '#D1FAE5' : '#FEE2E2',
+                     backgroundColor: mod.enabled ? '#F0FDF4' : '#FEF2F2',
+@@ -307,9 +347,19 @@ const TenantView: React.FC = () => {
+                   }}>
+                     {mod.enabled ? '已启用' : '未启用'}
+                   </span>
+-                </div>
++                </button>
+               ))}
+             </div>
++            <div className="flex items-center justify-between mt-4">
++              <p className="text-xs text-gray-400">合同、用户、角色、项目部为默认基础功能；物资、劳资、财务可单独开通。</p>
++              <button
++                onClick={handleSaveModules}
++                disabled={savingModules}
++                className="btn-primary text-sm"
++              >
++                {savingModules ? '保存中...' : '保存模块设置'}
++              </button>
++            </div>
+           </div>
+ 
+           {/* ==========================================

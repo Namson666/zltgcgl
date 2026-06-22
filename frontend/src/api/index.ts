@@ -200,6 +200,18 @@ export const developerApi = {
   toggleTenant: (id: number) =>
     http.patch(`/developer/tenants/${id}/toggle`),
 
+  /**
+   * 获取企业模块开通状态
+   */
+  getTenantModules: (tenantId: string) =>
+    http.get(`/developer/tenants/${tenantId}/modules`),
+
+  /**
+   * 更新企业模块开通状态
+   */
+  updateTenantModules: (tenantId: string, modules: Array<{ moduleKey: string; isEnabled: boolean; expiresAt?: string | null; remark?: string | null }>) =>
+    http.put(`/developer/tenants/${tenantId}/modules`, { modules }),
+
   /* ---------- 回收站管理 ---------- */
 
   /**

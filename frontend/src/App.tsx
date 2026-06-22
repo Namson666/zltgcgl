@@ -42,6 +42,7 @@
 
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from './lib/AuthContext';
 
 /* 导入布局组件 */
 import Layout from './components/layout/Layout';
@@ -128,6 +129,14 @@ const SubscriptionPlans = lazy(() => import('./pages/subscription/Plans'));
 /* 404 页面 */
 const NotFound = lazy(() => import('./pages/NotFound'));
 
+const ModuleRoute: React.FC<{ moduleKey: 'wms' | 'labor' | 'finance'; children: React.ReactNode }> = ({ moduleKey, children }) => {
+  const hasModule = useAuthStore((state) => state.hasModule);
+  if (!hasModule(moduleKey)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+};
+
 /* ========================================
  * App 根组件
  * ======================================== */
@@ -156,36 +165,36 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={<Dashboard />} />
 
           {/* ---------- 物资管理模块 ---------- */}
-          <Route path="/wms/materials" element={<WmsMaterials />} />
-          <Route path="/wms/inbound" element={<WmsInbound />} />
-          <Route path="/wms/outbound" element={<WmsOutbound />} />
-          <Route path="/wms/returns" element={<WmsReturns />} />
-          <Route path="/wms/transfers" element={<WmsTransfers />} />
-          <Route path="/wms/ledger" element={<WmsLedger />} />
-          <Route path="/wms/alerts" element={<WmsAlerts />} />
+          <Route path="/wms/materials" element={<ModuleRoute moduleKey="wms"><WmsMaterials /></ModuleRoute>} />
+          <Route path="/wms/inbound" element={<ModuleRoute moduleKey="wms"><WmsInbound /></ModuleRoute>} />
+          <Route path="/wms/outbound" element={<ModuleRoute moduleKey="wms"><WmsOutbound /></ModuleRoute>} />
+          <Route path="/wms/returns" element={<ModuleRoute moduleKey="wms"><WmsReturns /></ModuleRoute>} />
+          <Route path="/wms/transfers" element={<ModuleRoute moduleKey="wms"><WmsTransfers /></ModuleRoute>} />
+          <Route path="/wms/ledger" element={<ModuleRoute moduleKey="wms"><WmsLedger /></ModuleRoute>} />
+          <Route path="/wms/alerts" element={<ModuleRoute moduleKey="wms"><WmsAlerts /></ModuleRoute>} />
 
           {/* ---------- 劳资管理模块 ---------- */}
-          <Route path="/labor/personnel" element={<LaborPersonnel />} />
-          <Route path="/labor/attendance" element={<LaborAttendance />} />
-          <Route path="/labor/salary" element={<LaborSalary />} />
-          <Route path="/labor/payment" element={<LaborPayment />} />
-          <Route path="/labor/risk" element={<LaborRisk />} />
-          <Route path="/labor/reports" element={<LaborReports />} />
+          <Route path="/labor/personnel" element={<ModuleRoute moduleKey="labor"><LaborPersonnel /></ModuleRoute>} />
+          <Route path="/labor/attendance" element={<ModuleRoute moduleKey="labor"><LaborAttendance /></ModuleRoute>} />
+          <Route path="/labor/salary" element={<ModuleRoute moduleKey="labor"><LaborSalary /></ModuleRoute>} />
+          <Route path="/labor/payment" element={<ModuleRoute moduleKey="labor"><LaborPayment /></ModuleRoute>} />
+          <Route path="/labor/risk" element={<ModuleRoute moduleKey="labor"><LaborRisk /></ModuleRoute>} />
+          <Route path="/labor/reports" element={<ModuleRoute moduleKey="labor"><LaborReports /></ModuleRoute>} />
 
           {/* ---------- 财务管理模块 ---------- */}
-          <Route path="/finance/dept-entry" element={<FinanceExpenseEntryDept />} />
-          <Route path="/finance/finance-entry" element={<FinanceExpenseEntryFinance />} />
-          <Route path="/finance/expenses" element={<FinanceExpenseList />} />
-          <Route path="/finance/settings" element={<FinanceCategorySettings />} />
-          <Route path="/finance/petty-cash" element={<FinancePettyCashManage />} />
-          <Route path="/finance/dashboard" element={<FinanceDashboard />} />
-          <Route path="/finance/import" element={<FinanceImportExcel />} />
-          <Route path="/finance/invoices" element={<FinanceInvoices />} />
-          <Route path="/finance/invoices/form" element={<FinanceInvoiceForm />} />
-          <Route path="/finance/receipts" element={<FinanceReceipts />} />
-          <Route path="/finance/receipts/form" element={<FinanceReceiptForm />} />
-          <Route path="/finance/contract-pnl" element={<FinanceContractPnl />} />
-          <Route path="/finance/contract-pnl/:contractId" element={<FinanceContractPnlDetail />} />
+          <Route path="/finance/dept-entry" element={<ModuleRoute moduleKey="finance"><FinanceExpenseEntryDept /></ModuleRoute>} />
+          <Route path="/finance/finance-entry" element={<ModuleRoute moduleKey="finance"><FinanceExpenseEntryFinance /></ModuleRoute>} />
+          <Route path="/finance/expenses" element={<ModuleRoute moduleKey="finance"><FinanceExpenseList /></ModuleRoute>} />
+          <Route path="/finance/settings" element={<ModuleRoute moduleKey="finance"><FinanceCategorySettings /></ModuleRoute>} />
+          <Route path="/finance/petty-cash" element={<ModuleRoute moduleKey="finance"><FinancePettyCashManage /></ModuleRoute>} />
+          <Route path="/finance/dashboard" element={<ModuleRoute moduleKey="finance"><FinanceDashboard /></ModuleRoute>} />
+          <Route path="/finance/import" element={<ModuleRoute moduleKey="finance"><FinanceImportExcel /></ModuleRoute>} />
+          <Route path="/finance/invoices" element={<ModuleRoute moduleKey="finance"><FinanceInvoices /></ModuleRoute>} />
+          <Route path="/finance/invoices/form" element={<ModuleRoute moduleKey="finance"><FinanceInvoiceForm /></ModuleRoute>} />
+          <Route path="/finance/receipts" element={<ModuleRoute moduleKey="finance"><FinanceReceipts /></ModuleRoute>} />
+          <Route path="/finance/receipts/form" element={<ModuleRoute moduleKey="finance"><FinanceReceiptForm /></ModuleRoute>} />
+          <Route path="/finance/contract-pnl" element={<ModuleRoute moduleKey="finance"><FinanceContractPnl /></ModuleRoute>} />
+          <Route path="/finance/contract-pnl/:contractId" element={<ModuleRoute moduleKey="finance"><FinanceContractPnlDetail /></ModuleRoute>} />
 
           {/* ---------- 合同管理 ---------- */}
           <Route path="/contracts" element={<Contracts />} />

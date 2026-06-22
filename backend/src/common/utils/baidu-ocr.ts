@@ -15,6 +15,16 @@ interface BaiduOcrResponse {
   log_id: number;
 }
 
+interface BaiduTokenResponse {
+  access_token?: string;
+}
+
+function isBaiduOcrResponse(data: unknown): data is BaiduOcrResponse {
+  return typeof data === 'object'
+    && data !== null
+    && Array.isArray((data as { words_result?: unknown }).words_result);
+}
+
 /**
  * 获取百度 OCR access token
  */
@@ -28,7 +38,7 @@ async function getAccessToken(apiKey: string, secretKey: string): Promise<string
     const errText = await res.text();
     throw new Error(`百度 OCR 获取 token 失败 (${res.status}): ${errText.slice(0, 200)}`);
   }
-  const data = await res.json();
+  const data = await res.json() as BaiduTokenResponse;
   if (!data.access_token) {
     throw new Error(`百度 OCR 获取 token 失败: ${JSON.stringify(data).slice(0, 200)}`);
   }
@@ -69,9 +79,9 @@ export async function baiduOcr(imageBase64: string, apiKey: string, secretKey: s
     throw new Error(`百度 OCR 识别失败 (${res.status}): ${errText.slice(0, 200)}`);
   }
 
-  const data: BaiduOcrResponse = await res.json();
+  const data = await res.json() as unknown;
 
-  if (!data.words_result) {
+  if (!isBaiduOcrResponse(data)) {
     throw new Error(`百度 OCR 返回异常: ${JSON.stringify(data).slice(0, 200)}`);
   }
 

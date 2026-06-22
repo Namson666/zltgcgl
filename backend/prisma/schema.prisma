@@ -88,11 +88,32 @@ model Tenant {
   roles            Role[]
   subcontractors   Subcontractor[]
   subscription     Subscription?
+  moduleEntitlements TenantModuleEntitlement[]
   suppliers        Supplier[]
   users            User[]
   workTeams        WorkTeam[]
 
   @@map("tenants")
+}
+
+/// 企业模块开通记录
+/// 合同管理是默认基础功能，不进入该表；这里只控制 wms / labor / finance。
+model TenantModuleEntitlement {
+  id         String    @id @default(cuid())
+  tenantId   String
+  moduleKey  String
+  isEnabled  Boolean   @default(true)
+  enabledAt  DateTime  @default(now())
+  disabledAt DateTime?
+  expiresAt  DateTime?
+  remark     String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, moduleKey])
+  @@index([tenantId])
+  @@map("tenant_module_entitlements")
 }
 
 /// 订阅信息

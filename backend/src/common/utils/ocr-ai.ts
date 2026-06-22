@@ -33,6 +33,26 @@ interface OcrResult {
   parsedBy: string;
 }
 
+interface AiResponseShape {
+  choices?: Array<{ message?: { content?: string } }>;
+  content?: string;
+  reply?: string;
+  output?: { text?: string };
+}
+
+function normalizeOptionalString(value: string | null | undefined): string | undefined {
+  return value ?? undefined;
+}
+
+function extractAiContent(data: unknown): string {
+  const response = data as AiResponseShape;
+  return response?.choices?.[0]?.message?.content
+    || response?.content
+    || response?.reply
+    || response?.output?.text
+    || '';
+}
+
 /**
  * 文本结构化提取提示词
  *
@@ -209,7 +229,8 @@ export async function aiOcr(imageBase64: string, mimeType: string, tenantId: str
     throw new Error('请先在开发者后台的「AI 模型配置」中配置并启用 AI 模型（需要配置 OpenAI 或 MiniMax 的 API Key）');
   }
 
-  const { provider, model, apiKey, baseUrl } = aiConfig;
+  const { provider, model, apiKey } = aiConfig;
+  const baseUrl = normalizeOptionalString(aiConfig.baseUrl);
 
   if (provider === 'openai') {
     return await callOpenAI(imageBase64, mimeType, model || 'gpt-4o', apiKey, baseUrl, `OpenAI ${model || 'gpt-4o'}`);
@@ -241,7 +262,8 @@ export async function aiExtractFromText(ocrText: string, tenantId: string): Prom
     throw new Error('请先在开发者后台的「AI 模型配置」中配置并启用 AI 模型');
   }
 
-  const { provider, model, apiKey, baseUrl } = aiConfig;
+  const { provider, model, apiKey } = aiConfig;
+  const baseUrl = normalizeOptionalString(aiConfig.baseUrl);
 
   if (provider === 'openai') {
     return await callOpenAIText(ocrText, model || 'gpt-4o-mini', apiKey, baseUrl, `OpenAI ${model || 'gpt-4o-mini'}`);
@@ -381,15 +403,10 @@ async function sendTextRequest(
     throw new Error(`AI API 错误 (${res.status}): ${errText.slice(0, 200)}`);
   }
 
-  const data = await res.json();
+  const data = await res.json() as unknown;
 
   // 提取 AI 回复内容
-  let content = '';
-  if (data?.choices?.[0]?.message?.content) {
-    content = data.choices[0].message.content;
-  } else if (data?.reply) {
-    content = data.reply;
-  }
+  const content = extractAiContent(data);
 
   // 写入调试日志
   const charCount = content.length;
@@ -432,19 +449,10 @@ async function sendRequest(
     throw new Error(`AI API 错误 (${res.status}): ${errText.slice(0, 200)}`);
   }
 
-  const data = await res.json();
+  const data = await res.json() as unknown;
 
   // 兼容多种响应格式：OpenAI 格式、MiniMax VLM 格式
-  let content = '';
-  if (data?.choices?.[0]?.message?.content) {
-    content = data.choices[0].message.content;
-  } else if (data?.content) {
-    content = data.content;
-  } else if (data?.reply) {
-    content = data.reply;
-  } else if (data?.output?.text) {
-    content = data.output.text;
-  }
+  const content = extractAiContent(data);
 
   // 写入调试日志
   const debugLog = `[${new Date().toISOString()}]

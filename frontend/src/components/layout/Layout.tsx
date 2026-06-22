@@ -76,6 +76,7 @@ interface MenuItem {
   icon: React.ReactNode;           /* 菜单图标 */
   permission?: string;             /* 所需权限（不设置则所有人可见） */
   developerOnly?: boolean;         /* 是否仅开发者可见 */
+  moduleKey?: 'wms' | 'labor' | 'finance'; /* 所属开通模块 */
 }
 
 /** 菜单分组接口 */
@@ -85,6 +86,7 @@ interface MenuGroup {
   items: MenuItem[];               /* 分组下的菜单项 */
   permission?: string;             /* 所需权限 */
   developerOnly?: boolean;         /* 是否仅开发者可见 */
+  moduleKey?: 'wms' | 'labor' | 'finance'; /* 所属开通模块 */
 }
 
 /* ========================================
@@ -119,6 +121,7 @@ const menuGroups: MenuGroup[] = [
   {
     name: '物资管理',
     permission: 'wms:view',
+    moduleKey: 'wms',
     items: [
       {
         name: '物资总览',
@@ -167,6 +170,7 @@ const menuGroups: MenuGroup[] = [
   {
     name: '劳资管理',
     permission: 'labor:view',
+    moduleKey: 'labor',
     items: [
       {
         name: '人员管理',
@@ -209,6 +213,7 @@ const menuGroups: MenuGroup[] = [
   {
     name: '财务管理',
     permission: 'finance:view',
+    moduleKey: 'finance',
     items: [
       {
         name: '项目部报账',
@@ -427,7 +432,7 @@ const Layout: React.FC = () => {
   const location = useLocation();
 
   /* 从认证 Store 获取状态和方法 */
-  const { user, isAuthenticated, isDeveloper, isDevView, can, logout, toggleDevView, exitEnterpriseView } =
+  const { user, isAuthenticated, isDeveloper, isDevView, can, hasModule, logout, toggleDevView, exitEnterpriseView } =
     useAuthStore();
 
   /* ---------- 本地状态 ---------- */
@@ -495,6 +500,8 @@ const Layout: React.FC = () => {
   const isMenuItemVisible = (item: MenuItem): boolean => {
     /* 开发者专属菜单仅开发者可见 */
     if (item.developerOnly && !isDeveloper) return false;
+    /* 企业未开通模块时隐藏对应菜单项 */
+    if (item.moduleKey && !hasModule(item.moduleKey)) return false;
     /* 权限检查 */
     if (item.permission && !can(item.permission)) return false;
     return true;
@@ -510,6 +517,8 @@ const Layout: React.FC = () => {
     if (isDeveloper && isDevView && group.developerOnly) return false;
     /* 开发者专属分组仅开发者可见 */
     if (group.developerOnly && !isDeveloper) return false;
+    /* 企业未开通模块时隐藏对应分组 */
+    if (group.moduleKey && !hasModule(group.moduleKey)) return false;
     /* 权限检查 */
     if (group.permission && !can(group.permission)) return false;
     /* 分组内至少有一个可见菜单项 */
