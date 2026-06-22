@@ -237,6 +237,18 @@ export const developerApi = {
   }) =>
     http.put(`/developer/tenants/${tenantId}/portal`, data),
 
+  getDefaultMiniProgram: () =>
+    http.get('/developer/mini-program/default'),
+
+  updateDefaultMiniProgram: (data: any) =>
+    http.put('/developer/mini-program/default', data),
+
+  getTenantMiniProgram: (tenantId: string) =>
+    http.get(`/developer/tenants/${tenantId}/mini-program`),
+
+  updateTenantMiniProgram: (tenantId: string, data: any) =>
+    http.put(`/developer/tenants/${tenantId}/mini-program`, data),
+
   /* ---------- 回收站管理 ---------- */
 
   /**
@@ -1113,6 +1125,24 @@ export const laborApi = {
   createAttendance: (data: any) =>
     http.post('/labor/attendance', data),
 
+  getAttendanceSetting: () =>
+    http.get('/labor/attendance/mobile/settings'),
+
+  updateAttendanceSetting: (data: any) =>
+    http.put('/labor/attendance/mobile/settings', data),
+
+  getMobileCheckIns: (params?: any) =>
+    http.get('/labor/attendance/mobile/check-ins', params),
+
+  resolveMobileCheckIns: (data: { ids: string[]; resolveReason?: string }) =>
+    http.post('/labor/attendance/mobile/check-ins/resolve-batch', data),
+
+  getTrustedLocations: (params?: any) =>
+    http.get('/labor/attendance/mobile/trusted-locations', params),
+
+  addTrustedLocation: (data: any) =>
+    http.post('/labor/attendance/mobile/trusted-locations', data),
+
   /**
    * 批量导入考勤记录
    * @param data - 批量考勤数据
@@ -1285,6 +1315,9 @@ export const laborApi = {
    */
   uploadAttachment: (formData: FormData) =>
     http.post('/labor/attachment/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+
+  uploadFacePhoto: (personnelId: string, formData: FormData) =>
+    http.post(`/labor/personnel/${personnelId}/face`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 
   /**
    * 获取附件列表

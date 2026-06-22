@@ -108,7 +108,15 @@ const Integrations: React.FC = () => {
     Record<string, PlatformState>
   >({});
 
-  const [loading, setLoading] = useState(true);                  /* 初始加载状态 */
+	  const [loading, setLoading] = useState(true);                  /* 初始加载状态 */
+	  const [defaultMiniProgram, setDefaultMiniProgram] = useState({
+	    name: '开发者默认打卡小程序',
+	    appId: '',
+	    appSecret: '',
+	    isEnabled: true,
+	    remark: '',
+	  });
+	  const [savingDefaultMiniProgram, setSavingDefaultMiniProgram] = useState(false);
 
   /* ---------- 数据加载 ---------- */
 
@@ -120,8 +128,22 @@ const Integrations: React.FC = () => {
     const fetchIntegrations = async () => {
       try {
         setLoading(true);
-        const res = await developerApi.getIntegrations();
-        const data = res.data || res;
+	        const [res, miniProgramRes] = await Promise.all([
+	          developerApi.getIntegrations(),
+	          developerApi.getDefaultMiniProgram(),
+	        ]);
+	        const data = res.data || res;
+	        const miniProgramBody = miniProgramRes.data || miniProgramRes;
+	        const miniProgramData = miniProgramBody.data || {};
+	        if (miniProgramData) {
+	          setDefaultMiniProgram({
+	            name: miniProgramData.name || '开发者默认打卡小程序',
+	            appId: miniProgramData.appId || '',
+	            appSecret: miniProgramData.appSecret || '',
+	            isEnabled: miniProgramData.isEnabled !== false,
+	            remark: miniProgramData.remark || '',
+	          });
+	        }
 
         /* 初始化各平台状态 */
         const initialStates: Record<string, PlatformState> = {};
@@ -230,7 +252,7 @@ const Integrations: React.FC = () => {
    * 调用 developerApi.testIntegration() 验证配置是否可用
    * @param platformKey - 平台标识
    */
-  const handleTest = async (platformKey: string) => {
+	  const handleTest = async (platformKey: string) => {
     const state = platformStates[platformKey];
     if (!state) return;
 
@@ -271,7 +293,36 @@ const Integrations: React.FC = () => {
       }));
       toast.error(`${PLATFORMS.find((p) => p.key === platformKey)?.label} 连通性测试失败`);
     }
-  };
+	  };
+
+	  const updateDefaultMiniProgram = (field: string, value: string | boolean) => {
+	    setDefaultMiniProgram((prev) => ({ ...prev, [field]: value }));
+	  };
+
+	  const handleSaveDefaultMiniProgram = async () => {
+	    if (!defaultMiniProgram.name.trim() || !defaultMiniProgram.appId.trim()) {
+	      toast.error('默认小程序名称和 App ID 不能为空');
+	      return;
+	    }
+	    setSavingDefaultMiniProgram(true);
+	    try {
+	      const res = await developerApi.updateDefaultMiniProgram(defaultMiniProgram);
+	      const body = res.data || res;
+	      const updated = body.data || body;
+	      setDefaultMiniProgram({
+	        name: updated.name || '',
+	        appId: updated.appId || '',
+	        appSecret: updated.appSecret || '',
+	        isEnabled: updated.isEnabled !== false,
+	        remark: updated.remark || '',
+	      });
+	      toast.success('开发者默认小程序配置已保存');
+	    } catch (error: any) {
+	      toast.error(error.message || '保存默认小程序失败');
+	    } finally {
+	      setSavingDefaultMiniProgram(false);
+	    }
+	  };
 
   /* ---------- 加载中骨架屏 ---------- */
   if (loading) {
@@ -322,9 +373,55 @@ const Integrations: React.FC = () => {
           <Globe size={16} />
           集成中心
         </div>
-      </div>
+	      </div>
 
-      {/* ==========================================
+	      <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6 overflow-hidden">
+	        <div className="px-6 py-5 flex items-center justify-between border-b border-green-50 bg-gradient-to-r from-green-50 to-white">
+	          <div className="flex items-center gap-3">
+	            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
+	              <MessageCircle size={24} />
+	            </div>
+	            <div>
+	              <h3 className="text-base font-semibold" style={{ color: '#1A2B3C' }}>开发者默认打卡小程序</h3>
+	              <p className="text-xs text-gray-400 mt-1">企业未接入自有小程序时，默认用此 appId 接收打卡，再按手机号匹配企业/人员。</p>
+	            </div>
+	          </div>
+	          <label className="flex items-center gap-2 text-sm text-gray-600">
+	            <input type="checkbox" checked={defaultMiniProgram.isEnabled}
+	              onChange={(e) => updateDefaultMiniProgram('isEnabled', e.target.checked)} />
+	            启用
+	          </label>
+	        </div>
+	        <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+	          <div>
+	            <label className="block text-xs font-medium text-gray-500 mb-1">小程序名称</label>
+	            <input className="input w-full text-sm" value={defaultMiniProgram.name}
+	              onChange={(e) => updateDefaultMiniProgram('name', e.target.value)} />
+	          </div>
+	          <div>
+	            <label className="block text-xs font-medium text-gray-500 mb-1">App ID</label>
+	            <input className="input w-full text-sm" value={defaultMiniProgram.appId}
+	              onChange={(e) => updateDefaultMiniProgram('appId', e.target.value)} placeholder="wx_default_appid" />
+	          </div>
+	          <div>
+	            <label className="block text-xs font-medium text-gray-500 mb-1">App Secret（可选）</label>
+	            <input type="password" className="input w-full text-sm" value={defaultMiniProgram.appSecret}
+	              onChange={(e) => updateDefaultMiniProgram('appSecret', e.target.value)} />
+	          </div>
+	          <div>
+	            <label className="block text-xs font-medium text-gray-500 mb-1">备注</label>
+	            <input className="input w-full text-sm" value={defaultMiniProgram.remark}
+	              onChange={(e) => updateDefaultMiniProgram('remark', e.target.value)} />
+	          </div>
+	        </div>
+	        <div className="px-6 py-4 flex justify-end" style={{ backgroundColor: '#FAFBFC', borderTop: '1px solid #EDEDED' }}>
+	          <button className="btn-primary text-sm" onClick={handleSaveDefaultMiniProgram} disabled={savingDefaultMiniProgram}>
+	            {savingDefaultMiniProgram ? '保存中...' : '保存默认小程序配置'}
+	          </button>
+	        </div>
+	      </div>
+
+	      {/* ==========================================
        * 平台配置卡片网格
        * ========================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

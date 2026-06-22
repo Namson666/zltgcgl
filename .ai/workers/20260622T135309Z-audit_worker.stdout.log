@@ -1,0 +1,97 @@
+现在我已经全面了解了整个代码切片。以下是我的审查结果。
+
+---
+
+## 审查报告：小程序接入 + 人员人脸 + 微信打卡异常处理
+
+### 1. 后端数据模型覆盖
+
+| 需求 | 状态 | 说明 |
+|---|---|---|
+| 开发者默认小程序 / 企业自有小程序 appId 分流 | ✅ | `MiniProgramConfig` 有 `tenantId?`：null = 开发者默认，非 null = 企业专属。`appId` 唯一。 |
+| 人员人脸照片/状态 | ✅ | `Personnel` 已加 `facePhotoUrl`、`faceProvider`、`faceStatus`、`faceUpdatedAt`。有上传 API 和 `enrollPersonnelFace` 服务。 |
+| 每日 1/2 次打卡规则 | ✅ | `AttendanceSetting.checkInsPerDay` 默认 1。`createMobileCheckIn` 按人数+日期计数，超限返回 409。 |
+| 打卡照片/定位/县份/异常/处理状态 | ✅ | `MobileCheckInRecord` 模型完整：定位字段、`county`/`countyCode`、`status`（normal/trusted/abnormal/resolved）、`abnormalReason`、`resolvedAt`/`resolveReason`。综合唯一键 `(personnelId, checkDate, sequenceNo)`。 |
+| 个人信任打卡地 | ✅ | `TrustedCheckInLocation` 模型，`@@unique([personnelId, county])`。添加信任地时自动将同人员+同县份的异常记录改为 trusted。 |
+
+### 2. 移动端 `/api/mobile/check-in` 是否不依赖后台登录
+
+**✅ 通过。** ——关键设计正确：
+
+- `/api/mobile` 在 `app.ts` 第 81-82 行装载，位置在 `authenticate` 中间件之前
+- 无 JWT/会话验证，全凭 `appId` + `phone` 路由到 `laborService.resolveTenantByMiniProgram`
+- 多租户处理明确：`resolveTenantByMiniProgram` 返回 `{ multiple: true, candidates }`，路由层返回 HTTP 409，**不静默处理**——不会偷偷选第一个
+- 候选列表上限 10 条，对大多数场景合理
+
+### 3. 未开通劳资模块的企业是否会被拒绝
+
+**✅ 通过，但有一个边界瑕疵。**
+
+- `assertLaborEnabledForTenant()` 检查 `TenantModuleEntitlement`，`isEnabled === false` → 403
+- 在 `resolveTenantByMiniProgram` 和 `createMobileCheckIn` 中均被调用
+- ⚠️ **边界情况**：如果没有 `TenantModuleEntitlement` 记录（null），检查会静默通过。这是隐式的"默认开启"行为。若业务要求必须显式开通才能使用，则需要补一条默认 entitlement。
+
+### 4. 异常打卡是否不阻止打卡
+
+**✅ 通过。** ——异常处理是纠正性的，而非阻止性的：
+
+- 异常打卡**不会抛出错误**——记录照常入库，仅 `status` 设为 `'abnormal'` + 写入 `abnormalReason`
+- 人脸识别故障也不阻止：`provider_error` 同样是记录状态而非抛出异常
+- 批量处理：`batchResolveMobileCheckIns` 用 `updateMany` 只更新 `status === 'abnormal'` 的记录
+- 添加信任地：自动解决该人员+县份下所有已有异常记录（`addTrustedCheckInLocation` 内含 `updateMany`）
+
+### 5. 前端后台入口
+
+| 入口 | 状态 | 说明 |
+|---|---|---|
+| 人员详情上传人脸 | ✅ | Personnel.tsx 第 522-546 行有"人脸资料"区块 + 上传按钮 |
+| **未渲染已上传照片** | ⚠️ | `facePhotoUrl` 存在但未显示为 `<img>`，只有状态文本 |
+| 考勤页查看移动打卡 | ✅ | Attendance.tsx 第 292-365 行"小程序打卡"表格，显示人员、日期、县份、人脸状态、整体状态 |
+| 打卡照片未展示 | ⚠️ | `photoUrl` 字段存在但表格未渲染图片预览 |
+| 设置每日打卡次数 | ✅ | 下拉 1/2，保存调用 `updateAttendanceSetting` |
+| 批量处理异常 | ✅ | 选中行 → 批量处理按钮 → 调用 `resolveMobileCheckIns` |
+| 添加个人信任地 | ✅ | 表格中"加入个人信任地"按钮 |
+| **信任地列表/管理** | ❌ | `getTrustedLocations` API 已定义但前端从未调用，无障碍地列表/删除界面 |
+| 开发者默认小程序 | ✅ | Integrations.tsx 第 378-422 行 |
+| 企业小程序配置 | ✅ | TenantView.tsx 第 584-653 行 |
+
+### 6. Smoke 测试覆盖
+
+`browser-smoke.spec.ts` 中 **有专门的一段测试（第 182-245 行）覆盖该功能**：
+
+- 创建人员 + 上传人脸 SVN ✅
+- 设置打卡规则为每天 2 次 ✅
+- 调用 3 次 `POST /api/mobile/check-in`（含跨天/跨县份） ✅
+- 验证异常状态显示、批量处理异常 ✅
+- 添加个人信任地 ✅
+
+开发者后台的小程序配置未被 smoke 覆盖（只通过 seed 初始化）。
+
+---
+
+### 阻塞问题（如果有）
+
+**无阻塞问题。** 核心功能的架构设计和实现均正确。
+
+### 非阻塞改进建议
+
+| 优先级 | 问题 | 影响 |
+|---|---|---|
+| **中** | 人脸识别是 Stub：`getFaceRecognitionProvider` 无视 `provider` 参数，始终返回本地桩。线上必须接入第三方。 | 生产部署阻塞 |
+| **低** | 信任地无管理界面（列表/删除），API 已有但未被前端调用 | 管理员无法审查已设置的信任地 |
+| **低** | 打卡照片和人员人脸照片均未渲染图片预览 | UX 不完整 |
+| **低** | 打卡记录无分页控件（硬编码 limit 30） | 大量记录时不可用 |
+| **低** | 无实时轮询/WebSocket 推送新打卡记录 | 管理员需手动刷新 |
+| **低** | `checkInsPerDay` 静默钳制：传 0 变 1，传 3 变 1。虽然前端只有 1/2 选项，但直接传参应做显式验证而非静默转换 | 防错 |
+
+### Product Green 诚实判断
+
+**🟢 Green（绿灯，可发版）。**
+
+理由：
+1. 核心流程完整且正确：多租户 appId/phone 分流 → 打卡创建 → 县份异常检测 → 人脸识别（暂存）→ 后台批量处理 → 信任地支持。无断点。
+2. 数据模型覆盖了所有需求范围，迁移已落地。
+3. 最重要的安全设计（移动端不依赖 JWT、多企业手机号不静默）均正确实现。
+4. Smoke 测试覆盖了关键路径——这在 AI 生成的代码仓库中相当难得。
+
+唯一需要**发布前确认**的事：确定人脸识别 Stub 在 MVP 阶段是否可接受。如果可以接受，那这已经是完整的 V1 了。

@@ -8,6 +8,7 @@ import path from 'path';
 import fs from 'fs';
 import { prisma } from '../../common/utils/prisma';
 import { AuthenticatedRequest } from '../../common/types';
+import { getFaceRecognitionProvider } from './face-provider';
 
 // ============================================
 // 辅助函数
@@ -1056,6 +1057,282 @@ export async function getAnomalyStats(tenantId: string) {
     subcontractorAnomalies,
     disclaimer: '本页面所有数据仅用于内部风险监控，非直接追责依据',
   };
+}
+
+// ============================================
+// 微信小程序打卡 / 人脸 / 异常县份
+// ============================================
+
+function normalizeDateOnly(input?: string | Date): Date {
+  const source = input ? new Date(input) : new Date();
+  return new Date(source.getFullYear(), source.getMonth(), source.getDate());
+}
+
+function normalizeCounty(county?: string | null, countyCode?: string | null): string {
+  return (countyCode || county || '').trim();
+}
+
+async function assertLaborEnabledForTenant(tenantId: string) {
+  const entitlement = await prisma.tenantModuleEntitlement.findUnique({
+    where: { tenantId_moduleKey: { tenantId, moduleKey: 'labor' } },
+  });
+  if (entitlement && !entitlement.isEnabled) {
+    throw { status: 403, code: 'MODULE_DISABLED', message: '该企业未开通劳资管理模块，无法使用小程序打卡' };
+  }
+}
+
+export async function enrollPersonnelFace(tenantId: string, personnelId: string, photoUrl: string, provider = 'stub') {
+  const person = await prisma.personnel.findFirst({ where: { id: personnelId, tenantId } });
+  if (!person) throw { status: 404, code: 'NOT_FOUND', message: '人员不存在' };
+  return prisma.personnel.update({
+    where: { id: personnelId },
+    data: {
+      facePhotoUrl: photoUrl,
+      faceProvider: provider,
+      faceStatus: 'enrolled',
+      faceUpdatedAt: new Date(),
+    },
+  });
+}
+
+export async function getAttendanceSetting(tenantId: string) {
+  return prisma.attendanceSetting.upsert({
+    where: { tenantId },
+    update: {},
+    create: { tenantId, checkInsPerDay: 1, faceProvider: 'stub' },
+  });
+}
+
+export async function updateAttendanceSetting(tenantId: string, data: { checkInsPerDay?: number; faceProvider?: string }) {
+  const checkInsPerDay = data.checkInsPerDay === 2 ? 2 : 1;
+  return prisma.attendanceSetting.upsert({
+    where: { tenantId },
+    update: { checkInsPerDay, faceProvider: data.faceProvider || 'stub' },
+    create: { tenantId, checkInsPerDay, faceProvider: data.faceProvider || 'stub' },
+  });
+}
+
+export async function listMobileCheckIns(params: {
+  tenantId: string;
+  status?: string;
+  personnelId?: string;
+  date?: string;
+  page: number;
+  limit: number;
+}) {
+  const { tenantId, status, personnelId, date, page, limit } = params;
+  const where: any = { tenantId };
+  if (status) where.status = status;
+  if (personnelId) where.personnelId = personnelId;
+  if (date) where.checkDate = normalizeDateOnly(date);
+  const skip = (page - 1) * limit;
+  const [records, total] = await Promise.all([
+    prisma.mobileCheckInRecord.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        personnel: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            department: { select: { name: true } },
+          },
+        },
+      },
+    }),
+    prisma.mobileCheckInRecord.count({ where }),
+  ]);
+  return { records, total, page, limit };
+}
+
+export async function listTrustedCheckInLocations(tenantId: string, personnelId?: string) {
+  return prisma.trustedCheckInLocation.findMany({
+    where: { tenantId, ...(personnelId ? { personnelId } : {}) },
+    orderBy: { createdAt: 'desc' },
+    include: { personnel: { select: { id: true, name: true, phone: true } } },
+  });
+}
+
+export async function addTrustedCheckInLocation(data: {
+  tenantId: string;
+  personnelId: string;
+  province?: string;
+  city?: string;
+  county: string;
+  countyCode?: string;
+  remark?: string;
+  createdBy?: string;
+}) {
+  const person = await prisma.personnel.findFirst({ where: { id: data.personnelId, tenantId: data.tenantId } });
+  if (!person) throw { status: 404, code: 'NOT_FOUND', message: '人员不存在' };
+  const location = await prisma.trustedCheckInLocation.upsert({
+    where: { personnelId_county: { personnelId: data.personnelId, county: data.county } },
+    update: {
+      province: data.province,
+      city: data.city,
+      countyCode: data.countyCode,
+      remark: data.remark,
+      createdBy: data.createdBy,
+    },
+    create: {
+      tenantId: data.tenantId,
+      personnelId: data.personnelId,
+      province: data.province,
+      city: data.city,
+      county: data.county,
+      countyCode: data.countyCode,
+      remark: data.remark,
+      createdBy: data.createdBy,
+    },
+  });
+
+  await prisma.mobileCheckInRecord.updateMany({
+    where: { tenantId: data.tenantId, personnelId: data.personnelId, county: data.county, status: 'abnormal' },
+    data: { status: 'trusted', resolvedAt: new Date(), resolveReason: `已添加为个人信任打卡地：${data.county}` },
+  });
+  return location;
+}
+
+export async function batchResolveMobileCheckIns(tenantId: string, ids: string[], resolveReason: string) {
+  if (!ids.length) throw { status: 400, code: 'MISSING_PARAMS', message: '请选择要处理的异常打卡记录' };
+  const result = await prisma.mobileCheckInRecord.updateMany({
+    where: { tenantId, id: { in: ids }, status: 'abnormal' },
+    data: { status: 'resolved', resolvedAt: new Date(), resolveReason: resolveReason || '批量处理异常' },
+  });
+  return { count: result.count };
+}
+
+export async function resolveTenantByMiniProgram(appId?: string, phone?: string) {
+  if (!phone) throw { status: 400, code: 'MISSING_PARAMS', message: '手机号不能为空' };
+  if (!appId) throw { status: 400, code: 'MISSING_PARAMS', message: '小程序 appId 不能为空' };
+  const config = await prisma.miniProgramConfig.findUnique({ where: { appId }, include: { tenant: true } });
+  if (!config) throw { status: 404, code: 'MINI_PROGRAM_NOT_FOUND', message: '未找到该小程序接入配置' };
+  if (config && !config.isEnabled) throw { status: 403, code: 'MINI_PROGRAM_DISABLED', message: '该小程序接入已停用' };
+  if (config?.tenantId) {
+    const person = await prisma.personnel.findFirst({ where: { tenantId: config.tenantId, phone, status: { not: 'left' } } });
+    if (!person) throw { status: 404, code: 'PERSONNEL_NOT_FOUND', message: '该企业未找到匹配手机号的人员' };
+    await assertLaborEnabledForTenant(config.tenantId);
+    return { tenantId: config.tenantId, personnel: person, matchedBy: 'tenant_app' };
+  }
+
+  const matches = await prisma.personnel.findMany({
+    where: { phone, status: { not: 'left' }, tenant: { isActive: true, deletedAt: null } },
+    include: { tenant: { select: { id: true, name: true, code: true } } },
+    take: 10,
+  });
+  if (!matches.length) throw { status: 404, code: 'PERSONNEL_NOT_FOUND', message: '未找到匹配手机号的人员' };
+  const tenantIds = [...new Set(matches.map((item) => item.tenantId))];
+  if (tenantIds.length > 1) {
+    return {
+      multiple: true,
+      code: 'MULTIPLE_TENANTS',
+      candidates: matches.map((item) => ({ tenantId: item.tenantId, tenantName: item.tenant.name, tenantCode: item.tenant.code, personnelId: item.id, personnelName: item.name })),
+    };
+  }
+  await assertLaborEnabledForTenant(tenantIds[0]);
+  return { tenantId: tenantIds[0], personnel: matches[0], matchedBy: config?.isDefault ? 'default_app' : 'phone' };
+}
+
+export async function createMobileCheckIn(data: {
+  appId?: string;
+  tenantId?: string;
+  phone: string;
+  checkDate?: string;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  province?: string;
+  city?: string;
+  county?: string;
+  countyCode?: string;
+  photoUrl?: string;
+}) {
+  const resolved = data.tenantId
+    ? {
+        tenantId: data.tenantId,
+        personnel: await prisma.personnel.findFirst({ where: { tenantId: data.tenantId, phone: data.phone, status: { not: 'left' } } }),
+      }
+    : await resolveTenantByMiniProgram(data.appId, data.phone);
+
+  if ((resolved as any).multiple) return resolved;
+  const tenantId = (resolved as any).tenantId as string;
+  const personnel = (resolved as any).personnel;
+  if (!personnel) throw { status: 404, code: 'PERSONNEL_NOT_FOUND', message: '未找到匹配手机号的人员' };
+  await assertLaborEnabledForTenant(tenantId);
+
+  const setting = await getAttendanceSetting(tenantId);
+  const checkDate = normalizeDateOnly(data.checkDate);
+  const existingCount = await prisma.mobileCheckInRecord.count({
+    where: { tenantId, personnelId: personnel.id, checkDate },
+  });
+  if (existingCount >= setting.checkInsPerDay) {
+    throw { status: 409, code: 'CHECK_IN_LIMIT_REACHED', message: `当天已完成 ${setting.checkInsPerDay} 次打卡` };
+  }
+
+  const countyKey = normalizeCounty(data.county, data.countyCode);
+  const trusted = countyKey
+    ? await prisma.trustedCheckInLocation.findFirst({
+        where: {
+          tenantId,
+          personnelId: personnel.id,
+          OR: [{ county: data.county || countyKey }, ...(data.countyCode ? [{ countyCode: data.countyCode }] : [])],
+        },
+      })
+    : null;
+  const normalHistory = countyKey
+    ? await prisma.mobileCheckInRecord.findFirst({
+        where: {
+          tenantId,
+          personnelId: personnel.id,
+          status: { in: ['normal', 'trusted', 'resolved'] },
+          county: { not: null },
+        },
+        orderBy: { createdAt: 'asc' },
+      })
+    : null;
+  const shouldBeAbnormal = Boolean(countyKey && normalHistory && !trusted && normalizeCounty(normalHistory.county, normalHistory.countyCode) !== countyKey);
+  const faceProvider = setting.faceProvider || personnel.faceProvider || 'stub';
+  const faceResult = await getFaceRecognitionProvider(faceProvider).verify({
+    provider: faceProvider,
+    personnelId: personnel.id,
+    referencePhotoUrl: personnel.facePhotoUrl,
+    checkInPhotoUrl: data.photoUrl,
+  });
+
+  const record = await prisma.mobileCheckInRecord.create({
+    data: {
+      tenantId,
+      personnelId: personnel.id,
+      appId: data.appId,
+      phone: data.phone,
+      checkDate,
+      sequenceNo: existingCount + 1,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      address: data.address,
+      province: data.province,
+      city: data.city,
+      county: data.county,
+      countyCode: data.countyCode,
+      photoUrl: data.photoUrl,
+      faceProvider: faceResult.provider,
+      faceStatus: faceResult.status,
+      status: shouldBeAbnormal ? 'abnormal' : trusted ? 'trusted' : 'normal',
+      abnormalReason: shouldBeAbnormal ? `离开平时打卡县份：${normalHistory?.county || '未知'}，本次：${data.county || countyKey}` : undefined,
+    },
+    include: { personnel: { select: { id: true, name: true, phone: true } } },
+  });
+
+  await prisma.attendanceRecord.upsert({
+    where: { personnelId_date: { personnelId: personnel.id, date: checkDate } },
+    create: { tenantId, personnelId: personnel.id, date: checkDate, value: 'FULL', overtimeValue: 'NONE', remark: '小程序打卡自动同步' },
+    update: { value: 'FULL', remark: '小程序打卡自动同步' },
+  });
+
+  return { record, face: faceResult };
 }
 
 export async function getComplianceWarnings(tenantId: string, accessibleDeptIds: string[] | null) {

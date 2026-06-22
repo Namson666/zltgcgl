@@ -11,7 +11,7 @@ import {
   Package, FileText, UserCog, Key, Truck, HardHat,
   CalendarCheck, Calculator, Banknote, ShieldCheck,
   FileSpreadsheet, AlertTriangle, CheckCircle2, XCircle,
-  Globe2, Image as ImageIcon, Palette,
+	  Globe2, Image as ImageIcon, Palette, Smartphone,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { developerApi, tenantApi, authApi } from '../../api';
@@ -65,6 +65,14 @@ interface TenantPortalConfig {
   isEnabled: boolean;
 }
 
+interface MiniProgramConfig {
+  name: string;
+  appId: string;
+  appSecret?: string;
+  isEnabled: boolean;
+  remark?: string;
+}
+
 /* ========================================
  * TenantView 组件
  * ======================================== */
@@ -88,6 +96,14 @@ const TenantView: React.FC = () => {
   const [entering, setEntering] = useState(false);
   const [savingModules, setSavingModules] = useState(false);
   const [savingPortal, setSavingPortal] = useState(false);
+  const [miniProgramConfig, setMiniProgramConfig] = useState<MiniProgramConfig>({
+    name: '',
+    appId: '',
+    appSecret: '',
+    isEnabled: true,
+    remark: '',
+  });
+  const [savingMiniProgram, setSavingMiniProgram] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,10 +121,11 @@ const TenantView: React.FC = () => {
 
         // 获取该企业的用户列表和模块开通状态
         try {
-          const [usersRes, modulesRes, portalRes] = await Promise.all([
+          const [usersRes, modulesRes, portalRes, miniProgramRes] = await Promise.all([
             developerApi.getTenantUsers(id),
             developerApi.getTenantModules(id),
             developerApi.getTenantPortal(id),
+            developerApi.getTenantMiniProgram(id),
           ]);
           const body = usersRes.data || usersRes;
           const usersData = body.data || body;
@@ -125,6 +142,15 @@ const TenantView: React.FC = () => {
             loginTitle: portalData.loginTitle || '',
             themeColor: portalData.themeColor || '#2563EB',
             isEnabled: Boolean(portalData.isEnabled),
+          });
+          const miniProgramBody = miniProgramRes.data || miniProgramRes;
+          const miniProgramData = miniProgramBody.data || miniProgramBody || {};
+          setMiniProgramConfig({
+            name: miniProgramData.name || `${found?.name || '企业'}小程序`,
+            appId: miniProgramData.appId || '',
+            appSecret: miniProgramData.appSecret || '',
+            isEnabled: miniProgramData.isEnabled !== false,
+            remark: miniProgramData.remark || '',
           });
         } catch {
           // 用户列表或模块状态可能不可用
@@ -207,6 +233,36 @@ const TenantView: React.FC = () => {
       toast.error(error.message || '保存独立登录页配置失败');
     } finally {
       setSavingPortal(false);
+    }
+  };
+
+  const handleMiniProgramChange = (field: keyof MiniProgramConfig, value: string | boolean) => {
+    setMiniProgramConfig((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveMiniProgram = async () => {
+    if (!id) return;
+    if (!miniProgramConfig.name.trim() || !miniProgramConfig.appId.trim()) {
+      toast.error('小程序名称和 appId 不能为空');
+      return;
+    }
+    setSavingMiniProgram(true);
+    try {
+      const res = await developerApi.updateTenantMiniProgram(id, miniProgramConfig);
+      const body = res.data || res;
+      const updated = body.data || body;
+      setMiniProgramConfig({
+        name: updated.name || '',
+        appId: updated.appId || '',
+        appSecret: updated.appSecret || '',
+        isEnabled: updated.isEnabled !== false,
+        remark: updated.remark || '',
+      });
+      toast.success('企业小程序接入配置已保存');
+    } catch (error: any) {
+      toast.error(error.message || '保存小程序配置失败');
+    } finally {
+      setSavingMiniProgram(false);
     }
   };
 
@@ -520,10 +576,84 @@ const TenantView: React.FC = () => {
                 </button>
               </div>
             </div>
-          </div>
+	          </div>
 
-          {/* ==========================================
-           * 用户列表
+	          {/* ==========================================
+	           * 企业自有小程序接入
+	           * ========================================== */}
+	          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+	            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+	              <div>
+	                <h2 className="text-base font-semibold" style={{ color: '#1A2B3C' }}>
+	                  <Smartphone size={16} className="inline mr-1.5 text-green-500" />
+	                  企业小程序接入
+	                </h2>
+	                <p className="text-xs text-gray-400 mt-1">企业自有 appId 命中后直接分流到该企业；未配置时走开发者默认小程序并按手机号匹配。</p>
+	              </div>
+	              <label className="flex items-center gap-2 text-sm text-gray-600">
+	                <input
+	                  type="checkbox"
+	                  checked={miniProgramConfig.isEnabled}
+	                  onChange={(e) => handleMiniProgramChange('isEnabled', e.target.checked)}
+	                />
+	                启用
+	              </label>
+	            </div>
+	            <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+	              <div>
+	                <label className="form-label">小程序名称</label>
+	                <input
+	                  type="text"
+	                  value={miniProgramConfig.name}
+	                  onChange={(e) => handleMiniProgramChange('name', e.target.value)}
+	                  placeholder="某某公司工程打卡小程序"
+	                  className="input"
+	                />
+	              </div>
+	              <div>
+	                <label className="form-label">App ID</label>
+	                <input
+	                  type="text"
+	                  value={miniProgramConfig.appId}
+	                  onChange={(e) => handleMiniProgramChange('appId', e.target.value)}
+	                  placeholder="wx123456..."
+	                  className="input"
+	                />
+	              </div>
+	              <div>
+	                <label className="form-label">App Secret（可选）</label>
+	                <input
+	                  type="password"
+	                  value={miniProgramConfig.appSecret || ''}
+	                  onChange={(e) => handleMiniProgramChange('appSecret', e.target.value)}
+	                  placeholder="用于后续服务端调用微信能力"
+	                  className="input"
+	                />
+	              </div>
+	              <div>
+	                <label className="form-label">备注</label>
+	                <input
+	                  type="text"
+	                  value={miniProgramConfig.remark || ''}
+	                  onChange={(e) => handleMiniProgramChange('remark', e.target.value)}
+	                  placeholder="接入说明"
+	                  className="input"
+	                />
+	              </div>
+	              <div className="md:col-span-2 flex justify-end">
+	                <button
+	                  onClick={handleSaveMiniProgram}
+	                  disabled={savingMiniProgram}
+	                  className="btn-primary text-sm"
+	                >
+	                  {savingMiniProgram ? '保存中...' : '保存企业小程序配置'}
+	                </button>
+	              </div>
+	            </div>
+	          </div>
+
+	          {/* ==========================================
+	           * 用户列表
            * ========================================== */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
             <div className="px-5 py-4 border-b border-gray-100">

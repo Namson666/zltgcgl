@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import fs from 'fs';
 import path from 'path';
 
 const enterpriseAccount = {
@@ -175,10 +176,76 @@ test.describe('browser smoke: authenticated core navigation', () => {
         await page.getByText('承包合同、合同附件、收款记录').click();
         await row.getByTitle('删除').click();
         await page.getByRole('button', { name: '确认删除' }).click();
-        await expect(page.getByText(contractName)).toHaveCount(0);
-      }
-      await page.screenshot({
-        path: `../docs/smoke-evidence/${target.text}.png`,
+	        await expect(page.getByText(contractName)).toHaveCount(0);
+	      }
+	      if (target.text === '人员管理') {
+	        const stamp = Date.now();
+	        const personName = `浏览器打卡验收-${stamp}`;
+	        const phone = `139${String(stamp).slice(-8)}`;
+	        const facePath = path.resolve(process.cwd(), 'tests/fixtures/checkin-face.svg');
+	        const faceBuffer = fs.readFileSync(facePath);
+
+	        await page.getByRole('button', { name: /新增项目部人员/ }).click();
+	        await page.getByPlaceholder('姓名', { exact: true }).fill(personName);
+	        await page.getByPlaceholder('联系电话').fill(phone);
+	        await page.getByPlaceholder('18位身份证号').fill('110101199001011237');
+	        await page.locator('input[type="date"]').fill('2026-06-22');
+	        const deptSelect = page.locator('select').filter({ hasText: '请选择项目部' });
+	        const deptValue = await deptSelect.locator('option').nth(1).getAttribute('value');
+	        expect(deptValue).toBeTruthy();
+	        await deptSelect.selectOption(deptValue!);
+	        await page.getByRole('button', { name: '保存' }).click();
+	        await expect(page.getByText(personName)).toBeVisible();
+
+	        const personRow = page.locator('tr', { hasText: personName });
+	        await personRow.getByTitle('查看详情').click();
+	        await expect(page.getByRole('heading', { name: new RegExp(`人员详情 — ${personName}`) })).toBeVisible();
+	        await page.getByRole('button', { name: '上传人脸照片' }).click();
+	        await page.locator('input[type="file"]').setInputFiles(facePath);
+	        await expect(page.getByText('已录入人脸照片')).toBeVisible({ timeout: 10000 });
+	        await page.getByTitle('关闭').click();
+
+	        await page.getByText('考勤管理', { exact: true }).last().click();
+	        await expect(page).toHaveURL(/\/labor\/attendance/);
+	        await expect(page.getByRole('heading', { name: '小程序打卡', exact: true })).toBeVisible();
+	        await page.locator('select').filter({ hasText: '每天一次' }).selectOption('2');
+	        await page.getByRole('button', { name: '保存打卡规则' }).click();
+	        await expect(page.getByText('小程序打卡规则已保存')).toBeVisible();
+
+	        const postCheckIn = async (checkDate: string, county: string) => {
+	          const response = await page.request.post('/api/mobile/check-in', {
+	            multipart: {
+	              appId: 'wx_dev_default_checkin',
+	              phone,
+	              checkDate,
+	              latitude: '22.5431',
+	              longitude: '114.0579',
+	              province: '广东省',
+	              city: '深圳市',
+	              county,
+	              address: `广东省深圳市${county}测试打卡点`,
+	              photo: { name: 'checkin-face.svg', mimeType: 'image/svg+xml', buffer: faceBuffer },
+	            },
+	          });
+	          expect(response.status()).toBe(201);
+	        };
+
+	        await postCheckIn('2026-06-22', '南山区');
+	        await postCheckIn('2026-06-22', '宝安区');
+	        await postCheckIn('2026-06-23', '宝安区');
+	        await page.getByRole('button', { name: '刷新打卡记录' }).click();
+	        await expect(page.getByText(personName).first()).toBeVisible();
+	        await expect(page.getByText('异常').first()).toBeVisible();
+
+	        await page.locator('tbody tr', { hasText: '异常' }).first().locator('input[type="checkbox"]').check();
+	        await page.getByRole('button', { name: '批量处理异常' }).click();
+	        await expect(page.getByText('异常打卡已批量处理')).toBeVisible();
+	        await expect(page.getByRole('button', { name: '加入个人信任地' }).first()).toBeVisible();
+	        await page.getByRole('button', { name: '加入个人信任地' }).first().click();
+	        await expect(page.getByText('已添加为个人信任打卡地')).toBeVisible();
+	      }
+	      await page.screenshot({
+	        path: `../docs/smoke-evidence/${target.text}.png`,
         fullPage: true,
       });
     }

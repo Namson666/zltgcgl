@@ -26,6 +26,7 @@ model Developer {
   ocrConfigs         OcrConfig[]
   operationLogs      OperationLog[]
   integrationConfigs IntegrationConfig[]
+  miniProgramConfigs MiniProgramConfig[]
 
   @@map("developers")
 }
@@ -90,6 +91,10 @@ model Tenant {
   subcontractors   Subcontractor[]
   subscription     Subscription?
   moduleEntitlements TenantModuleEntitlement[]
+  miniProgramConfigs MiniProgramConfig[]
+  attendanceSetting AttendanceSetting?
+  mobileCheckInRecords MobileCheckInRecord[]
+  trustedCheckInLocations TrustedCheckInLocation[]
   suppliers        Supplier[]
   users            User[]
   workTeams        WorkTeam[]
@@ -854,11 +859,17 @@ model Personnel {
   isOverAge             Boolean            @default(false)
   isDuplicateId         Boolean            @default(false)
   consecutiveAbsentDays Int?
+  facePhotoUrl          String?
+  faceProvider          String?
+  faceStatus            String             @default("not_enrolled")
+  faceUpdatedAt         DateTime?
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
   anomalies             Anomaly[]
   attachments           Attachment[]
   attendanceRecords     AttendanceRecord[]
+  mobileCheckInRecords  MobileCheckInRecord[]
+  trustedCheckInLocations TrustedCheckInLocation[]
   paymentRecords        PaymentRecord[]
   subcontractor         Subcontractor?     @relation(fields: [subcontractorId], references: [id])
   department            Department?        @relation(fields: [departmentId], references: [id])
@@ -885,6 +896,94 @@ model AttendanceRecord {
 
   @@unique([personnelId, date])
   @@map("attendance_records")
+}
+
+/// 企业小程序接入配置。tenantId 为空表示开发者默认小程序；tenantId 不为空表示企业自有小程序。
+model MiniProgramConfig {
+  id          String    @id @default(cuid())
+  developerId String
+  tenantId    String?
+  name        String
+  appId       String    @unique
+  appSecret   String?
+  isDefault   Boolean   @default(false)
+  isEnabled   Boolean   @default(true)
+  remark      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  developer   Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("mini_program_configs")
+}
+
+/// 企业微信打卡规则
+model AttendanceSetting {
+  id             String   @id @default(cuid())
+  tenantId       String   @unique
+  checkInsPerDay Int      @default(1)
+  faceProvider   String   @default("stub")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("attendance_settings")
+}
+
+/// 微信/小程序定位照片打卡流水
+model MobileCheckInRecord {
+  id             String    @id @default(cuid())
+  tenantId       String
+  personnelId    String
+  appId          String?
+  phone          String
+  checkDate      DateTime
+  sequenceNo     Int       @default(1)
+  latitude       Float?
+  longitude      Float?
+  address        String?
+  province       String?
+  city           String?
+  county         String?
+  countyCode     String?
+  photoUrl       String?
+  faceProvider   String?
+  faceStatus     String    @default("provider_error")
+  status         String    @default("normal")
+  abnormalReason String?
+  resolvedAt     DateTime?
+  resolveReason  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  personnel      Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+
+  @@unique([personnelId, checkDate, sequenceNo])
+  @@index([tenantId, checkDate])
+  @@index([tenantId, status])
+  @@map("mobile_check_in_records")
+}
+
+/// 个人信任打卡县份。只对单个人员生效。
+model TrustedCheckInLocation {
+  id          String    @id @default(cuid())
+  tenantId    String
+  personnelId String
+  province    String?
+  city        String?
+  county      String
+  countyCode  String?
+  remark      String?
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  personnel   Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+
+  @@unique([personnelId, county])
+  @@index([tenantId, personnelId])
+  @@map("trusted_check_in_locations")
 }
 
 /// 工资核算记录

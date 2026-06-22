@@ -33,6 +33,9 @@ interface PersonnelRecord {
   subcontractor?: { companyName?: string; contactName?: string };
   consecutiveAbsentDays?: number;
   absenceWarning?: string | null;
+  facePhotoUrl?: string;
+  faceStatus?: string;
+  faceUpdatedAt?: string;
   createdAt?: string;
 }
 
@@ -116,6 +119,14 @@ const Personnel: React.FC = () => {
     setUploadingCategory(category);
     try {
       const fd = new FormData();
+      if (category === 'face') {
+        fd.append('photo', files[0]);
+        await laborApi.uploadFacePhoto(String(detailItem.id), fd);
+        toast.success('人脸照片已录入');
+        setDetailItem({ ...detailItem, faceStatus: 'enrolled', facePhotoUrl: URL.createObjectURL(files[0]) });
+        fetchData();
+        return;
+      }
       Array.from(files).forEach(f => fd.append('files', f));
       fd.append('entityType', 'personnel');
       fd.append('entityId', String(detailItem.id));
@@ -207,11 +218,17 @@ const Personnel: React.FC = () => {
     if (!form.phone.trim()) return toast.error('请输入联系电话');
     setSaving(true);
     try {
+      const payload = {
+        ...form,
+        monthlySalary: form.monthlySalary ? Number(form.monthlySalary) : undefined,
+        dailySalary: form.dailySalary ? Number(form.dailySalary) : undefined,
+        socialInsurance: form.hasSocialInsurance && form.socialInsuranceMonthly ? Number(form.socialInsuranceMonthly) : undefined,
+      };
       if (editItem) {
         const { http } = await import('../../api/client');
-        await http.put(`/labor/personnel/${editItem.id}`, form);
+        await http.put(`/labor/personnel/${editItem.id}`, payload);
       } else {
-        await laborApi.createPersonnel(form);
+        await laborApi.createPersonnel(payload);
       }
       toast.success(editItem ? '更新成功' : '人员添加成功');
       setShowModal(false);
@@ -493,12 +510,39 @@ const Personnel: React.FC = () => {
                 ['所属单位', detailItem.subcontractor?.companyName || detailItem.subcontractor?.contactName || detailItem.department?.name || '—'],
                 ['银行卡号', detailItem.bankAccount || '—'],
                 ['社保', detailItem.hasSocialInsurance ? `已购，月扣 ¥${detailItem.socialInsuranceMonthly || 0}` : '未购'],
+                ['人脸状态', detailItem.faceStatus === 'enrolled' ? '已录入' : detailItem.faceStatus || '未录入'],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-2">
                   <span className="text-gray-400 flex-shrink-0 w-20">{k}</span>
                   <span className="font-medium text-gray-800">{v}</span>
                 </div>
               ))}
+            </div>
+
+            {/* 人脸资料 */}
+            <div className="border-t border-gray-100 pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700">人脸资料</h4>
+                  <p className="text-xs text-gray-400">用于微信小程序拍照打卡时进行人员身份核验</p>
+                </div>
+                <button onClick={() => handleUploadClick('face')}
+                  disabled={uploadingCategory === 'face'}
+                  className="btn-secondary btn-sm">
+                  <Upload size={13} />
+                  {uploadingCategory === 'face' ? '上传中...' : '上传人脸照片'}
+                </button>
+              </div>
+              {detailItem.facePhotoUrl ? (
+                <div className="flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                  <CheckCircle size={16} />
+                  已录入人脸照片，后续打卡将尝试调用人脸识别适配层
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-gray-200 px-3 py-3 text-sm text-gray-400">
+                  暂未录入人脸照片
+                </div>
+              )}
             </div>
 
             {/* 附件区域 */}

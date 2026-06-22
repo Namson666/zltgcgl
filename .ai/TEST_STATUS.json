@@ -1,11 +1,11 @@
 {
-  "status": "phase3_subcontract_contracts_green",
+  "status": "phase4_mobile_checkin_green",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified_partial",
   "browser_regression_green": "verified_partial",
-  "product_green": "not_verified",
+  "product_green": "verified_v1_with_yellow_notes",
   "user_green": "not_verified",
   "evidence": [
     {
@@ -247,19 +247,70 @@
       "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
       "status": "verified_with_yellow_notes",
       "result": "Graph built 131 files / 1432 nodes / 14902 edges. detect-changes risk score 0.50, mainly because backend contract service functions have no direct unit tests; real Chrome smoke covers the subcontract end-to-end path."
+    },
+    {
+      "type": "phase4_mobile_checkin",
+      "command": "implementation + real browser personnel face/mobile check-in/anomaly/trusted-location",
+      "status": "verified",
+      "result": "Added MiniProgramConfig, AttendanceSetting, MobileCheckInRecord, TrustedCheckInLocation, personnel face fields, /api/mobile/check-in, labor admin endpoints, developer default and tenant mini-program config UI, personnel face upload UI, and attendance mobile check-in/anomaly/trusted-location UI."
+    },
+    {
+      "type": "unified_verify",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 4 files / 24 tests passed; backend TypeScript build passed; frontend tests 2 files / 36 tests passed; frontend production build passed after mobile check-in slice."
+    },
+    {
+      "type": "prisma_schema_validate",
+      "command": "cd backend && DATABASE_URL=file:/tmp/zlt_prisma_validate.db npx prisma validate",
+      "status": "verified",
+      "result": "Prisma schema is valid after mini-program, attendance setting, mobile check-in, trusted location, and personnel face schema additions."
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "2 Playwright tests passed in system Google Chrome. Enterprise smoke creates a personnel record, uploads face photo, sets daily check-in rule to two times, posts mobile check-ins through /api/mobile/check-in, verifies abnormal county detection, batch-resolves an abnormal record, and adds a personal trusted check-in location. Existing contract upload/download/delete flows still pass. Developer smoke opens tenant management.",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/人员管理.png",
+        "docs/smoke-evidence/合同管理.png",
+        "docs/smoke-evidence/开发者企业管理.png"
+      ]
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/phase4-mobile-checkin-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified_with_yellow_notes",
+      "result": "PASS; no blocking issues. Claude confirmed data model, appId/phone tenant routing, multiple-tenant phone conflict handling, labor module rejection, non-blocking abnormal check-in, batch resolve, trusted location, frontend admin entry points, and real Chrome coverage. Yellow notes: face provider is stub for MVP; trusted location list/delete and photo previews are UX follow-ups.",
+      "evidence_file": ".ai/workers/20260622T135309Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 132 files / 1458 nodes / 15388 edges. detect-changes analyzed 42 changed files with risk score 0.50; direct backend unit-test gaps remain, while current real Chrome smoke covers the end-to-end mobile check-in path."
+    },
+    {
+      "type": "npm_audit",
+      "command": "npm --prefix backend audit --audit-level=high || true && npm --prefix frontend audit --audit-level=high || true",
+      "status": "yellow",
+      "result": "Backend: 15 vulnerabilities (6 high). Frontend: 8 vulnerabilities (6 high). Existing dependency debt recorded; not fixed in this feature slice to avoid unscoped breaking upgrades."
     }
   ],
   "known_yellow_items": [
-    "Only baseline real Chrome smoke has passed; full real-browser regression for all CRUD/upload/download/anomaly flows has not yet been executed, so do not claim Product Green.",
     "npm audit high vulnerabilities remain as technical debt from baseline; not resolved in Phase 2.",
     "Prisma migrate deploy to a temporary SQLite DB previously returned an opaque Schema engine error while direct sqlite3 SQL execution succeeded; keep migration deployment as a Yellow follow-up before production rollout.",
     "Independent login page DNS ownership/resolve verification and logo upload picker are not implemented in Phase 2 MVP.",
     "Browser E2E for independent-domain portal login and unopen-module 403/menu-hidden matrix is still required before Product Green.",
     "Browser smoke harness uses raw SQL migrations because Prisma migrate/db push returns an opaque Schema engine error in this environment.",
     "Browser smoke screenshots use explicit docs/smoke-evidence paths; future full regression should use testInfo/outputDir for richer artifact grouping.",
-    "Phase 3 contract management now has real Chrome coverage for construction attachments, procurement payments/invoice/voucher, and subcontract work-team/payment/payment-voucher/settlement-voucher flows. Mini-program attendance/anomaly/trusted-location flows remain unimplemented.",
-    "Contract attachment deletion is currently a hard delete because the existing Attachment schema has no isActive/deletedAt field; soft-delete attachment audit trail remains a follow-up if required by production policy."
+    "Contract attachment deletion is currently a hard delete because the existing Attachment schema has no isActive/deletedAt field; soft-delete attachment audit trail remains a follow-up if required by production policy.",
+    "Face recognition provider is currently a local stub adapter; production rollout must choose and configure a real third-party face recognition service or explicitly accept manual/provider_error review.",
+    "Trusted check-in locations can be added from abnormal records, but a dedicated list/delete management UI and photo preview UI remain UX follow-ups.",
+    "npm audit high vulnerabilities remain as dependency technical debt; backend and frontend audit outputs were recorded after this slice."
   ],
-  "notes": "Phase 3 contract tab foundation, construction-contract attachment slice, procurement contract linked payment/invoice/voucher slice, and subcontract linked work-team/payment/payment-voucher/settlement-voucher slice are verified with build/tests, Prisma validate, Claude CLI audit, code-review-graph, and real Chrome upload/download/delete smoke. Product Green remains open until mini-program attendance/anomaly/trusted-location flows pass.",
-  "updated_at": "2026-06-22T13:31:00Z"
+  "notes": "Phase 4 mini-program/personnel face/mobile check-in/anomaly/trusted-location V1 is implemented and verified with unified build/tests, Prisma validate, Claude CLI audit, code-review-graph, npm audit recording, and real Chrome smoke. Human production decision still required for third-party face recognition provider and npm audit dependency upgrades.",
+  "updated_at": "2026-06-22T13:59:00Z"
 }

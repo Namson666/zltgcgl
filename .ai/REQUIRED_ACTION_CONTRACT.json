@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "phase3_subcontract_contracts",
+  "stage": "phase4_mobile_checkin_green",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Phase 3 subcontract contract slice completed through local verification: contract management has tabs, construction-contract attachments, procurement payment/invoice/voucher flows, and subcontract linked construction/work-team/payment/payment-voucher/settlement-voucher flows. Claude CLI audit, code-review-graph, verify, Prisma validate, and real Chrome upload/download/delete smoke passed. Mini-program attendance/anomaly flows remain open.",
+  "notes": "Phase 4 mini-program/personnel face/mobile check-in/anomaly/trusted-location V1 completed through local verification. Claude CLI audit, code-review-graph, verify, Prisma validate, npm audit recording, and real Chrome smoke passed. Yellow follow-ups: production third-party face recognition provider, npm audit dependency upgrades, trusted-location list/delete/photo preview UX.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-22T13:31:00Z"
+  "updated_at": "2026-06-22T13:56:00Z"
 }

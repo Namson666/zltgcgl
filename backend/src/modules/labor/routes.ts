@@ -146,6 +146,27 @@ personnelRouter.post('/:id/rejoin', authenticate, requireUser, requirePermission
   }
 });
 
+personnelRouter.post('/:id/face', authenticate, requireUser, requirePermission('canManagePersonnel'), upload.single('photo'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId!;
+    if (!req.file) {
+      res.status(400).json({ success: false, error: 'MISSING_FILE', message: '请上传人员人脸照片' } as ApiResponse);
+      return;
+    }
+    if (!req.file.mimetype.startsWith('image/')) {
+      res.status(400).json({ success: false, error: 'INVALID_FILE', message: '人脸照片仅支持图片' } as ApiResponse);
+      return;
+    }
+    const updated = await laborService.enrollPersonnelFace(tenantId, req.params.id, `/uploads/${req.file.filename}`);
+    await createLog({ tenantId, userId: req.user!.id, action: 'UPDATE', module: '人员管理', description: `录入人员人脸照片「${updated.name}」`, ip: req.ip, userAgent: req.headers['user-agent'] });
+    res.json({ success: true, data: updated, message: '人脸照片已录入' } as ApiResponse);
+  } catch (error: any) {
+    console.error('录入人脸照片失败:', error);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
 router.use('/personnel', personnelRouter);
 
 // ============================================
@@ -212,6 +233,84 @@ attendanceRouter.get('/', authenticate, requireUser, requirePermission('canManag
   } catch (error: any) {
     console.error('获取考勤记录失败:', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '获取考勤记录过程中发生服务器错误' } as ApiResponse);
+  }
+});
+
+attendanceRouter.get('/mobile/settings', authenticate, requireUser, requirePermission('canManageAttendance'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const data = await laborService.getAttendanceSetting(req.user!.tenantId!);
+    res.json({ success: true, data } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取打卡规则失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '获取打卡规则失败' } as ApiResponse);
+  }
+});
+
+attendanceRouter.put('/mobile/settings', authenticate, requireUser, requirePermission('canManageAttendance'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const data = await laborService.updateAttendanceSetting(req.user!.tenantId!, {
+      checkInsPerDay: Number(req.body.checkInsPerDay),
+      faceProvider: req.body.faceProvider,
+    });
+    res.json({ success: true, data, message: '打卡规则已保存' } as ApiResponse);
+  } catch (error: any) {
+    console.error('保存打卡规则失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '保存打卡规则失败' } as ApiResponse);
+  }
+});
+
+attendanceRouter.get('/mobile/check-ins', authenticate, requireUser, requirePermission('canManageAttendance'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { status, personnelId, date, page = '1', limit = '50' } = req.query as any;
+    const data = await laborService.listMobileCheckIns({
+      tenantId: req.user!.tenantId!,
+      status,
+      personnelId,
+      date,
+      page: parseInt(page),
+      limit: parseInt(limit),
+    });
+    res.json({ success: true, data } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取移动打卡记录失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '获取移动打卡记录失败' } as ApiResponse);
+  }
+});
+
+attendanceRouter.post('/mobile/check-ins/resolve-batch', authenticate, requireUser, requirePermission('canManageAttendance'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const data = await laborService.batchResolveMobileCheckIns(req.user!.tenantId!, req.body.ids || [], req.body.resolveReason || '批量处理异常');
+    res.json({ success: true, data, message: `已处理 ${data.count} 条异常打卡` } as ApiResponse);
+  } catch (error: any) {
+    console.error('批量处理异常打卡失败:', error);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
+attendanceRouter.get('/mobile/trusted-locations', authenticate, requireUser, requirePermission('canManageAttendance'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const data = await laborService.listTrustedCheckInLocations(req.user!.tenantId!, req.query.personnelId as string | undefined);
+    res.json({ success: true, data } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取信任打卡地失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '获取信任打卡地失败' } as ApiResponse);
+  }
+});
+
+attendanceRouter.post('/mobile/trusted-locations', authenticate, requireUser, requirePermission('canManageAttendance'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { personnelId, province, city, county, countyCode, remark } = req.body;
+    if (!personnelId || !county) {
+      res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '人员和县份不能为空' } as ApiResponse);
+      return;
+    }
+    const data = await laborService.addTrustedCheckInLocation({ tenantId: req.user!.tenantId!, personnelId, province, city, county, countyCode, remark, createdBy: req.user!.id });
+    res.status(201).json({ success: true, data, message: '已添加个人信任打卡地' } as ApiResponse);
+  } catch (error: any) {
+    console.error('添加信任打卡地失败:', error);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
   }
 });
 

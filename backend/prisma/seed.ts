@@ -51,6 +51,30 @@ async function main() {
   });
   console.log(`  ✓ 租户创建成功: ${tenant.name} (${tenant.code})`);
 
+  await prisma.miniProgramConfig.upsert({
+    where: { appId: 'wx_dev_default_checkin' },
+    update: {
+      developerId: developer.id,
+      name: '开发者默认打卡小程序',
+      isDefault: true,
+      isEnabled: true,
+    },
+    create: {
+      developerId: developer.id,
+      name: '开发者默认打卡小程序',
+      appId: 'wx_dev_default_checkin',
+      isDefault: true,
+      isEnabled: true,
+      remark: '演示/验收默认小程序，企业未接入自有小程序时使用',
+    },
+  });
+
+  await prisma.attendanceSetting.upsert({
+    where: { tenantId: tenant.id },
+    update: { checkInsPerDay: 1, faceProvider: 'stub' },
+    create: { tenantId: tenant.id, checkInsPerDay: 1, faceProvider: 'stub' },
+  });
+
   // ============================================
   // 3. 创建订阅信息
   // ============================================

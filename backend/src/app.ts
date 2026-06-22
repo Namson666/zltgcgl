@@ -24,6 +24,7 @@ import laborRoutes from './modules/labor/routes';
 import financeRoutes from './modules/finance/routes';
 import logRoutes from './modules/auth/routes/logs';
 import recycleBinRoutes from './modules/recycle-bin/routes';
+import mobileRoutes from './modules/mobile/routes';
 
 // 创建 Express 应用
 const app = express();
@@ -75,6 +76,10 @@ app.get('/api/v1/health', (_req, res) => {
 // 认证路由
 app.use('/api/auth', authRoutes);
 app.use('/api/v1/auth', authRoutes);
+
+// 小程序/移动端公开入口：按 appId/手机号解析企业和人员，不依赖后台登录态
+app.use('/api/mobile', mobileRoutes);
+app.use('/api/v1/mobile', mobileRoutes);
 
 // 开发者后台路由
 app.use('/api/developer', developerRoutes);

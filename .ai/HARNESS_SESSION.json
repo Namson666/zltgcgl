@@ -6,15 +6,14 @@
   "risk_level": "enhanced",
   "project_root": "/Users/Namson/Documents/工程管理系统/资料通工程管理系统",
   "required_state_files_checked": true,
-  "current_phase": "S5_phase3_subcontract_contracts_green",
+  "current_phase": "S6_phase4_mobile_checkin_green",
   "research_probe_only": false,
   "may_modify_code": true,
   "may_commit": true,
   "required_skills_pending": [
-    "superpowers-pro:brainstorming user approval of refactor design",
-    "superpowers-pro:writing-plans after approved design",
-    "superpowers-pro:executing-plans before implementation",
-    "superpowers-pro:verification-before-completion before completion"
+    "superpowers-pro:verification-before-completion before final completion",
+    "production face provider selection before production Product Green",
+    "dependency audit remediation before production hardening"
   ],
-  "updated_at": "2026-06-22T13:31:00Z"
+  "updated_at": "2026-06-22T13:56:00Z"
 }

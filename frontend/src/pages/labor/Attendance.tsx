@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { laborApi } from '../../api';
-import { Search, Calendar, CheckSquare, AlertTriangle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Calendar, CheckSquare, AlertTriangle, Loader2, ChevronLeft, ChevronRight, MapPin, Smartphone, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/Common';
@@ -31,6 +31,22 @@ interface PersonnelBrief {
   department?: { name: string };
   consecutiveAbsentDays?: number;
   absenceWarning?: string | null;
+}
+
+interface MobileCheckInRecord {
+  id: string;
+  checkDate: string;
+  sequenceNo: number;
+  phone: string;
+  address?: string;
+  province?: string;
+  city?: string;
+  county?: string;
+  photoUrl?: string;
+  faceStatus: string;
+  status: 'normal' | 'trusted' | 'abnormal' | 'resolved';
+  abnormalReason?: string;
+  personnel?: { id: string; name: string; phone?: string; department?: { name: string } };
 }
 
 /* 日历组件 */
@@ -99,6 +115,11 @@ const Attendance: React.FC = () => {
   const [patchValue, setPatchValue] = useState('FULL');
   const [patchOvertime, setPatchOvertime] = useState('NONE');
   const [patchSubmitting, setPatchSubmitting] = useState(false);
+  const [mobileCheckIns, setMobileCheckIns] = useState<MobileCheckInRecord[]>([]);
+  const [loadingMobile, setLoadingMobile] = useState(false);
+  const [checkInsPerDay, setCheckInsPerDay] = useState(1);
+  const [savingRule, setSavingRule] = useState(false);
+  const [selectedMobileIds, setSelectedMobileIds] = useState<Set<string>>(new Set());
 
   const loadPersonnel = async () => {
     setLoadingPersonnel(true);
@@ -113,6 +134,71 @@ const Attendance: React.FC = () => {
   };
 
   useEffect(() => { loadPersonnel(); }, [filterType, search]);
+
+  const loadMobileCheckIns = async () => {
+    setLoadingMobile(true);
+    try {
+      const [settingRes, checkInRes] = await Promise.all([
+        laborApi.getAttendanceSetting(),
+        laborApi.getMobileCheckIns({ limit: 30 }),
+      ]);
+      const setting = (settingRes.data as any)?.data || {};
+      setCheckInsPerDay(setting.checkInsPerDay || 1);
+      const data = (checkInRes.data as any)?.data || {};
+      setMobileCheckIns(data.records || []);
+    } catch {
+      toast.error('加载小程序打卡记录失败');
+    } finally { setLoadingMobile(false); }
+  };
+
+  useEffect(() => { loadMobileCheckIns(); }, []);
+
+  const saveMobileRule = async () => {
+    setSavingRule(true);
+    try {
+      await laborApi.updateAttendanceSetting({ checkInsPerDay, faceProvider: 'stub' });
+      toast.success('小程序打卡规则已保存');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '保存规则失败');
+    } finally { setSavingRule(false); }
+  };
+
+  const toggleMobile = (id: string) => {
+    setSelectedMobileIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const batchResolveMobile = async () => {
+    if (!selectedMobileIds.size) return toast.error('请先选择异常打卡记录');
+    try {
+      await laborApi.resolveMobileCheckIns({ ids: [...selectedMobileIds], resolveReason: '后台批量处理异常' });
+      toast.success('异常打卡已批量处理');
+      setSelectedMobileIds(new Set());
+      loadMobileCheckIns();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '批量处理失败');
+    }
+  };
+
+  const addTrustedFromRecord = async (record: MobileCheckInRecord) => {
+    if (!record.personnel?.id || !record.county) return toast.error('缺少人员或县份，无法添加信任地');
+    try {
+      await laborApi.addTrustedLocation({
+        personnelId: record.personnel.id,
+        province: record.province,
+        city: record.city,
+        county: record.county,
+        remark: '由异常打卡添加',
+      });
+      toast.success('已添加为个人信任打卡地');
+      loadMobileCheckIns();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '添加信任地失败');
+    }
+  };
 
   const toggleSelect = (id: number) => {
     setSelectedPersonnel(prev => {
@@ -201,6 +287,81 @@ const Attendance: React.FC = () => {
         <button className="btn-secondary" onClick={openPatch}>
           <Calendar size={16} /> 批量补卡
         </button>
+      </div>
+
+      <div className="card space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <Smartphone size={18} className="text-primary-500" /> 小程序打卡
+            </h3>
+            <p className="text-xs text-gray-400 mt-1">不限时间/位置，照片和县份位置归档；离开平时县份会标为异常</p>
+          </div>
+          <button className="btn-secondary btn-sm" onClick={loadMobileCheckIns}>刷新打卡记录</button>
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="label">每日打卡次数</label>
+            <select className="select w-32" value={checkInsPerDay} onChange={e => setCheckInsPerDay(Number(e.target.value))}>
+              <option value={1}>每天一次</option>
+              <option value={2}>每天两次</option>
+            </select>
+          </div>
+          <button className="btn-primary btn-sm" onClick={saveMobileRule} disabled={savingRule}>
+            {savingRule ? '保存中...' : '保存打卡规则'}
+          </button>
+          <button className="btn-secondary btn-sm" onClick={batchResolveMobile} disabled={!selectedMobileIds.size}>
+            批量处理异常
+          </button>
+        </div>
+        <div className="overflow-x-auto border border-gray-100 rounded-lg">
+          <table className="w-full">
+            <thead><tr className="border-b border-gray-100 bg-gray-50">
+              <th className="table-th">选择</th>
+              <th className="table-th">人员</th>
+              <th className="table-th">日期/次数</th>
+              <th className="table-th">县份位置</th>
+              <th className="table-th">人脸</th>
+              <th className="table-th">状态</th>
+              <th className="table-th">操作</th>
+            </tr></thead>
+            <tbody>
+              {loadingMobile ? <tr><td colSpan={7} className="table-td text-center py-8 text-gray-400">加载中...</td></tr>
+                : mobileCheckIns.length === 0 ? <tr><td colSpan={7} className="table-td text-center py-8"><EmptyState title="暂无小程序打卡记录" /></td></tr>
+                : mobileCheckIns.map(record => (
+                  <tr key={record.id} className={`border-b border-gray-50 ${record.status === 'abnormal' ? 'bg-red-50/30' : ''}`}>
+                    <td className="table-td">
+                      <input type="checkbox" checked={selectedMobileIds.has(record.id)}
+                        disabled={record.status !== 'abnormal'}
+                        onChange={() => toggleMobile(record.id)} />
+                    </td>
+                    <td className="table-td font-medium">{record.personnel?.name || record.phone}</td>
+                    <td className="table-td text-xs">{record.checkDate?.slice(0, 10)} 第 {record.sequenceNo} 次</td>
+                    <td className="table-td text-xs">
+                      <div className="flex items-center gap-1"><MapPin size={12} />{record.province || ''}{record.city || ''}{record.county || record.address || '—'}</div>
+                    </td>
+                    <td className="table-td">
+                      {record.faceStatus === 'verified'
+                        ? <span className="badge-green"><ShieldCheck size={11} className="inline" />通过</span>
+                        : <span className="badge-yellow">{record.faceStatus || '待核验'}</span>}
+                    </td>
+                    <td className="table-td">
+                      {record.status === 'abnormal' ? <span className="badge-red">异常</span>
+                        : record.status === 'trusted' ? <span className="badge-blue">信任地</span>
+                        : record.status === 'resolved' ? <span className="badge-green">已处理</span>
+                        : <span className="badge-green">正常</span>}
+                      {record.abnormalReason && <div className="text-[11px] text-red-500 mt-1 max-w-[220px] truncate">{record.abnormalReason}</div>}
+                    </td>
+                    <td className="table-td">
+                      {record.status === 'abnormal' && (
+                        <button className="btn-secondary btn-sm" onClick={() => addTrustedFromRecord(record)}>加入个人信任地</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

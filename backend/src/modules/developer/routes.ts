@@ -784,6 +784,75 @@ router.post('/integrations/test', async (req: AuthenticatedRequest, res: Respons
 });
 
 // ============================================
+// 小程序接入配置：开发者默认小程序 + 企业自有小程序
+// ============================================
+
+router.get('/mini-program/default', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const config = await prisma.miniProgramConfig.findFirst({ where: { developerId: req.user!.id, isDefault: true } });
+    res.json({ success: true, data: config } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取默认小程序配置失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+router.put('/mini-program/default', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { name, appId, appSecret, isEnabled, remark } = req.body;
+    if (!name || !appId) {
+      res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '小程序名称和 appId 不能为空' } as ApiResponse);
+      return;
+    }
+    const existing = await prisma.miniProgramConfig.findFirst({ where: { developerId: req.user!.id, isDefault: true } });
+    const config = existing
+      ? await prisma.miniProgramConfig.update({ where: { id: existing.id }, data: { name, appId, appSecret, isEnabled: isEnabled !== false, remark } })
+      : await prisma.miniProgramConfig.create({ data: { developerId: req.user!.id, name, appId, appSecret, isDefault: true, isEnabled: isEnabled !== false, remark } });
+    await createLog(req.user!.id, { action: 'UPDATE', module: 'mini_program', description: '更新开发者默认小程序接入配置' });
+    res.json({ success: true, data: config, message: '默认小程序配置已保存' } as ApiResponse);
+  } catch (error: any) {
+    console.error('保存默认小程序配置失败:', error);
+    const isDuplicate = error.code === 'P2002';
+    res.status(isDuplicate ? 409 : 500).json({ success: false, error: isDuplicate ? 'DUPLICATE_APP_ID' : 'INTERNAL_ERROR', message: isDuplicate ? 'appId 已被其他小程序配置使用' : '服务器错误' } as ApiResponse);
+  }
+});
+
+router.get('/tenants/:tenantId/mini-program', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const config = await prisma.miniProgramConfig.findFirst({ where: { developerId: req.user!.id, tenantId: req.params.tenantId } });
+    res.json({ success: true, data: config } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取企业小程序配置失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+router.put('/tenants/:tenantId/mini-program', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { name, appId, appSecret, isEnabled, remark } = req.body;
+    if (!name || !appId) {
+      res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '小程序名称和 appId 不能为空' } as ApiResponse);
+      return;
+    }
+    const tenant = await prisma.tenant.findFirst({ where: { id: req.params.tenantId, deletedAt: null } });
+    if (!tenant) {
+      res.status(404).json({ success: false, error: 'NOT_FOUND', message: '企业不存在' } as ApiResponse);
+      return;
+    }
+    const existing = await prisma.miniProgramConfig.findFirst({ where: { developerId: req.user!.id, tenantId: req.params.tenantId } });
+    const config = existing
+      ? await prisma.miniProgramConfig.update({ where: { id: existing.id }, data: { name, appId, appSecret, isEnabled: isEnabled !== false, remark } })
+      : await prisma.miniProgramConfig.create({ data: { developerId: req.user!.id, tenantId: req.params.tenantId, name, appId, appSecret, isEnabled: isEnabled !== false, remark } });
+    await createLog(req.user!.id, { tenantId: req.params.tenantId, action: 'UPDATE', module: 'mini_program', description: `更新企业「${tenant.name}」小程序接入配置` });
+    res.json({ success: true, data: config, message: '企业小程序配置已保存' } as ApiResponse);
+  } catch (error: any) {
+    console.error('保存企业小程序配置失败:', error);
+    const isDuplicate = error.code === 'P2002';
+    res.status(isDuplicate ? 409 : 500).json({ success: false, error: isDuplicate ? 'DUPLICATE_APP_ID' : 'INTERNAL_ERROR', message: isDuplicate ? 'appId 已被其他小程序配置使用' : '服务器错误' } as ApiResponse);
+  }
+});
+
+// ============================================
 // 存储管理
 // ============================================
 
