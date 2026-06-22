@@ -4,12 +4,12 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S3 browser smoke harness green
-- Current task: 真实 Chrome 浏览器 smoke harness + 证据链
-- Last completed: 用户批准实施计划，要求全程 Superpowers Pro、尽量调用 Claude CLI、最终真实浏览器全功能验收
-- In progress: 准备提交并推送浏览器 smoke harness
-- Next action: 提交/推送 smoke harness；随后进入 Phase 3 合同管理重构
-- Blockers: 完整 CRUD/上传/下载/异常处理浏览器回归尚未建立/执行；前后端 npm audit 存在 high 漏洞，作为 Yellow 技术债记录
+- Current phase: S4 Phase 3 contract tab foundation green
+- Current task: 合同管理三 tab 基础底座
+- Last completed: 合同管理已形成承包合同、采购合同、分包合同三 tab；分包合同列表改走合同基础接口 `/api/contracts/sub-contracts`，不再依赖劳资模块开通
+- In progress: 准备提交并推送 Phase 3 合同 tab 基础切片
+- Next action: 进入合同下一切片：合同自有附件上传/下载/删除、采购合同发票/支付凭证、分包合同新建/班组关联/付款与结算凭证
+- Blockers: 完整 CRUD/上传/下载/异常处理浏览器回归尚未建立/执行；Phase 3 尚不是 Product Green；前后端 npm audit 存在 high 漏洞，作为 Yellow 技术债记录
 - Do not repeat: 不要在未确认重构设计前修改业务代码；不要把 Build Green 当 Product Green
 - Must read:
   1. .ai/REQUIRED_ACTION_CONTRACT.json
@@ -22,12 +22,12 @@
   8. .ai/session/HANDOFF.md
 - Must read spec:
   1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
-- Last verified command: `bash scripts/browser-smoke.sh` passed in system Google Chrome: enterprise login/core navigation and developer login/tenant management
-- Claude worker evidence: `.ai/workers/20260622T114708Z-audit_worker.result.md` returned PASS_WITH_NOTES; portal loading UX note fixed
-- Last commit: 8b78ec0 feat: add tenant module entitlement foundation
-- Safe rollback point: 8b78ec0
+- Last verified command: `bash scripts/verify.sh` and `bash scripts/browser-smoke.sh` passed after Phase 3 contract tab foundation
+- Claude worker evidence: `.ai/workers/20260622T121408Z-audit_worker.result.md` returned PASS; non-blocking loading-state note fixed after audit
+- Last commit: 71f5b7f test: add real chrome browser smoke harness
+- Safe rollback point: 71f5b7f
 - Browser smoke evidence: `docs/smoke-evidence/playwright-results.json` and screenshots under `docs/smoke-evidence/`
-- Updated at: 2026-06-22T12:05:00Z
+- Updated at: 2026-06-22T12:17:00Z
 
 ## 项目概览
 

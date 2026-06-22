@@ -1,0 +1,54 @@
+## Audit Report: Phase 3 Contract Tabs Foundation
+
+### VERDICT: **PASS** — No blocking issues.
+
+---
+
+### 1. Route Ordering
+
+**PASS.** `/sub-contracts` (routes.ts:85) is correctly registered before `/:id` (routes.ts:115). Express routes match in declaration order, so a request to `GET /api/contracts/sub-contracts` hits the dedicated handler, not the `/:id` catch-all.
+
+### 2. Subcontract API Path
+
+**PASS.** The subcontract list endpoint is at `/contracts/sub-contracts` (routes.ts:85), not `/labor/sub-contract`. The frontend API layer (`api/index.ts:597`) calls `http.get('/contracts/sub-contracts', params)` and comments explicitly document the design intent: "合同管理是基础功能，因此走 /contracts 入口，不依赖劳资模块开通。"
+
+### 3. Tenant Isolation
+
+**PASS.** Both route handler (routes.ts:87-91) and service layer (service.ts:172) filter by `tenantId`. The route rejects requests with `NO_TENANT` before any query runs. This matches the existing `listContracts` pattern in the same file.
+
+### 4. Module-Entitlement Coupling
+
+**PASS — No new coupling introduced.** Key findings:
+
+- **Subcontract API** is correctly isolated under the contract module's own route, not labor's.
+- **Frontend `List.tsx`** still imports `laborApi` for attachment operations (upload/download/delete), but this is **pre-existing** behavior (lines 328/356/371) — not introduced by this diff. Decoupling attachments from labor is a broader refactor beyond the foundation scope.
+- The new code path (subcontract tab) makes zero calls to `laborApi`, `wmsApi`, or any finance-related API.
+
+### 5. No Fake Completion
+
+**PASS.** The code clearly scopes itself as foundation work:
+
+| Location | Marker |
+|----------|--------|
+| `List.tsx:420-422` | Toast: "分包合同新建将在下一切片接入班组/付款/结算凭证流程" |
+| `List.tsx:717-718` | EmptyState: "分包合同新建、付款凭证、结算凭证将在后续切片接入" |
+| `List.tsx:733` | Operation cell: "付款/结算凭证待接入" |
+
+The EmptyState and operation column are explicitly marked as pending — no pretense of completeness.
+
+### 6. E2E Smoke Test
+
+**PASS.** `browser-smoke.spec.ts:39-43` adds tab interaction: verifies default tab description is visible, clicks through all three tabs, returns to the default. This covers the tab navigation UX. A minor gap: it doesn't verify data loads from `/contracts/sub-contracts`, but this is acceptable for a navigation-only smoke test at this foundation phase.
+
+### 7. Concrete Suggestions (Non-Blocking)
+
+| Priority | File:Line | Issue | Suggestion |
+|----------|-----------|-------|------------|
+| LOW | `List.tsx:255` | `as any` cast on API response defeats type checking | Define a `PaginatedResponse<SubContract>` type for the response envelope |
+| LOW | `List.tsx:624` | Loading spinner uses `contracts.length === 0`; subcontract tab always has `contracts=[]`, so spinner shows briefly on tab switch | Use a tab-aware empty check: `loading && (activeTab === 'SUBCONTRACT' ? subContracts.length === 0 : contracts.length === 0)` |
+| INFO | `service.ts:172` | `where` clause hardcodes `isActive: true` (unlike `listContracts` which accepts `isActive` as param) | OK for phase 1; add `isActive` param when subcontract termination UI lands |
+| INFO | `schema:753` | `Contract` relation uses `onDelete: Cascade` — deleting a parent contract silently removes sub-contracts | Verify this matches business intent before deletion UI lands |
+
+### Summary
+
+The foundation is clean. Route ordering is correct, subcontract API is properly isolated from module entitlements, tenant isolation is enforced, and the code honestly scopes itself as phase-1-only. No security, isolation, or fake-completion concerns.

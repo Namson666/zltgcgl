@@ -153,6 +153,54 @@ export async function deleteContract(tenantId: string, id: string) {
 }
 
 // ============================================
+// 分包合同列表（合同基础板块入口）
+// ============================================
+
+export interface SubContractListParams {
+  tenantId: string;
+  contractId?: string;
+  subcontractorId?: string;
+  page: number;
+  pageSize: number;
+  search?: string;
+}
+
+export async function listSubContracts(params: SubContractListParams) {
+  const { tenantId, contractId, subcontractorId, page, pageSize, search } = params;
+  const skip = (page - 1) * pageSize;
+
+  const where: any = { tenantId, isActive: true };
+  if (contractId) where.contractId = contractId;
+  if (subcontractorId) where.subcontractorId = subcontractorId;
+  if (search) {
+    where.OR = [
+      { name: { contains: search } },
+      { contract: { is: { name: { contains: search } } } },
+      { subcontractor: { is: { companyName: { contains: search } } } },
+      { subcontractor: { is: { contactName: { contains: search } } } },
+    ];
+  }
+
+  const [contracts, total] = await Promise.all([
+    prisma.subContract.findMany({
+      where,
+      skip,
+      take: pageSize,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        contract: { select: { id: true, name: true, code: true, totalAmount: true } },
+        subcontractor: { select: { id: true, companyName: true, contactName: true, type: true } },
+        outputValues: { select: { amount: true, payableRatio: true } },
+        subProgressPayments: { select: { totalAmount: true } },
+      },
+    }),
+    prisma.subContract.count({ where }),
+  ]);
+
+  return { contracts, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+}
+
+// ============================================
 // 进度款管理
 // ============================================
 

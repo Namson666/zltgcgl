@@ -591,6 +591,13 @@ export const contractApi = {
     http.get('/contracts', params),
 
   /**
+   * 获取分包合同列表
+   * 合同管理是基础功能，因此走 /contracts 入口，不依赖劳资模块开通。
+   */
+  getSubContracts: (params?: PaginationParams & { contractId?: string; subcontractorId?: string; search?: string }) =>
+    http.get('/contracts/sub-contracts', params),
+
+  /**
    * 创建新合同
    * @param data - 合同信息（合同编号、甲方、金额等）
    * @returns 新创建的合同信息

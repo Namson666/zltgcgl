@@ -1,5 +1,5 @@
 {
-  "status": "browser_smoke_harness_green",
+  "status": "phase3_contract_tabs_foundation_green",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -36,7 +36,7 @@
       "type": "unified_verify",
       "command": "bash scripts/verify.sh",
       "status": "verified",
-      "result": "Backend tests/build and frontend tests/build passed after Phase 2 changes"
+      "result": "Backend tests/build and frontend tests/build passed after Phase 3 contract tab foundation changes"
     },
     {
       "type": "migration_sql_check",
@@ -75,6 +75,43 @@
       "status": "verified",
       "result": "PASS_WITH_NOTES; no blocking issue; confirmed temporary SQLite DB, test-only JWT_SECRET, system Chrome channel, and honest baseline smoke scope",
       "evidence_file": ".ai/workers/20260622T120532Z-audit_worker.result.md"
+    },
+    {
+      "type": "phase3_contract_tabs_foundation",
+      "command": "git diff + implementation review",
+      "status": "verified",
+      "result": "Contract management page now has construction/procurement/subcontract tabs. Subcontract list uses /api/contracts/sub-contracts so contract management remains a default base feature and does not depend on labor module entitlement."
+    },
+    {
+      "type": "unified_verify",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 4 files / 24 tests passed; backend TypeScript build passed; frontend tests 2 files / 36 tests passed; frontend production build passed after Phase 3 tab foundation"
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "2 Playwright tests passed in system Google Chrome after Phase 3 tab foundation; enterprise smoke clicks contract management and all three contract tabs, plus core enabled modules; developer smoke opens tenant management",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/合同管理.png",
+        "docs/smoke-evidence/物资总览.png",
+        "docs/smoke-evidence/人员管理.png",
+        "docs/smoke-evidence/项目部报账.png",
+        "docs/smoke-evidence/项目部管理.png",
+        "docs/smoke-evidence/用户管理.png",
+        "docs/smoke-evidence/角色权限.png",
+        "docs/smoke-evidence/开发者企业管理.png"
+      ]
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/phase3-contract-tabs-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "PASS; no blocking route-order, tenant-isolation, module-entitlement, or fake-completion issues. Non-blocking loading-state suggestion fixed after audit.",
+      "evidence_file": ".ai/workers/20260622T121408Z-audit_worker.result.md"
     }
   ],
   "known_yellow_items": [
@@ -84,8 +121,10 @@
     "Independent login page DNS ownership/resolve verification and logo upload picker are not implemented in Phase 2 MVP.",
     "Browser E2E for independent-domain portal login and unopen-module 403/menu-hidden matrix is still required before Product Green.",
     "Browser smoke harness uses raw SQL migrations because Prisma migrate/db push returns an opaque Schema engine error in this environment.",
-    "Browser smoke screenshots use explicit docs/smoke-evidence paths; future full regression should use testInfo/outputDir for richer artifact grouping."
+    "Browser smoke screenshots use explicit docs/smoke-evidence paths; future full regression should use testInfo/outputDir for richer artifact grouping.",
+    "Phase 3 currently has the contract tab/list foundation only. Contract upload/download/delete, procurement invoices/payment vouchers, subcontract create/team relation/payment/settlement vouchers still need implementation and real-browser CRUD/upload/download verification.",
+    "Contract detail attachment operations still use the pre-existing labor attachment API; this was not introduced by the tab foundation but should be decoupled into contract-owned attachment APIs during the next contract slice."
   ],
-  "notes": "Reusable real Chrome smoke harness is in place and passed for baseline login/navigation. Product Green remains open until all required feature CRUD/upload/download/anomaly paths pass.",
-  "updated_at": "2026-06-22T12:05:00Z"
+  "notes": "Phase 3 contract management tab/list foundation is verified with build/tests, Claude CLI audit, and real Chrome smoke. Product Green remains open until all required feature CRUD/upload/download/anomaly paths pass.",
+  "updated_at": "2026-06-22T12:17:00Z"
 }

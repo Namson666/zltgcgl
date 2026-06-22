@@ -36,6 +36,12 @@ test.describe('browser smoke: authenticated core navigation', () => {
     for (const target of menuTargets) {
       await page.getByText(target.text, { exact: true }).last().click();
       await expect(page).toHaveURL(target.url);
+      if (target.text === '合同管理') {
+        await expect(page.getByText('承包合同、合同附件、收款记录')).toBeVisible();
+        await page.getByText('采购合同、发票、附件、支付记录').click();
+        await page.getByText('分包合同、班组关联、付款/结算凭证').click();
+        await page.getByText('承包合同、合同附件、收款记录').click();
+      }
       await page.screenshot({
         path: `../docs/smoke-evidence/${target.text}.png`,
         fullPage: true,

@@ -77,6 +77,41 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response):
   }
 });
 
+// ============================================
+// 分包合同列表（合同基础板块入口）
+// 必须放在 /:id 动态路由之前，避免 sub-contracts 被识别为合同 ID。
+// ============================================
+
+router.get('/sub-contracts', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId;
+    if (!tenantId) {
+      res.status(400).json({ success: false, error: 'NO_TENANT', message: '当前用户未关联企业' } as ApiResponse);
+      return;
+    }
+
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 20));
+    const result = await contractService.listSubContracts({
+      tenantId,
+      page,
+      pageSize,
+      contractId: req.query.contractId as string | undefined,
+      subcontractorId: req.query.subcontractorId as string | undefined,
+      search: req.query.search as string | undefined,
+    });
+
+    res.json({
+      success: true,
+      data: result.contracts,
+      pagination: { page, pageSize, total: result.total, totalPages: result.totalPages },
+    } as PaginatedResponse);
+  } catch (error: any) {
+    console.error('获取分包合同列表失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
 router.get('/:id', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const contract = await contractService.getContractDetail(req.user!.tenantId!, req.params.id);

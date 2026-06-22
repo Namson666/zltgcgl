@@ -90,6 +90,17 @@ interface ProgressPayment {
   createdAt: string;             /* 创建时间 */
 }
 
+/** 分包合同信息接口 */
+interface SubContract {
+  id: string;
+  name?: string;
+  totalAmount?: number;
+  isActive?: boolean;
+  createdAt?: string;
+  contract?: { id: string; name: string; code?: string | null };
+  subcontractor?: { companyName?: string | null; contactName?: string | null; type?: string | null };
+}
+
 /** 供应商信息接口（简化版） */
 interface Supplier {
   id: number;                    /* 供应商 ID */
@@ -133,6 +144,14 @@ const CONTRACT_TYPE_OPTIONS = [
   { value: 'CONSTRUCTION', label: '承包合同' },
 ];
 
+type ContractTab = 'CONSTRUCTION' | 'PROCUREMENT' | 'SUBCONTRACT';
+
+const CONTRACT_TABS: Array<{ key: ContractTab; label: string; description: string }> = [
+  { key: 'CONSTRUCTION', label: '承包合同', description: '承包合同、合同附件、收款记录' },
+  { key: 'PROCUREMENT', label: '采购合同', description: '采购合同、发票、附件、支付记录' },
+  { key: 'SUBCONTRACT', label: '分包合同', description: '分包合同、班组关联、付款/结算凭证' },
+];
+
 /** 合同状态映射及样式配置 */
 const CONTRACT_STATUS_MAP: Record<string, { label: string; type: 'success' | 'warning' | 'danger' | 'info' | 'default' }> = {
   active: { label: '生效中', type: 'success' },       /* 生效中 - 绿色 */
@@ -174,13 +193,14 @@ const ContractList: React.FC = () => {
 
   /* ---------- 列表数据状态 ---------- */
   const [contracts, setContracts] = useState<Contract[]>([]);   /* 合同列表数据 */
+  const [subContracts, setSubContracts] = useState<SubContract[]>([]); /* 分包合同列表 */
   const [loading, setLoading] = useState<boolean>(false);        /* 加载状态 */
   const [totalRecords, setTotalRecords] = useState<number>(0);   /* 总记录数 */
   const [totalPages, setTotalPages] = useState<number>(1);       /* 总页数 */
 
   /* ---------- 搜索筛选状态 ---------- */
   const [keyword, setKeyword] = useState<string>('');            /* 搜索关键词 */
-  const [typeFilter, setTypeFilter] = useState<string>('');      /* 类型筛选值 */
+  const [activeTab, setActiveTab] = useState<ContractTab>('CONSTRUCTION'); /* 当前合同 tab */
   const [currentPage, setCurrentPage] = useState<number>(1);     /* 当前页码 */
   const pageSize = 20;                                            /* 每页条数 */
 
@@ -231,14 +251,21 @@ const ContractList: React.FC = () => {
         page: currentPage,
         pageSize,
       };
+      if (activeTab === 'SUBCONTRACT') {
+        const subRes = await contractApi.getSubContracts({ page: currentPage, pageSize, search: keyword.trim() || undefined } as any);
+        const subBody: any = subRes.data || {};
+        const list = subBody.data || [];
+        setSubContracts(Array.isArray(list) ? list : []);
+        setContracts([]);
+        setTotalRecords(subBody.pagination?.total || list.length || 0);
+        setTotalPages(subBody.pagination?.totalPages || Math.max(1, Math.ceil((subBody.pagination?.total || list.length || 0) / pageSize)));
+        return;
+      }
       /* 搜索关键词（非空时添加） */
       if (keyword.trim()) {
         params.search = keyword.trim();
       }
-      /* 类型筛选（非空时添加） */
-      if (typeFilter) {
-        params.type = typeFilter;
-      }
+      params.type = activeTab;
       /* 默认只显示生效中的合同（isActive=true），不显示已删除的 */
       params.isActive = 'true';
 
@@ -250,6 +277,7 @@ const ContractList: React.FC = () => {
         status: c.isActive ? 'active' : 'inactive',
       }));
       setContracts(Array.isArray(contractsData) ? contractsData : []);
+      setSubContracts([]);
       setTotalRecords(body.pagination?.total || 0);
       setTotalPages(body.pagination?.totalPages || 1);
     } catch (error: any) {
@@ -257,7 +285,7 @@ const ContractList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, keyword, typeFilter, pageSize]);
+  }, [currentPage, keyword, activeTab, pageSize]);
 
   /**
    * 加载供应商列表
@@ -368,8 +396,8 @@ const ContractList: React.FC = () => {
    * 类型筛选变化
    * 重置页码到第 1 页后重新加载数据
    */
-  const handleTypeFilterChange = useCallback((value: string) => {
-    setTypeFilter(value);
+  const handleTabChange = useCallback((value: ContractTab) => {
+    setActiveTab(value);
     setCurrentPage(1);
   }, []);
 
@@ -389,10 +417,14 @@ const ContractList: React.FC = () => {
    * 重置表单为默认值
    */
   const handleOpenCreate = useCallback(() => {
+    if (activeTab === 'SUBCONTRACT') {
+      toast('分包合同新建将在下一切片接入班组/付款/结算凭证流程');
+      return;
+    }
     setEditingContract(null);
-    setFormData(DEFAULT_CONTRACT_FORM);
+    setFormData({ ...DEFAULT_CONTRACT_FORM, type: activeTab });
     setShowFormModal(true);
-  }, []);
+  }, [activeTab]);
 
   /**
    * 打开编辑合同弹窗
@@ -589,7 +621,7 @@ const ContractList: React.FC = () => {
   /* ========================================
    * 渲染：加载状态
    * ======================================== */
-  if (loading && contracts.length === 0) {
+  if (loading && (activeTab === 'SUBCONTRACT' ? subContracts.length === 0 : contracts.length === 0)) {
     return (
       <div className="flex items-center justify-center py-32">
         {/* 加载旋转图标 */}
@@ -607,15 +639,40 @@ const ContractList: React.FC = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">合同管理</h1>
-          <p className="page-subtitle">工程合同登记与管理</p>
+          <p className="page-subtitle">承包合同、采购合同、分包合同统一管理</p>
         </div>
         {/* 新增按钮（需要 contract:create 权限） */}
         {can('contract:create') && (
           <button onClick={handleOpenCreate} className="btn-primary">
             <Plus size={16} className="mr-1.5" />
-            新增合同
+            {activeTab === 'SUBCONTRACT' ? '新增分包合同' : `新增${CONTRACT_TABS.find(t => t.key === activeTab)?.label || '合同'}`}
           </button>
         )}
+      </div>
+
+      {/* ========== 合同类型 Tab ========== */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        {CONTRACT_TABS.map((tab) => {
+          const active = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => handleTabChange(tab.key)}
+              className="text-left rounded-xl border p-4 transition-colors"
+              style={{
+                borderColor: active ? '#0066CC' : 'var(--border)',
+                backgroundColor: active ? '#EFF6FF' : '#fff',
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold" style={{ color: active ? '#0066CC' : '#1A2B3C' }}>{tab.label}</span>
+                {active && <span className="badge badge-blue">当前</span>}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">{tab.description}</p>
+            </button>
+          );
+        })}
       </div>
 
       {/* ========== 搜索筛选栏 ========== */}
@@ -630,24 +687,56 @@ const ContractList: React.FC = () => {
           />
         </div>
 
-        {/* 类型筛选下拉框 */}
-        <select
-          value={typeFilter}
-          onChange={(e) => handleTypeFilterChange(e.target.value)}
-          className="select w-[160px]"
-        >
-          <option value="">全部类型</option>
-          {CONTRACT_TYPE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <div className="text-sm text-gray-500 px-3">
+          当前：{CONTRACT_TABS.find(t => t.key === activeTab)?.label}
+        </div>
       </div>
 
       {/* ========== 合同列表表格 ========== */}
       <div className="card">
         <div className="table-container">
+          {activeTab === 'SUBCONTRACT' ? (
+          <table className="table">
+            <thead>
+              <tr className="table-thead" style={{ backgroundColor: '#0066CC', color: '#fff' }}>
+                <th>分包合同名称</th>
+                <th>关联承包合同</th>
+                <th>关联班组/分包商</th>
+                <th>总金额</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody className="table-tbody">
+              {subContracts.length === 0 ? (
+                <tr>
+                  <td colSpan={7}>
+                    <EmptyState
+                      title="暂无分包合同数据"
+                      description="分包合同新建、付款凭证、结算凭证将在后续切片接入"
+                      icon={<FileText size={48} />}
+                    />
+                  </td>
+                </tr>
+              ) : (
+                subContracts.map((contract, index) => (
+                  <tr key={contract.id} className={index % 2 === 1 ? 'bg-gray-50' : ''}>
+                    <td className="font-medium text-gray-800">{contract.name || '-'}</td>
+                    <td className="text-gray-600">{contract.contract?.name || '-'}</td>
+                    <td className="text-gray-600">{contract.subcontractor?.companyName || contract.subcontractor?.contactName || '-'}</td>
+                    <td className="font-medium text-gray-800">{formatMoney(contract.totalAmount || 0)}</td>
+                    <td>
+                      <StatusBadge status={contract.isActive === false ? '已终止' : '生效中'} type={contract.isActive === false ? 'danger' : 'success'} />
+                    </td>
+                    <td className="text-gray-500">{contract.createdAt ? formatDate(contract.createdAt) : '-'}</td>
+                    <td className="text-xs text-gray-400">付款/结算凭证待接入</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+          ) : (
           <table className="table">
             {/* 表头：深色背景 */}
             <thead>
@@ -750,10 +839,11 @@ const ContractList: React.FC = () => {
               )}
             </tbody>
           </table>
+          )}
         </div>
 
         {/* 分页区域 */}
-        {contracts.length > 0 && (
+        {(activeTab === 'SUBCONTRACT' ? subContracts.length > 0 : contracts.length > 0) && (
           <div className="table-footer">
             <Pagination
               current={currentPage}
