@@ -1196,6 +1196,13 @@ export async function addTrustedCheckInLocation(data: {
   return location;
 }
 
+export async function deleteTrustedCheckInLocation(tenantId: string, id: string) {
+  const location = await prisma.trustedCheckInLocation.findFirst({ where: { id, tenantId } });
+  if (!location) throw { status: 404, code: 'NOT_FOUND', message: '信任打卡地不存在' };
+  await prisma.trustedCheckInLocation.deleteMany({ where: { id, tenantId } });
+  return location;
+}
+
 export async function batchResolveMobileCheckIns(tenantId: string, ids: string[], resolveReason: string) {
   if (!ids.length) throw { status: 400, code: 'MISSING_PARAMS', message: '请选择要处理的异常打卡记录' };
   const result = await prisma.mobileCheckInRecord.updateMany({

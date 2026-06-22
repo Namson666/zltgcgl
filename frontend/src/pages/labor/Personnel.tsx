@@ -535,8 +535,13 @@ const Personnel: React.FC = () => {
               </div>
               {detailItem.facePhotoUrl ? (
                 <div className="flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                  <CheckCircle size={16} />
-                  已录入人脸照片，后续打卡将尝试调用人脸识别适配层
+                  <a href={detailItem.facePhotoUrl} target="_blank" rel="noreferrer" className="block">
+                    <img src={detailItem.facePhotoUrl} alt={`${detailItem.name}人脸照片`} className="h-14 w-14 rounded-lg object-cover border border-emerald-200 bg-white" />
+                  </a>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={16} />
+                    <span>已录入人脸照片，后续打卡将尝试调用人脸识别适配层</span>
+                  </div>
                 </div>
               ) : (
                 <div className="rounded-lg border border-dashed border-gray-200 px-3 py-3 text-sm text-gray-400">

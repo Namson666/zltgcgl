@@ -581,7 +581,7 @@ const TenantView: React.FC = () => {
 	          {/* ==========================================
 	           * 企业自有小程序接入
 	           * ========================================== */}
-	          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+	          <div className="bg-white rounded-xl border border-gray-200 shadow-sm" data-testid="tenant-mini-program-config">
 	            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
 	              <div>
 	                <h2 className="text-base font-semibold" style={{ color: '#1A2B3C' }}>
@@ -612,9 +612,10 @@ const TenantView: React.FC = () => {
 	              </div>
 	              <div>
 	                <label className="form-label">App ID</label>
-	                <input
-	                  type="text"
-	                  value={miniProgramConfig.appId}
+		                <input
+		                  type="text"
+		                  data-testid="tenant-mini-program-app-id"
+		                  value={miniProgramConfig.appId}
 	                  onChange={(e) => handleMiniProgramChange('appId', e.target.value)}
 	                  placeholder="wx123456..."
 	                  className="input"

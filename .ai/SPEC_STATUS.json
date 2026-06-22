@@ -1,9 +1,9 @@
 {
-  "stage": "S6_phase4_mobile_checkin_green",
+  "stage": "S6_phase4_mobile_checkin_hardened_green",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Phase 1 and Phase 2 are pushed. Phase 3 contract tabs and contract attachment/payment workflows are verified. Phase 4 mini-program appId/phone routing, personnel face upload, mobile check-in, abnormal county handling, batch resolve, and personal trusted check-in location V1 are implemented and verified. Production face provider and dependency audit upgrades remain Yellow follow-ups.",
-  "updated_at": "2026-06-22T13:56:00Z"
+  "notes": "Phase 4 mini-program/personnel face/mobile check-in flows are hardened with photo preview/link, trusted-location list/delete, and developer/tenant mini-program config real Chrome coverage. Production face provider and dependency audit upgrades remain Yellow follow-ups.",
+  "updated_at": "2026-06-22T14:15:00Z"
 }

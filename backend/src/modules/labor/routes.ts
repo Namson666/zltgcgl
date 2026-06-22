@@ -314,6 +314,17 @@ attendanceRouter.post('/mobile/trusted-locations', authenticate, requireUser, re
   }
 });
 
+attendanceRouter.delete('/mobile/trusted-locations/:id', authenticate, requireUser, requirePermission('canManageAttendance'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const data = await laborService.deleteTrustedCheckInLocation(req.user!.tenantId!, req.params.id);
+    res.json({ success: true, data, message: '个人信任打卡地已删除' } as ApiResponse);
+  } catch (error: any) {
+    console.error('删除信任打卡地失败:', error);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
 router.use('/attendance', attendanceRouter);
 
 // ============================================

@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { laborApi } from '../../api';
-import { Search, Calendar, CheckSquare, AlertTriangle, Loader2, ChevronLeft, ChevronRight, MapPin, Smartphone, ShieldCheck } from 'lucide-react';
+import { Search, Calendar, CheckSquare, AlertTriangle, Loader2, ChevronLeft, ChevronRight, MapPin, Smartphone, ShieldCheck, Image as ImageIcon, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/Common';
@@ -47,6 +47,16 @@ interface MobileCheckInRecord {
   status: 'normal' | 'trusted' | 'abnormal' | 'resolved';
   abnormalReason?: string;
   personnel?: { id: string; name: string; phone?: string; department?: { name: string } };
+}
+
+interface TrustedLocation {
+  id: string;
+  province?: string;
+  city?: string;
+  county: string;
+  remark?: string;
+  createdAt?: string;
+  personnel?: { id: string; name: string; phone?: string };
 }
 
 /* 日历组件 */
@@ -120,6 +130,7 @@ const Attendance: React.FC = () => {
   const [checkInsPerDay, setCheckInsPerDay] = useState(1);
   const [savingRule, setSavingRule] = useState(false);
   const [selectedMobileIds, setSelectedMobileIds] = useState<Set<string>>(new Set());
+  const [trustedLocations, setTrustedLocations] = useState<TrustedLocation[]>([]);
 
   const loadPersonnel = async () => {
     setLoadingPersonnel(true);
@@ -138,14 +149,17 @@ const Attendance: React.FC = () => {
   const loadMobileCheckIns = async () => {
     setLoadingMobile(true);
     try {
-      const [settingRes, checkInRes] = await Promise.all([
+      const [settingRes, checkInRes, trustedRes] = await Promise.all([
         laborApi.getAttendanceSetting(),
         laborApi.getMobileCheckIns({ limit: 30 }),
+        laborApi.getTrustedLocations(),
       ]);
       const setting = (settingRes.data as any)?.data || {};
       setCheckInsPerDay(setting.checkInsPerDay || 1);
       const data = (checkInRes.data as any)?.data || {};
       setMobileCheckIns(data.records || []);
+      const trustedData = (trustedRes.data as any)?.data || [];
+      setTrustedLocations(Array.isArray(trustedData) ? trustedData : []);
     } catch {
       toast.error('加载小程序打卡记录失败');
     } finally { setLoadingMobile(false); }
@@ -197,6 +211,16 @@ const Attendance: React.FC = () => {
       loadMobileCheckIns();
     } catch (err: any) {
       toast.error(err.response?.data?.message || '添加信任地失败');
+    }
+  };
+
+  const deleteTrustedLocation = async (id: string) => {
+    try {
+      await laborApi.deleteTrustedLocation(id);
+      toast.success('个人信任打卡地已删除');
+      loadMobileCheckIns();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '删除信任地失败');
     }
   };
 
@@ -321,7 +345,7 @@ const Attendance: React.FC = () => {
               <th className="table-th">人员</th>
               <th className="table-th">日期/次数</th>
               <th className="table-th">县份位置</th>
-              <th className="table-th">人脸</th>
+              <th className="table-th">照片/人脸</th>
               <th className="table-th">状态</th>
               <th className="table-th">操作</th>
             </tr></thead>
@@ -341,6 +365,13 @@ const Attendance: React.FC = () => {
                       <div className="flex items-center gap-1"><MapPin size={12} />{record.province || ''}{record.city || ''}{record.county || record.address || '—'}</div>
                     </td>
                     <td className="table-td">
+                      {record.photoUrl ? (
+                        <a href={record.photoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary-600 hover:underline mb-1">
+                          <ImageIcon size={12} />查看照片
+                        </a>
+                      ) : (
+                        <div className="text-xs text-gray-400 mb-1">无照片</div>
+                      )}
                       {record.faceStatus === 'verified'
                         ? <span className="badge-green"><ShieldCheck size={11} className="inline" />通过</span>
                         : <span className="badge-yellow">{record.faceStatus || '待核验'}</span>}
@@ -361,6 +392,31 @@ const Attendance: React.FC = () => {
                 ))}
             </tbody>
           </table>
+	        </div>
+        <div className="border-t border-gray-100 pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-semibold text-gray-700">个人信任打卡地</h4>
+            <span className="text-xs text-gray-400">仅对对应人员生效</span>
+          </div>
+          {trustedLocations.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-gray-200 px-3 py-3 text-sm text-gray-400">暂无信任打卡地</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {trustedLocations.map((loc) => (
+                <div key={loc.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-blue-800 truncate">
+                      {loc.personnel?.name || '未知人员'} · {loc.province || ''}{loc.city || ''}{loc.county}
+                    </div>
+                    <div className="text-xs text-blue-500 truncate">{loc.remark || '个人信任打卡地'}</div>
+                  </div>
+                  <button className="btn-ghost btn-sm text-red-500" title="删除信任地" onClick={() => deleteTrustedLocation(loc.id)}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

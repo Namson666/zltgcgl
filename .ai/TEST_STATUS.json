@@ -1,5 +1,5 @@
 {
-  "status": "phase4_mobile_checkin_green",
+  "status": "phase4_mobile_checkin_hardened_green",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -297,6 +297,37 @@
       "command": "npm --prefix backend audit --audit-level=high || true && npm --prefix frontend audit --audit-level=high || true",
       "status": "yellow",
       "result": "Backend: 15 vulnerabilities (6 high). Frontend: 8 vulnerabilities (6 high). Existing dependency debt recorded; not fixed in this feature slice to avoid unscoped breaking upgrades."
+    },
+    {
+      "type": "phase4_mobile_checkin_hardening",
+      "command": "implementation + real browser photo/trusted-location/developer-mini-program-config smoke",
+      "status": "verified",
+      "result": "Added tenant-isolated trusted-location delete API, trusted-location list/delete UI, mobile check-in photo links, personnel face photo preview, and developer/tenant mini-program config smoke coverage. Claude suggested atomic deleteMany; implemented and reverified."
+    },
+    {
+      "type": "unified_verify",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests/build and frontend tests/build passed after Phase 4 hardening."
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "2 Playwright tests passed in system Google Chrome. Enterprise smoke verifies photo link visible, trusted location appears after adding, trusted location delete succeeds, and previous check-in/contract paths still pass. Developer smoke saves default mini-program and tenant mini-program configuration."
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/phase4-mobile-checkin-hardening-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified_with_yellow_notes",
+      "result": "PASS; no blockers. Claude confirmed tenant isolation and smoke coverage. Non-blocking atomic deleteMany suggestion was implemented after audit and reverified.",
+      "evidence_file": ".ai/workers/20260622T141044Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 135 files / 1470 nodes / 15534 edges. detect-changes analyzed 19 changed files, 11 changed functions/classes, risk score 0.50; real Chrome smoke covers the new hardening flow."
     }
   ],
   "known_yellow_items": [
@@ -308,9 +339,9 @@
     "Browser smoke screenshots use explicit docs/smoke-evidence paths; future full regression should use testInfo/outputDir for richer artifact grouping.",
     "Contract attachment deletion is currently a hard delete because the existing Attachment schema has no isActive/deletedAt field; soft-delete attachment audit trail remains a follow-up if required by production policy.",
     "Face recognition provider is currently a local stub adapter; production rollout must choose and configure a real third-party face recognition service or explicitly accept manual/provider_error review.",
-    "Trusted check-in locations can be added from abnormal records, but a dedicated list/delete management UI and photo preview UI remain UX follow-ups.",
-    "npm audit high vulnerabilities remain as dependency technical debt; backend and frontend audit outputs were recorded after this slice."
+    "npm audit high vulnerabilities remain as dependency technical debt; backend and frontend audit outputs were recorded after this slice.",
+    "Trusted check-in locations now have list/delete UI and smoke coverage; advanced filtering/pagination can be added later if record volume grows."
   ],
-  "notes": "Phase 4 mini-program/personnel face/mobile check-in/anomaly/trusted-location V1 is implemented and verified with unified build/tests, Prisma validate, Claude CLI audit, code-review-graph, npm audit recording, and real Chrome smoke. Human production decision still required for third-party face recognition provider and npm audit dependency upgrades.",
-  "updated_at": "2026-06-22T13:59:00Z"
+  "notes": "Phase 4 mobile check-in hardening completed: trusted check-in locations are visible and deletable, personnel face photos and check-in photos are previewable/openable, developer default mini-program and tenant mini-program config are covered by real Chrome smoke. Production face provider and npm audit remediation remain Yellow follow-ups.",
+  "updated_at": "2026-06-22T14:15:00Z"
 }

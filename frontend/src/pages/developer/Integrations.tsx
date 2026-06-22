@@ -375,7 +375,7 @@ const Integrations: React.FC = () => {
         </div>
 	      </div>
 
-	      <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6 overflow-hidden">
+	      <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6 overflow-hidden" data-testid="default-mini-program-config">
 	        <div className="px-6 py-5 flex items-center justify-between border-b border-green-50 bg-gradient-to-r from-green-50 to-white">
 	          <div className="flex items-center gap-3">
 	            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
@@ -400,7 +400,7 @@ const Integrations: React.FC = () => {
 	          </div>
 	          <div>
 	            <label className="block text-xs font-medium text-gray-500 mb-1">App ID</label>
-	            <input className="input w-full text-sm" value={defaultMiniProgram.appId}
+		            <input data-testid="default-mini-program-app-id" className="input w-full text-sm" value={defaultMiniProgram.appId}
 	              onChange={(e) => updateDefaultMiniProgram('appId', e.target.value)} placeholder="wx_default_appid" />
 	          </div>
 	          <div>

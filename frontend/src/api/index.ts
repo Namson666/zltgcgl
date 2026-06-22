@@ -1143,6 +1143,9 @@ export const laborApi = {
   addTrustedLocation: (data: any) =>
     http.post('/labor/attendance/mobile/trusted-locations', data),
 
+  deleteTrustedLocation: (id: string) =>
+    http.delete(`/labor/attendance/mobile/trusted-locations/${id}`),
+
   /**
    * 批量导入考勤记录
    * @param data - 批量考勤数据

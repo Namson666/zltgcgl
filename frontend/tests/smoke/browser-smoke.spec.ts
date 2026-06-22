@@ -235,6 +235,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
 	        await postCheckIn('2026-06-23', '宝安区');
 	        await page.getByRole('button', { name: '刷新打卡记录' }).click();
 	        await expect(page.getByText(personName).first()).toBeVisible();
+	        await expect(page.getByRole('link', { name: '查看照片' }).first()).toBeVisible();
 	        await expect(page.getByText('异常').first()).toBeVisible();
 
 	        await page.locator('tbody tr', { hasText: '异常' }).first().locator('input[type="checkbox"]').check();
@@ -243,6 +244,9 @@ test.describe('browser smoke: authenticated core navigation', () => {
 	        await expect(page.getByRole('button', { name: '加入个人信任地' }).first()).toBeVisible();
 	        await page.getByRole('button', { name: '加入个人信任地' }).first().click();
 	        await expect(page.getByText('已添加为个人信任打卡地')).toBeVisible();
+	        await expect(page.getByText(`${personName} · 广东省深圳市宝安区`)).toBeVisible();
+	        await page.getByTitle('删除信任地').click();
+	        await expect(page.getByText('个人信任打卡地已删除')).toBeVisible();
 	      }
 	      await page.screenshot({
 	        path: `../docs/smoke-evidence/${target.text}.png`,
@@ -251,7 +255,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
     }
   });
 
-  test('developer can login and open tenant management', async ({ page }) => {
+	  test('developer can login and open tenant management', async ({ page }) => {
     await page.goto('/login');
 
     await page.getByRole('button', { name: /开发者登录/ }).click();
@@ -259,11 +263,24 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await page.getByPlaceholder('请输入密码').fill(developerAccount.password);
     await page.getByRole('button', { name: '登 录' }).click();
 
-    await expect(page).toHaveURL(/\/dashboard|\/dev/);
-    await page.goto('/dev/tenants');
-    await expect(page.getByText('企业管理').first()).toBeVisible();
-    await page.screenshot({
-      path: '../docs/smoke-evidence/开发者企业管理.png',
+	    await expect(page).toHaveURL(/\/dashboard|\/dev/);
+	    await page.goto('/dev/integrations');
+	    const defaultMiniProgram = page.getByTestId('default-mini-program-config');
+	    await expect(defaultMiniProgram.getByText('开发者默认打卡小程序')).toBeVisible();
+	    await defaultMiniProgram.getByTestId('default-mini-program-app-id').fill(`wx_smoke_default_${Date.now()}`);
+	    await defaultMiniProgram.getByRole('button', { name: '保存默认小程序配置' }).click();
+	    await expect(page.getByText('开发者默认小程序配置已保存')).toBeVisible();
+
+	    await page.goto('/dev/tenants');
+	    await expect(page.getByText('企业管理').first()).toBeVisible();
+	    await page.locator('tr', { hasText: '演示建筑工程有限公司' }).getByTitle('进入企业视角').click();
+	    const tenantMiniProgram = page.getByTestId('tenant-mini-program-config');
+	    await expect(tenantMiniProgram.getByText('企业小程序接入')).toBeVisible();
+	    await tenantMiniProgram.getByTestId('tenant-mini-program-app-id').fill(`wx_smoke_tenant_${Date.now()}`);
+	    await tenantMiniProgram.getByRole('button', { name: '保存企业小程序配置' }).click();
+	    await expect(page.getByText('企业小程序接入配置已保存')).toBeVisible();
+	    await page.screenshot({
+	      path: '../docs/smoke-evidence/开发者企业管理.png',
       fullPage: true,
     });
   });

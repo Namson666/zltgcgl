@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "phase4_mobile_checkin_green",
+  "stage": "phase4_mobile_checkin_hardened_green",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Phase 4 mini-program/personnel face/mobile check-in/anomaly/trusted-location V1 completed through local verification. Claude CLI audit, code-review-graph, verify, Prisma validate, npm audit recording, and real Chrome smoke passed. Yellow follow-ups: production third-party face recognition provider, npm audit dependency upgrades, trusted-location list/delete/photo preview UX.",
+  "notes": "Phase 4 mobile check-in hardening completed: trusted-location list/delete, check-in photo link, personnel face photo preview, and developer/tenant mini-program config Chrome coverage. Production third-party face provider and dependency audit upgrades remain Yellow follow-ups.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-22T13:56:00Z"
+  "updated_at": "2026-06-22T14:15:00Z"
 }
