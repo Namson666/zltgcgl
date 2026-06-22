@@ -1,0 +1,63 @@
+## 审计报告：Phase 3 合同附件切片
+
+### 结论：**PASS**（无阻塞性问题）
+
+---
+
+### 1. 功能完整性
+
+| 功能 | 状态 |
+|------|------|
+| 列出附件 (`GET /attachments?contractId=X`) | ✅ 已实现 |
+| 上传附件 (`POST /attachments/upload`) | ✅ 已实现，multer 多文件（最多 20 个，50MB 限制） |
+| 下载附件 (`GET /attachments/:id/download`) | ✅ 已实现，`res.download()` + 租户范围认证 |
+| 删除附件 (`DELETE /attachments/:id`) | ✅ 已实现，同时删除文件和数据库记录 |
+
+路由在 `/:id` 通配符路由**之前**注册（`routes.ts:136-139` 注释表明顺序正确）。
+
+---
+
+### 2. 租户隔离与安全
+
+- **所有四个端点**都使用 `authenticate` 中间件，提取 `req.user!.tenantId`，并在所有 Prisma 查询中按 `tenantId` 过滤。
+- `getContractAttachment`（service.ts:246-250）按 `id + tenantId + entityType: 'contract'` 过滤——**无法跨租户访问**。
+- 下载路径：`storedName` 是一个 UUID，由 multer 生成（不是用户提供的）——**避免了路径遍历**。
+- Upload mimeType：由浏览器/curl 设置，**后端未强制执行**（仅前端 `accept="image/*,.pdf"`）。可接受加固（过滤危险类型），但对于内部管理系统而言并非阻塞性。
+
+### 3. 劳资模块耦合
+
+完全删除了。前端 diff 显示：
+- `import { contractApi, wmsApi, laborApi }` → `import { contractApi, wmsApi, downloadBlob }`
+- `laborApi.getAttachments('contract', String(contractId))` → `contractApi.getAttachments(contractId)`
+- `laborApi.uploadAttachment(formData)` → `contractApi.uploadAttachment(formData)`
+- `laborApi.deleteAttachment(attachmentId)` → `contractApi.deleteAttachment(attachmentId)`
+
+`laborApi` 仍然存在其自己的 `getAttachments` / `uploadAttachment` / `deleteAttachment`（在 `/labor/attachment/...` 路由下）——这些是完全独立于合同附件端点的，**不在** `contractApi` 中使用。
+
+### 4. 冒烟测试覆盖率
+
+`browser-smoke.spec.ts` diff 显示一个完整的 CRUD 生命周期测试：
+1. 创建承包合同 → 验证可见行
+2. 点击操作列中的"查看详情"→ 模态框打开
+3. 上传 `tests/fixtures/contract-attachment.txt`（exists，43 字节）→ 文件按钮出现
+4. 通过 Playwright 的 `waitForEvent('download')` 下载 → 检查 `suggestedFilename()`
+5. 删除附件（`title="删除附件"`）→ 验证元素计数为 0
+6. 关闭详情模态框
+7. 删除测试合同 → 验证文本消失
+
+假完成风险：**无**。测试了实际的上传/下载/删除路径，使用真实的浏览器自动化和真实文件。
+
+### 5. 微小问题（非阻塞）
+
+| # | 问题 | 文件:行号 | 影响 |
+|---|------|-----------|------|
+| 1 | **无后端 MIME 类型验证**。Multer 限制文件大小为 50MB，但任何人通过 curl 都可以上传 `.exe`、`.html` 或任意文件。 | routes.ts:34 | 低。前端有 `accept` 限制，但后端应验证 MIME 类型。 |
+| 2 | **软删除合同仍可访问附件**。如果合同被软删除（`isActive: false`），其附件仍然可以通过直接的 id 访问（下载/删除）。 | service.ts:247-249 | 低。与系统中其他附件行为一致。 |
+| 3 | **无附件分页**。`listContractAttachments` 返回所有内容。 | service.ts:240-244 | 对于合同有数百个附件时极低。 |
+| 4 | **`uploadDir` 范围混合**。路径在模块级别从 `routes.ts` 定义，但作为参数传递给 `deleteContractAttachment`。`download` 路径直接内联使用。 | routes.ts+service.ts | 不一致但不会出错。 |
+| 5 | **文件先于数据库记录删除**。如果 `prisma.attachment.delete()` 在 `fs.unlinkSync()` 之后失败，文件丢失，数据库记录成为孤儿。反转顺序更安全（允许用户重试）。 | service.ts:257-259 | 生产系统中偶发的低概率事件。 |
+| 6 | **上传最大 50MB**。对于图片来说没问题，但对于大型 PDF/扫描件来说可能有点宽松。 | routes.ts:34 | 配置选择——不是 bug。 |
+
+### 摘要
+
+这是一个工作正常、范围正确的切片。附件在合同模块内完全隔离，使用 `contractApi`，所有操作均受租户范围认证保护，冒烟测试覆盖了完整的 CRUD 生命周期。以上六个微小问题都不会阻塞发布。

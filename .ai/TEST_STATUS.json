@@ -1,5 +1,5 @@
 {
-  "status": "phase3_contract_tabs_foundation_green",
+  "status": "phase3_contract_attachments_green",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -112,6 +112,43 @@
       "status": "verified",
       "result": "PASS; no blocking route-order, tenant-isolation, module-entitlement, or fake-completion issues. Non-blocking loading-state suggestion fixed after audit.",
       "evidence_file": ".ai/workers/20260622T121408Z-audit_worker.result.md"
+    },
+    {
+      "type": "phase3_contract_attachments",
+      "command": "implementation + real browser CRUD/upload/download/delete",
+      "status": "verified",
+      "result": "Contract detail attachments now use contract-owned APIs for list/upload/authenticated download/delete. Frontend no longer uses laborApi or raw /uploads links for contract attachments. Backend enforces tenant scoping, PDF/image file whitelist, 50MB limit, JSON upload errors, and download rate limiting."
+    },
+    {
+      "type": "unified_verify",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend tests 4 files / 24 tests passed; backend TypeScript build passed; frontend tests 2 files / 36 tests passed; frontend production build passed after contract attachment slice"
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "2 Playwright tests passed in system Google Chrome. Enterprise smoke creates a contract, opens details, uploads a PDF fixture, downloads it, deletes the attachment, then deletes the test contract; it also clicks all contract tabs and core modules. Developer smoke opens tenant management.",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/合同管理.png",
+        "docs/smoke-evidence/物资总览.png",
+        "docs/smoke-evidence/人员管理.png",
+        "docs/smoke-evidence/项目部报账.png",
+        "docs/smoke-evidence/项目部管理.png",
+        "docs/smoke-evidence/用户管理.png",
+        "docs/smoke-evidence/角色权限.png",
+        "docs/smoke-evidence/开发者企业管理.png"
+      ]
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/phase3-contract-attachments-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
+      "status": "verified",
+      "result": "PASS; tenant isolation and labor-module decoupling confirmed. Claude found a smoke upload race and JSON upload error handling issue; both were fixed before final verify/browser smoke.",
+      "evidence_file": ".ai/workers/20260622T123235Z-audit_worker.result.md"
     }
   ],
   "known_yellow_items": [
@@ -122,9 +159,9 @@
     "Browser E2E for independent-domain portal login and unopen-module 403/menu-hidden matrix is still required before Product Green.",
     "Browser smoke harness uses raw SQL migrations because Prisma migrate/db push returns an opaque Schema engine error in this environment.",
     "Browser smoke screenshots use explicit docs/smoke-evidence paths; future full regression should use testInfo/outputDir for richer artifact grouping.",
-    "Phase 3 currently has the contract tab/list foundation only. Contract upload/download/delete, procurement invoices/payment vouchers, subcontract create/team relation/payment/settlement vouchers still need implementation and real-browser CRUD/upload/download verification.",
-    "Contract detail attachment operations still use the pre-existing labor attachment API; this was not introduced by the tab foundation but should be decoupled into contract-owned attachment APIs during the next contract slice."
+    "Phase 3 currently has contract tabs and construction-contract attachment upload/download/delete covered. Procurement invoices/payment vouchers and subcontract create/team relation/payment/settlement vouchers still need implementation and real-browser CRUD/upload/download verification.",
+    "Contract attachment deletion is currently a hard delete because the existing Attachment schema has no isActive/deletedAt field; soft-delete attachment audit trail remains a follow-up if required by production policy."
   ],
-  "notes": "Phase 3 contract management tab/list foundation is verified with build/tests, Claude CLI audit, and real Chrome smoke. Product Green remains open until all required feature CRUD/upload/download/anomaly paths pass.",
-  "updated_at": "2026-06-22T12:17:00Z"
+  "notes": "Phase 3 contract tab foundation and construction-contract attachment slice are verified with build/tests, Claude CLI audit, and real Chrome upload/download/delete smoke. Product Green remains open until all required procurement/subcontract/attendance flows pass.",
+  "updated_at": "2026-06-22T12:35:00Z"
 }

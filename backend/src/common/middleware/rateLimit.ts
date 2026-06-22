@@ -79,3 +79,22 @@ export const loginRateLimit = rateLimit({
     });
   },
 });
+
+/**
+ * 文件下载限流中间件
+ *
+ * 用于附件、报表等二进制下载接口，降低被盗 token 或异常脚本批量拉取文件的风险。
+ */
+export const fileDownloadRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      error: 'TOO_MANY_DOWNLOADS',
+      message: '文件下载过于频繁，请稍后再试。',
+    });
+  },
+});

@@ -7,6 +7,8 @@
 
 import { prisma } from '../../common/utils/prisma';
 import { createLog, CreateLogInput } from '../../common/services/log.service';
+import path from 'path';
+import fs from 'fs';
 
 // ============================================
 // 合同 CRUD
@@ -198,6 +200,64 @@ export async function listSubContracts(params: SubContractListParams) {
   ]);
 
   return { contracts, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+}
+
+// ============================================
+// 合同附件管理
+// ============================================
+
+export async function assertContractExists(tenantId: string, contractId: string) {
+  return prisma.contract.findFirst({ where: { id: contractId, tenantId } });
+}
+
+export async function createContractAttachments(tenantId: string, contractId: string, files: Express.Multer.File[], category?: string) {
+  const contract = await assertContractExists(tenantId, contractId);
+  if (!contract) throw { status: 404, code: 'CONTRACT_NOT_FOUND', message: '合同不存在' };
+
+  return prisma.$transaction(
+    files.map(file =>
+      prisma.attachment.create({
+        data: {
+          tenantId,
+          fileName: file.originalname,
+          storedName: file.filename,
+          filePath: `/uploads/${file.filename}`,
+          fileSize: file.size,
+          mimeType: file.mimetype,
+          entityType: 'contract',
+          entityId: contractId,
+          category: category || 'contract',
+        },
+      })
+    )
+  );
+}
+
+export async function listContractAttachments(tenantId: string, contractId: string) {
+  const contract = await assertContractExists(tenantId, contractId);
+  if (!contract) throw { status: 404, code: 'CONTRACT_NOT_FOUND', message: '合同不存在' };
+
+  return prisma.attachment.findMany({
+    where: { tenantId, entityType: 'contract', entityId: contractId },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+export async function getContractAttachment(tenantId: string, attachmentId: string) {
+  return prisma.attachment.findFirst({
+    where: { id: attachmentId, tenantId, entityType: 'contract' },
+  });
+}
+
+export async function deleteContractAttachment(tenantId: string, attachmentId: string, uploadDir: string) {
+  const attachment = await getContractAttachment(tenantId, attachmentId);
+  if (!attachment) throw { status: 404, code: 'NOT_FOUND', message: '附件不存在' };
+
+  const fullPath = path.join(uploadDir, attachment.storedName);
+  if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+
+  await prisma.attachment.delete({ where: { id: attachment.id } });
+  return attachment;
 }
 
 // ============================================

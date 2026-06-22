@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 
 /* 导入 API 接口 */
-import { contractApi, wmsApi, laborApi } from '@/api';
+import { contractApi, wmsApi, downloadBlob } from '@/api';
 import type { PaginatedResponse } from '@/api';
 
 /* 导入通用组件 */
@@ -325,7 +325,7 @@ const ContractList: React.FC = () => {
   const fetchAttachments = useCallback(async (contractId: number) => {
     try {
       setAttachmentsLoading(true);
-      const res = await laborApi.getAttachments('contract', String(contractId));
+      const res = await contractApi.getAttachments(contractId);
       const body: any = res.data;
       setAttachments(body?.data || body || []);
     } catch { setAttachments([]); }
@@ -348,12 +348,12 @@ const ContractList: React.FC = () => {
 
     const formData = new FormData();
     Array.from(files).forEach(f => formData.append('files', f));
-    formData.append('entityType', 'contract');
-    formData.append('entityId', String(detailContract.id));
+    formData.append('contractId', String(detailContract.id));
+    formData.append('category', 'contract');
 
     try {
       setUploading(true);
-      await laborApi.uploadAttachment(formData);
+      await contractApi.uploadAttachment(formData);
       toast.success('附件上传成功');
       if (detailContract) fetchAttachments(detailContract.id);
     } catch { toast.error('附件上传失败'); }
@@ -368,10 +368,23 @@ const ContractList: React.FC = () => {
    */
   const handleDeleteAttachment = useCallback(async (attachmentId: string) => {
     try {
-      await laborApi.deleteAttachment(attachmentId);
+      await contractApi.deleteAttachment(attachmentId);
       toast.success('附件已删除');
       setAttachments(prev => prev.filter((a: any) => a.id !== attachmentId));
+      if (detailContract) fetchAttachments(detailContract.id);
     } catch { toast.error('删除附件失败'); }
+  }, [detailContract, fetchAttachments]);
+
+  /**
+   * 下载附件
+   */
+  const handleDownloadAttachment = useCallback(async (attachment: any) => {
+    try {
+      const res = await contractApi.downloadAttachment(attachment.id);
+      downloadBlob(res.data as Blob, attachment.fileName || '合同附件');
+    } catch {
+      toast.error('附件下载失败');
+    }
   }, []);
 
   /* ---------- 页面初始化时加载数据 ---------- */
@@ -1208,17 +1221,13 @@ const ContractList: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {attachments.map((att: any) => (
                     <div key={att.id} className="relative group border border-gray-200 rounded-lg p-3 flex items-center gap-2 hover:border-[#0066CC] transition-colors">
-                      {att.mimeType?.startsWith('image/') ? (
-                        <img src={att.filePath || `/api/uploads/${att.storedName}`} alt={att.fileName}
-                          className="w-10 h-10 object-cover rounded" />
-                      ) : (
-                        <FileText size={24} className="text-red-500 shrink-0" />
-                      )}
-                      <a href={att.filePath || `/api/uploads/${att.storedName}`} target="_blank" rel="noopener noreferrer"
-                        className="text-sm text-gray-700 truncate flex-1 hover:text-[#0066CC]">
+                      <FileText size={24} className={att.mimeType?.startsWith('image/') ? 'text-blue-500 shrink-0' : 'text-red-500 shrink-0'} />
+                      <button type="button" onClick={() => handleDownloadAttachment(att)}
+                        className="text-sm text-gray-700 truncate flex-1 text-left hover:text-[#0066CC]">
                         {att.fileName}
-                      </a>
+                      </button>
                       <button onClick={() => handleDeleteAttachment(att.id)}
+                        title="删除附件"
                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <X size={12} />
                       </button>

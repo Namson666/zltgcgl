@@ -643,6 +643,30 @@ export const contractApi = {
    */
   createProgressPayment: (contractId: number, data: any) =>
     http.post(`/contracts/${contractId}/progress-payments`, data),
+
+  /**
+   * 获取合同附件列表
+   */
+  getAttachments: (contractId: string | number) =>
+    http.get('/contracts/attachments', { contractId: String(contractId) }),
+
+  /**
+   * 上传合同附件（支持多文件）
+   */
+  uploadAttachment: (formData: FormData) =>
+    http.upload('/contracts/attachments/upload', formData),
+
+  /**
+   * 下载合同附件
+   */
+  downloadAttachment: (id: string) =>
+    http.get(`/contracts/attachments/${id}/download`, {}, { responseType: 'blob' }),
+
+  /**
+   * 删除合同附件
+   */
+  deleteAttachment: (id: string) =>
+    http.delete(`/contracts/attachments/${id}`),
 };
 
 /* ========================================

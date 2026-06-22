@@ -1,0 +1,97 @@
+---
+
+## Phase 3 合同附件切片审计报告
+
+### 1. 判断：PASS（无 Blocking 问题）
+
+未发现安全漏洞、数据泄露或会导致生产事故的阻断性问题。
+
+---
+
+### 2. 租户隔离与文件安全
+
+| 检查项 | 状态 | 证据 |
+|--------|------|------|
+| 附件上传需认证 | ✅ | 路由 `authenticate` 中间件 → `routes.ts:52` |
+| 上传租户隔离 | ✅ | `createContractAttachments` 写入 DB 时带 `tenantId` |
+| 上传文件类型白名单 | ✅ | MIME 类型 + 扩展名双重校验（路线`.ts:35-36`） |
+| 上传文件大小上限 | ✅ | 50MB（`routes.ts:39`） |
+| 存储文件名安全 | ✅ | UUID 生成，无用户输入路径拼接（`routes.ts:31`） |
+| 列表仅返回本租户附件 | ✅ | `listContractAttachments` WHERE `tenantId`（`service.ts:241`） |
+| 下载需认证 + 租户隔离 | ✅ | `authenticate` + `fileDownloadRateLimit` + `tenantId` 过滤（`routes.ts:222-230`） |
+| 下载文件存在性检查 | ✅ | `fs.existsSync(fullPath)`（`routes.ts:237`） |
+| 删除同步清理文件系统和 DB | ✅ | `unlinkSync` + `prisma.attachment.delete`（`service.ts:257-259`） |
+| 删除时的拥有权检查 | ✅ | 先 `getContractAttachment`（含 `tenantId`），再用返回的 ID 删（`service.ts:252-259`） |
+| 下载频率限制 | ✅ | `fileDownloadRateLimit`: 15分钟120次（`rateLimit.ts:88-100`） |
+
+**安全结论**：附件 API 的安全设计完整，无明显缺口。
+
+---
+
+### 3. 劳资模块耦合检查
+
+前后对比（完整解耦）：
+
+| 操作 | 之前（耦合） | 现在（修复） |
+|------|------------|------------|
+| 获取列表 | `laborApi.getAttachments('contract', id)` | `contractApi.getAttachments(contractId)` |
+| 上传 | `laborApi.uploadAttachment(formData)` with `entityType: 'contract'` | `contractApi.uploadAttachment(formData)` with `contractId` |
+| 删除 | `laborApi.deleteAttachment(id)` | `contractApi.deleteAttachment(id)` |
+| 下载 | ❌ 不存在 | ✅ `contractApi.downloadAttachment(id)` |
+| import | `import { contractApi, wmsApi, laborApi }` | `import { contractApi, wmsApi, downloadBlob }` |
+
+**结论**：`laborApi` 已从 `List.tsx` import 中移除，所有附件操作全部走 `contractApi`。解耦完成。
+
+---
+
+### 4. 证据完整性与伪完成检查
+
+#### 4A. 烟雾测试覆盖的完整链
+
+烟雾测试 `browser-smoke.spec.ts` 覆盖了：创建合同 → 打开详情 → 上传附件 → 下载附件 → 删除附件 → 关闭详情 → 删除合同。链条完整。 ✅
+
+#### 4B. 烟雾测试的核心风控问题：上传竞态（需要修复）
+
+**文件**：`frontend/tests/smoke/browser-smoke.spec.ts`
+**行号**：59-60
+
+```typescript
+await page.locator('input[type="file"]').setInputFiles(fixturePath);   // line 59
+await expect(page.getByRole('button', { name: 'contract-attachment.pdf' })).toBeVisible(); // line 60
+```
+
+**问题**：`setInputFiles` 触发文件选择器 change 事件后，`handleFileChange` 执行 `await contractApi.uploadAttachment(formData)` — 这是一个异步 HTTP POST。测试在第 59 行后**没有等待上传完成**就直接断言附件按钮可见。
+
+**影响**：测试在 CI 或慢速网络下会间歇性失败（flaky）。当前行 60 依赖于上传 API 在第 59 行到断言执行之间恰好完成的时序巧合。
+
+**建议修复**：在 `setInputFiles` 后等待成功的 toast 消息出现：
+
+```typescript
+await page.locator('input[type="file"]').setInputFiles(fixturePath);
+await expect(page.getByText('附件上传成功')).toBeVisible({ timeout: 10000 });
+await expect(page.getByRole('button', { name: 'contract-attachment.pdf' })).toBeVisible();
+```
+
+#### 4C. 烟雾测试删除后的同步问题（次要）
+
+**文件**：`List.tsx:373`
+
+```typescript
+setAttachments(prev => prev.filter((a: any) => a.id !== attachmentId));
+```
+
+删除附件时仅做乐观 UI 更新（从 state 过滤），未重新调用 `fetchAttachments`。如果后端删除成功但后续有其他操作，前端 state 可能与后端不一致。这不是本切片的退化（之前用 `laborApi` 也是同样的模式），但值得顺便修复。
+
+烟雾测试中（line 67）删除后立即断言 `toHaveCount(0)` 配合 Playwright 默认超时可工作，但依赖于乐观更新的 `setState` 是同步的。✅ 此条不阻塞。
+
+---
+
+### 5. 建议汇总
+
+| 优先级 | 文件 | 行 | 建议 |
+|--------|------|----|------|
+| **高（flaky）** | `browser-smoke.spec.ts` | 59-60 | 上传后加 `waitFor` toast 确认，避免竞态 |
+| 低 | `List.tsx` | 373 | 删除后追加 `fetchAttachments(detailContract.id)` 保持 state 同步 |
+| 信息 | — | — | 所有静态文件路径（上传目录、命名规则）由 server 控制，无用户注入路径，安全合规 |
+
+**最终结论**：本切片质量良好，附件功能完整解耦自 contract 模块，租户隔离和文件安全姿势正确。**唯一必须修复的是烟雾测试的上传竞态**，否则 CI 中会间歇性失败。

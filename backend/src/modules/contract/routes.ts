@@ -4,13 +4,65 @@
 // 只负责：解析请求参数、调用服务层、返回响应
 // 业务逻辑全部在 service.ts 中
 
-import { Router, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../../common/middleware/auth';
+import { fileDownloadRateLimit } from '../../common/middleware/rateLimit';
 import { AuthenticatedRequest, ApiResponse, PaginatedResponse } from '../../common/types';
 import { createLog } from '../../common/services/log.service';
 import * as contractService from './service';
 
 const router = Router();
+
+// ============================================
+// 合同附件上传配置
+// ============================================
+
+const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${uuidv4()}${ext}`);
+  },
+});
+
+const allowedAttachmentTypes = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+const allowedAttachmentExts = new Set(['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.webp']);
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedAttachmentTypes.has(file.mimetype) && allowedAttachmentExts.has(ext)) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('仅支持上传 PDF 或图片附件'));
+  },
+});
+
+const uploadContractAttachments = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  upload.array('files', 20)(req, res, (error: any) => {
+    if (!error) {
+      next();
+      return;
+    }
+
+    const isSizeLimit = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE';
+    res.status(400).json({
+      success: false,
+      error: isSizeLimit ? 'FILE_TOO_LARGE' : 'INVALID_FILE',
+      message: isSizeLimit ? '单个附件不能超过 50MB' : (error.message || '仅支持上传 PDF 或图片附件'),
+    } as ApiResponse);
+  });
+};
 
 // ============================================
 // 合同 CRUD
@@ -109,6 +161,106 @@ router.get('/sub-contracts', authenticate, async (req: AuthenticatedRequest, res
   } catch (error: any) {
     console.error('获取分包合同列表失败:', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+// ============================================
+// 合同附件管理（合同基础板块入口）
+// 必须放在 /:id 动态路由之前。
+// ============================================
+
+router.get('/attachments', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId;
+    const contractId = req.query.contractId as string | undefined;
+    if (!tenantId) {
+      res.status(400).json({ success: false, error: 'NO_TENANT', message: '当前用户未关联企业' } as ApiResponse);
+      return;
+    }
+    if (!contractId) {
+      res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '合同ID不能为空' } as ApiResponse);
+      return;
+    }
+
+    const data = await contractService.listContractAttachments(tenantId, contractId);
+    res.json({ success: true, data } as ApiResponse);
+  } catch (error: any) {
+    const status = error.status || 500;
+    console.error('获取合同附件失败:', error);
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
+router.post('/attachments/upload', authenticate, uploadContractAttachments, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId;
+    const { contractId, category } = req.body;
+    if (!tenantId) {
+      res.status(400).json({ success: false, error: 'NO_TENANT', message: '当前用户未关联企业' } as ApiResponse);
+      return;
+    }
+    if (!contractId) {
+      res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '合同ID不能为空' } as ApiResponse);
+      return;
+    }
+    if (!req.files?.length) {
+      res.status(400).json({ success: false, error: 'MISSING_FILES', message: '请选择要上传的文件' } as ApiResponse);
+      return;
+    }
+
+    const files = req.files as Express.Multer.File[];
+    const saved = await contractService.createContractAttachments(tenantId, contractId, files, category);
+    await createLog(contractService.makeLogInput(tenantId, req.user!.id, 'UPLOAD', `上传合同附件 ${saved.length} 个`, { contractId }, req.ip, req.headers['user-agent']));
+    res.status(201).json({ success: true, data: saved, message: `成功上传 ${saved.length} 个文件` } as ApiResponse);
+  } catch (error: any) {
+    const status = error.status || 500;
+    console.error('上传合同附件失败:', error);
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
+router.get('/attachments/:id/download', authenticate, fileDownloadRateLimit, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId;
+    if (!tenantId) {
+      res.status(400).json({ success: false, error: 'NO_TENANT', message: '当前用户未关联企业' } as ApiResponse);
+      return;
+    }
+
+    const attachment = await contractService.getContractAttachment(tenantId, req.params.id);
+    if (!attachment) {
+      res.status(404).json({ success: false, error: 'NOT_FOUND', message: '附件不存在' } as ApiResponse);
+      return;
+    }
+
+    const fullPath = path.join(uploadDir, attachment.storedName);
+    if (!fs.existsSync(fullPath)) {
+      res.status(404).json({ success: false, error: 'FILE_NOT_FOUND', message: '附件文件不存在' } as ApiResponse);
+      return;
+    }
+
+    res.download(fullPath, attachment.fileName);
+  } catch (error: any) {
+    console.error('下载合同附件失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+router.delete('/attachments/:id', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId;
+    if (!tenantId) {
+      res.status(400).json({ success: false, error: 'NO_TENANT', message: '当前用户未关联企业' } as ApiResponse);
+      return;
+    }
+
+    const attachment = await contractService.deleteContractAttachment(tenantId, req.params.id, uploadDir);
+    await createLog(contractService.makeLogInput(tenantId, req.user!.id, 'DELETE', `删除合同附件「${attachment.fileName}」`, { attachmentId: attachment.id, contractId: attachment.entityId }, req.ip, req.headers['user-agent']));
+    res.json({ success: true, data: null, message: '附件已删除' } as ApiResponse);
+  } catch (error: any) {
+    const status = error.status || 500;
+    console.error('删除合同附件失败:', error);
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
   }
 });
 
