@@ -452,5 +452,5 @@
     "Full route matrix is now covered in real Chrome, but deep CRUD/upload/download regression for every page is still incomplete."
   ],
   "notes": "Full route browser matrix added and verified in real Chrome: enterprise 32 routes and developer 15 routes. This improves Browser Regression Green but is not full Product Green; deep CRUD/upload/download per page and real third-party face gateway configuration remain Yellow.",
-  "updated_at": "2026-06-22T14:58:00Z"
+  "updated_at": "2026-06-22T15:02:00Z"
 }
