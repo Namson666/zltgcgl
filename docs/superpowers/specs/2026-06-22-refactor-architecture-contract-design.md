@@ -37,6 +37,8 @@
 - 微信打卡必须关联到该人员。
 - 每天打卡一次或两次由公司设置，不限具体打卡时间，不限打卡位置。
 - 打卡必须返回具体位置；离开平时打卡所在县份时，记录为异常打卡。
+- 异常不能一直异常，系统需要支持批量处理异常。
+- 可以将异常地点添加为信任打卡地；信任打卡地只针对个人，不影响其他人员。
 - 打卡照片必须存档，并需要做人脸识别。
 - 采购合同和分包合同不用审批。
 - 合同附件可以下载，也可以删除。
@@ -70,6 +72,7 @@
 - AttendanceCheckIn：小程序照片定位打卡记录。
 - MiniProgramAppConfig：企业小程序接入配置。
 - AttendancePolicy：企业打卡规则配置。
+- TrustedCheckInLocation：个人信任打卡地。
 - FaceRecognitionProvider：人脸识别服务适配层。
 - ModuleGuard：后端统一模块开通检查中间件。
 - UserScope：统一用户数据范围判断。
@@ -327,6 +330,8 @@ tenantId + departmentId/subProjectId + materialId + projectName
 - 不限具体打卡位置。
 - 必须反馈具体位置。
 - 离开平时打卡所在县份，按异常打卡记录。
+- 异常可以批量处理。
+- 异常地点可以加入个人信任打卡地，加入后该人员在该地点或县份打卡不再记为异常。
 
 系统需要把经纬度反查到县或区级行政区。
 
@@ -334,9 +339,12 @@ tenantId + departmentId/subProjectId + materialId + projectName
 
 1. 每个人员保存 usualCountyCode 和 usualCountyName。
 2. usualCounty 可以来自项目部所在地，也可以由第一次正常打卡后管理员确认。
-3. 每次打卡根据经纬度反查 currentCountyCode。
-4. 如果 currentCountyCode 与 usualCountyCode 不一致，则标记异常。
-5. 异常不阻止打卡，只记录异常原因。
+3. 每个人员可以维护多个 TrustedCheckInLocation。
+4. 每次打卡根据经纬度反查 currentCountyCode。
+5. 如果 currentCountyCode 与 usualCountyCode 不一致，先检查是否命中该人员的信任打卡地。
+6. 命中信任打卡地则正常记录。
+7. 未命中信任打卡地则标记异常。
+8. 异常不阻止打卡，只记录异常原因。
 
 异常字段建议：
 
@@ -346,6 +354,49 @@ tenantId + departmentId/subProjectId + materialId + projectName
 - currentCountyName
 - usualCountyCode
 - usualCountyName
+- trustedLocationId：命中个人信任打卡地时记录
+
+### 个人信任打卡地
+
+建议新增 TrustedCheckInLocation：
+
+- tenantId
+- personnelId
+- countyCode
+- countyName
+- locationName
+- latitude
+- longitude
+- radiusMeters：可选，默认按县份信任，也可后续支持更细范围
+- sourceCheckInId：从哪条异常打卡转为信任地点
+- createdBy
+- createdAt
+- isActive
+
+信任打卡地规则：
+
+- 只对该 personnelId 生效。
+- 不影响同公司其他人员。
+- 可以从异常打卡记录一键添加。
+- 可以批量把多条异常标记为已处理。
+- 已处理异常保留原始异常记录，不物理删除。
+
+### 异常批量处理
+
+异常处理建议支持：
+
+- 批量标记为已处理。
+- 批量添加处理备注。
+- 从单条异常打卡添加为个人信任打卡地。
+- 批量忽略但保留记录。
+- 查看处理人、处理时间、处理原因。
+
+异常处理状态建议：
+
+- pending：待处理。
+- accepted：已接受，作为正常情况留档。
+- trusted_added：已添加为个人信任打卡地。
+- rejected：确认异常。
 
 ## 9. 人脸识别建议
 
@@ -477,3 +528,5 @@ tenantId + departmentId/subProjectId + materialId + projectName
 - 默认开发者小程序可通过手机号匹配人员，冲突时不允许静默打卡。
 - 打卡记录关联 tenantId 和 personnelId。
 - 打卡记录保存照片、定位、县份、人脸识别结果和异常状态。
+- 异常打卡可以批量处理。
+- 个人信任打卡地只对对应人员生效。

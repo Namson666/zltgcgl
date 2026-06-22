@@ -6,7 +6,7 @@
 - Current mode: Enforced Delivery
 - Current phase: S1 design draft / architecture contract
 - Current task: 模块化 SaaS 重构设计：基础功能、模块开通、合同板块、独立登录页、小程序打卡
-- Last completed: 已根据用户补充更新重构架构合同草案
+- Last completed: 已补充个人信任打卡地和异常批量处理规则
 - In progress: 等待用户审阅架构合同
 - Next action: 用户确认后，写实施计划
 - Blockers: 后端 TypeScript build 失败；前后端 npm audit 存在 high 漏洞；架构合同未最终确认
@@ -25,7 +25,7 @@
 - Last verified command: backend npm test passed; backend npm run build failed; frontend npm test passed; frontend npm run build passed; backend/frontend npm audit --audit-level=high failed
 - Last commit: 931dd69 chore(prisma): add initial migration (62 tables)
 - Safe rollback point: 931dd69
-- Updated at: 2026-06-22T10:02:00Z
+- Updated at: 2026-06-22T10:08:00Z
 
 ## 项目概览
 
