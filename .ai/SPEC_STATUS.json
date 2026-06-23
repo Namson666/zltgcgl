@@ -1,9 +1,9 @@
 {
-  "stage": "S18_developer_announcements_lifecycle_verified",
+  "stage": "S18_developer_announcements_lifecycle_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "Developer backend System Announcements now have real Chrome lifecycle coverage: create publishes immediately, edit persists title/content/type, unpublish clears publishedAt, republish refreshes publishedAt, delete removes the record, and enterprise users receive 403 for read/write developer announcement APIs. Full Chrome smoke is now 16/16. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T04:58:00Z"
+  "updated_at": "2026-06-23T05:02:00Z"
 }

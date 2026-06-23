@@ -7,7 +7,7 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_developer_announcements_lifecycle_verification",
+    "working_tree": "dirty_after_developer_announcements_lifecycle_push_marker",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
@@ -20,9 +20,9 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "developer_announcements_lifecycle_pending_push",
+    "push_status": "developer_announcements_lifecycle_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "4a99e8a chore: mark developer UI module portal pushed"
+        "pushed_commit": "de4b48e test: cover developer announcement lifecycle"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -31,11 +31,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_developer_announcements_lifecycle_verified_not_pushed",
-  "updated_at": "2026-06-23T04:58:00Z",
-  "push_status": "developer_announcements_lifecycle_pending_push",
-  "last_pushed_commit": "14245ae",
-  "current_commit": "developer_announcements_lifecycle_verified_pending_push",
+  "status": "yellow_developer_announcements_lifecycle_pushed",
+  "updated_at": "2026-06-23T05:02:00Z",
+  "push_status": "developer_announcements_lifecycle_pushed",
+  "last_pushed_commit": "de4b48e",
+  "current_commit": "developer_announcements_lifecycle_pushed",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -60,6 +60,6 @@
     "2026-06-23: Finance project department reimbursement review verified locally in real Chrome: project department submit with receipt upload, API pending/source/payer/receiptPath, UI approve, API approved status, approved-delete guard, UI reject, rejected delete, final API absence. Backend now tenant-scopes approve/reject and defaults payer to handler only for project_department. verify passed, real Chrome 14/14 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at dc676cb. Yellow follow-ups: optional reject confirmation and idempotent review policy.",
     "2026-06-23: Developer UI module entitlement + independent portal configuration verified locally in real Chrome: developer tenant view toggles labor/finance off and keeps WMS on, API verifies module state, UI configures localhost portal, original tenant-code login remains usable, disabled module menus/routes/APIs are blocked, WMS remains accessible, independent portal login works without tenant code. Added semantic portal field testids after Claude Yellow note. verify passed, focused Chrome 1/1 passed, real Chrome 15/15 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 7e58b7d.",
         "2026-06-23: Independent portal Host semantics upgraded from localhost/127.0.0.1 to portal-<stamp>.localhost in real Chrome. Focused Chrome 1/1 passed, verify passed, full real Chrome 15/15 passed, Claude WARN confirmed Host semantics with Vite/CORS concerns resolved by runtime evidence, code-review-graph risk 0.50; pushed at 14245ae.",
-        "2026-06-23: Developer system announcement lifecycle verified locally in real Chrome: create publishes with publishedAt, edit title/content/type, unpublish clears publishedAt, republish refreshes publishedAt, delete removes the record, and enterprise user GET/POST/PUT/PUBLISH/DELETE developer announcement APIs return 403. verify passed, focused Chrome 1/1 passed, full real Chrome 16/16 passed, Claude audit PASS, code-review-graph risk 0.50; pending commit/push."
+        "2026-06-23: Developer system announcement lifecycle verified locally in real Chrome: create publishes with publishedAt, edit title/content/type, unpublish clears publishedAt, republish refreshes publishedAt, delete removes the record, and enterprise user GET/POST/PUT/PUBLISH/DELETE developer announcement APIs return 403. verify passed, focused Chrome 1/1 passed, full real Chrome 16/16 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at de4b48e."
     ]
 }

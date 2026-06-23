@@ -1,5 +1,5 @@
 {
-  "status": "developer_announcements_lifecycle_browser_verified",
+  "status": "developer_announcements_lifecycle_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -939,5 +939,5 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "Developer system announcement lifecycle now has focused and full real Chrome coverage for create/edit/unpublish/republish/delete plus developer-only API permission checks. Inventory alert remains removed from active WMS product requirements and historical Prisma Material.alertThreshold schema/init SQL. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T04:58:00Z"
+  "updated_at": "2026-06-23T05:02:00Z"
 }
