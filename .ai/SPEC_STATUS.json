@@ -1,9 +1,9 @@
 {
-  "stage": "S31_wms_outbound_export_delete_verified_pending_push",
+  "stage": "S31_wms_outbound_export_delete_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "WMS outbound create/export/delete-preview now has real Chrome API/UI coverage: the browser seeds inbound stock through the real API, creates outbound through the UI, downloads outbound PDF, exports outbound records, previews cascade inventory restore impact, deletes the outbound order, and verifies it is absent from the active API list. Backend outbound export now filters active outbound orders only. Full Chrome smoke is 27/27. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T10:25:00Z"
+  "updated_at": "2026-06-23T10:30:00Z"
 }
