@@ -1,9 +1,9 @@
 {
-  "stage": "S24_enterprise_subscription_lifecycle_verified_pending_push",
+  "stage": "S24_enterprise_subscription_lifecycle_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "Enterprise subscription plan lifecycle now has real Chrome coverage: page data contract with current backend APIs, plan+tier card rendering, UI switch FULL/SMALL to FULL/MEDIUM, subscription API read-back, payment record read-back, and restore to FULL/SMALL. Full Chrome smoke is now 22/22. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T07:20:00Z"
+  "updated_at": "2026-06-23T07:25:00Z"
 }

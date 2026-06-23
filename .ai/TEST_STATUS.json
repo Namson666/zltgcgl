@@ -1,18 +1,18 @@
 {
-  "status": "enterprise_subscription_lifecycle_browser_verified_pending_push",
+  "status": "enterprise_subscription_lifecycle_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_pending_push",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_pushed",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
     {
       "type": "enterprise_subscription_lifecycle_flow",
       "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_subscription_lifecycle.db npx playwright test --config playwright.config.ts -g \"subscription plan lifecycle\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T071600Z-subscription-lifecycle-audit.prompt.md --model sonnet --effort low --max-budget-usd 1.00",
-      "status": "verified_pending_push",
-      "result": "企业订阅计划生命周期已通过真实 Chrome：修复前端旧契约导致的订阅页空套餐/错误变更接口问题；页面现在按后端 current/plans/change-plan 契约解包并渲染 plan+tier 卡片；真实点击从 FULL/SMALL 切换到 FULL/MEDIUM，API 回读 plan/tier/maxUsers/status，支付记录回读 seed 交易 DEMO-PAY-20260623，最后通过 API 恢复 FULL/SMALL 并刷新 UI 确认当前套餐。Focused Chrome 1/1 passed，完整真实 Chrome smoke 22/22 passed。库存预警仍未恢复。",
+      "status": "verified_pushed",
+      "result": "企业订阅计划生命周期已通过真实 Chrome：修复前端旧契约导致的订阅页空套餐/错误变更接口问题；页面现在按后端 current/plans/change-plan 契约解包并渲染 plan+tier 卡片；真实点击从 FULL/SMALL 切换到 FULL/MEDIUM，API 回读 plan/tier/maxUsers/status，支付记录回读 seed 交易 DEMO-PAY-20260623，最后通过 API 恢复 FULL/SMALL 并刷新 UI 确认当前套餐。Focused Chrome 1/1 passed，完整真实 Chrome smoke 22/22 passed。库存预警仍未恢复。 Implementation pushed at c344381 to origin public-main and main.",
       "evidence_files": [
         "docs/smoke-evidence/playwright-results.json",
         "docs/smoke-evidence/playwright-report/index.html",
