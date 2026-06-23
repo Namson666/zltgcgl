@@ -87,6 +87,7 @@
 - Latest pushed implementation commit: `b812fca feat: cover developer dashboard summary`
 - Latest pushed implementation commit: `7311a49 feat: cover public registration login`
 - Latest pushed implementation commit: `a616f85 feat: cover labor payment lifecycle`
+- Latest pushed implementation commit: `2afa30a feat: show announcements on enterprise dashboard`
 - Updated at: 2026-06-23T14:35:00Z
 
 ## 项目概览

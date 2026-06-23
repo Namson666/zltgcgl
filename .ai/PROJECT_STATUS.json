@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_enterprise_announcements_dashboard_implementation",
+    "working_tree": "clean_after_enterprise_announcements_dashboard_push",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "enterprise_announcements_dashboard_pending_commit_push",
-    "pushed_commit": "9665492 chore: mark labor payment lifecycle pushed",
-    "last_pushed_commit": "9665492"
+    "push_status": "enterprise_announcements_dashboard_pushed",
+    "pushed_commit": "2afa30a feat: show announcements on enterprise dashboard",
+    "last_pushed_commit": "2afa30a"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "enterprise_announcements_dashboard_pending_commit_push",
+    "push_status": "enterprise_announcements_dashboard_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "9665492 chore: mark labor payment lifecycle pushed"
+    "pushed_commit": "2afa30a feat: show announcements on enterprise dashboard"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,11 +34,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "enterprise_announcements_dashboard_verified_pending_commit_push",
-  "updated_at": "2026-06-23T14:50:00Z",
-  "push_status": "enterprise_announcements_dashboard_pending_commit_push",
-  "last_pushed_commit": "9665492",
-  "current_commit": "9665492 chore: mark labor payment lifecycle pushed",
+  "status": "enterprise_announcements_dashboard_pushed",
+  "updated_at": "2026-06-23T15:00:00Z",
+  "push_status": "enterprise_announcements_dashboard_pushed",
+  "last_pushed_commit": "2afa30a",
+  "current_commit": "2afa30a feat: show announcements on enterprise dashboard",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -75,7 +75,7 @@
   "last_verified_at": "2026-06-23T14:50:00Z",
   "last_verified_command": "focused Chrome announcement lifecycle 1/1; bash scripts/verify.sh backend 57 frontend 36 build; bash scripts/browser-smoke.sh 34/34; code-review-graph risk 0.50; Claude CLI audit PASS",
   "history": [
-    "2026-06-23: Enterprise announcements dashboard visibility verified locally in real Chrome. Added tenant-user-only /api/announcements and /api/v1/announcements returning only published announcements, wired Dashboard to show recent announcements, and expanded announcement lifecycle smoke to prove developer normal token 403 on enterprise endpoint, enterprise token 403 on developer management APIs, published announcements visible in API/Dashboard, edits sync, unpublish hides, republish shows, and delete hides. verify passed with backend 57 + frontend 36 + builds, focused Chrome 1/1 passed, full Chrome 34/34 passed, code-review-graph risk 0.50, Claude audit PASS. Pending commit/push.",
+    "2026-06-23: Enterprise announcements dashboard visibility verified locally in real Chrome and pushed at 2afa30a. Added tenant-user-only /api/announcements and /api/v1/announcements returning only published announcements, wired Dashboard to show recent announcements, and expanded announcement lifecycle smoke to prove developer normal token 403 on enterprise endpoint, enterprise token 403 on developer management APIs, published announcements visible in API/Dashboard, edits sync, unpublish hides, republish shows, and delete hides. verify passed with backend 57 + frontend 36 + builds, focused Chrome 1/1 passed, full Chrome 34/34 passed, code-review-graph risk 0.50, Claude audit PASS.",
     "2026-06-23: Labor payment lifecycle verified locally in real Chrome. Added persisted PaymentRecord.bankAccount and browser-smoke migration wiring; createPayment now creates pending/unconfirmed records without salary settlement/anomaly side effects; confirmation performs settlement/anomaly detection; unconfirmed payments can be deleted; confirmed payments return 400 and UI shows protected state. Added backend service tests for create/confirm/delete and browser coverage for create/delete/confirm/export/report plus risk flow confirmation. verify passed with backend 8 files / 57 tests + frontend 36 tests/build, focused Chrome labor payment 1/1 passed, focused Chrome labor risk 1/1 passed, full Chrome 34/34 passed, code-review-graph risk 0.50. Claude CLI produced no output for about 120 seconds and was interrupted; recorded Yellow, not PASS. Pending commit/push.",
     "2026-06-23: Public registration + original tenant-code login closure verified locally in real Chrome. Fixed Register to persist zlt_token and zlt_user after self-registration, including tenantId/tenantCode/tenantName/enabledModules/isDeveloper=false. Browser test creates a tenant through /register, verifies automatic dashboard login, localStorage, /api/auth/me, reload persistence, default module visibility, logout, original tenant-code login with generated tenant code/phone/password, and developer API cleanup. verify passed, focused Chrome 1/1 passed, full real Chrome 34/34 passed, code-review-graph risk 0.50. Claude CLI produced no output for more than two minutes and was interrupted; recorded Yellow, not PASS. Pending commit/push.",
     "2026-06-23: Developer main dashboard real-summary verified locally in real Chrome. Added stable test ids to /dev summary cards, trend/ranking sections, and quick actions. Browser test reads real developer stats/usage/revenue/daily APIs, asserts dashboard UI values and trend labels match, and clicks quick actions to tenant management, AI config, OCR config, system config, and logs. verify passed, focused Chrome 1/1 passed, full real Chrome 33/33 passed, code-review-graph risk 0.50. Claude CLI first exceeded USD budget 1, second produced no output for more than two minutes and was interrupted; recorded Yellow, not PASS. Pending commit/push.",
