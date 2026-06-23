@@ -1508,13 +1508,29 @@ export const financeApi = {
   getSummary: (params?: any) =>
     http.get('/finance/summary', params),
 
+  /** 获取财务看板综合汇总 */
+  getDashboardSummary: () =>
+    http.get('/finance/summary/dashboard'),
+
   /** 获取月度汇总 */
   getMonthlySummary: (params?: any) =>
     http.get('/finance/summary/monthly', params),
 
+  /** 获取财务看板月度趋势 */
+  getMonthlyTrend: (params?: any) =>
+    http.get('/finance/summary/monthly-trend', params),
+
   /** 获取按类别汇总 */
   getCategorySummary: (params?: any) =>
     http.get('/finance/summary/by-category', params),
+
+  /** 获取财务看板类别占比 */
+  getCategoryBreakdown: (params?: any) =>
+    http.get('/finance/summary/category-breakdown', params),
+
+  /** 获取项目部支出排名 */
+  getDepartmentRanking: (params?: any) =>
+    http.get('/finance/summary/department-ranking', params),
 
   /* ---------- 导入导出 ---------- */
 

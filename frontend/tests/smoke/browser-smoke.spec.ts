@@ -2302,6 +2302,117 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can verify finance dashboard real summary data', async ({ page }) => {
+    await loginEnterprise(page);
+    const stamp = Date.now();
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+
+    const categoriesResponse = await page.request.get('/api/finance/categories', {
+      headers: authHeaders,
+    });
+    expect(categoriesResponse.status()).toBe(200);
+    const categoriesBody = await readJson(categoriesResponse);
+    const materialCategory = (categoriesBody?.data || []).find((item: any) => item.name === '材料费');
+    expect(materialCategory?.id).toBeTruthy();
+    expect(materialCategory?.name).toBe('材料费');
+
+    const departmentsResponse = await page.request.get('/api/departments?pageSize=100', {
+      headers: authHeaders,
+    });
+    expect(departmentsResponse.status()).toBe(200);
+    const departmentsBody = await readJson(departmentsResponse);
+    const firstDepartment = (departmentsBody?.data || []).find((item: any) => item.name === '第一项目部') || departmentsBody?.data?.[0];
+    expect(firstDepartment?.id).toBeTruthy();
+    expect(firstDepartment?.name).toBeTruthy();
+
+    const currentDate = new Date().toISOString().slice(0, 10);
+    const handler = `财务看板经办-${stamp}`;
+    const detail = `真实浏览器财务看板汇总-${stamp}`;
+    const amount = 4321.09;
+
+    const createExpenseResponse = await page.request.post('/api/finance/expenses', {
+      headers: authHeaders,
+      data: {
+        source: 'company_finance',
+        departmentId: firstDepartment.id,
+        handler,
+        categoryId: materialCategory.id,
+        amount,
+        paymentMethod: 'company_direct',
+        payer: '财务看板付款方',
+        expenseDate: currentDate,
+        detail,
+      },
+    });
+    expect(createExpenseResponse.status()).toBe(201);
+    const createExpenseBody = await readJson(createExpenseResponse);
+    const expenseId = createExpenseBody?.data?.id;
+    expect(expenseId).toBeTruthy();
+
+    const approveResponse = await page.request.put(`/api/finance/expenses/${expenseId}/approve`, {
+      headers: authHeaders,
+    });
+    expect(approveResponse.status()).toBe(200);
+    const approveBody = await readJson(approveResponse);
+    expect(approveBody?.data?.status).toBe('approved');
+
+    const dashboardResponse = await page.request.get('/api/finance/summary/dashboard', {
+      headers: authHeaders,
+    });
+    expect(dashboardResponse.status()).toBe(200);
+    const dashboardBody = await readJson(dashboardResponse);
+    expect(Number(dashboardBody?.data?.monthExpenseTotal || 0)).toBeGreaterThanOrEqual(amount);
+    expect(Number(dashboardBody?.data?.yearExpenseTotal || 0)).toBeGreaterThanOrEqual(amount);
+
+    const month = currentDate.slice(0, 7);
+    const trendResponse = await page.request.get('/api/finance/summary/monthly-trend', {
+      headers: authHeaders,
+      params: { months: 12 },
+    });
+    expect(trendResponse.status()).toBe(200);
+    const trendBody = await readJson(trendResponse);
+    const currentMonthTrend = (trendBody?.data || []).find((item: any) => item.month === month);
+    expect(Number(currentMonthTrend?.total || 0)).toBeGreaterThanOrEqual(amount);
+
+    const categoryResponse = await page.request.get('/api/finance/summary/category-breakdown', {
+      headers: authHeaders,
+      params: { startDate: `${month}-01`, endDate: `${month}-31` },
+    });
+    expect(categoryResponse.status()).toBe(200);
+    const categoryBody = await readJson(categoryResponse);
+    const categorySummary = (categoryBody?.data || []).find((item: any) => item.categoryId === materialCategory.id);
+    expect(Number(categorySummary?.total || 0)).toBeGreaterThanOrEqual(amount);
+
+    const rankingResponse = await page.request.get('/api/finance/summary/department-ranking', {
+      headers: authHeaders,
+      params: { month },
+    });
+    expect(rankingResponse.status()).toBe(200);
+    const rankingBody = await readJson(rankingResponse);
+    const departmentSummary = (rankingBody?.data || []).find((item: any) => item.departmentId === firstDepartment.id);
+    expect(Number(departmentSummary?.total || 0)).toBeGreaterThanOrEqual(amount);
+
+    const formatSmokeMoney = (value: number) => `¥${value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    await page.goto('/finance/dashboard');
+    await expect(page.getByRole('heading', { name: '财务仪表盘' })).toBeVisible();
+    await expect(page.getByTestId('finance-dashboard-month-expense')).toContainText(formatSmokeMoney(Number(dashboardBody.data.monthExpenseTotal)));
+    await expect(page.getByTestId('finance-dashboard-year-expense')).toContainText(formatSmokeMoney(Number(dashboardBody.data.yearExpenseTotal)));
+    await expect(page.getByTestId('finance-dashboard-monthly-trend')).toContainText('月度支出趋势');
+    await expect(page.getByTestId('finance-dashboard-monthly-trend')).toContainText(formatSmokeMoney(Number(currentMonthTrend.total)));
+    await expect(page.getByTestId(`finance-dashboard-category-${materialCategory.name}`)).toContainText(formatSmokeMoney(Number(categorySummary.total)));
+    await expect(page.getByTestId(`finance-dashboard-category-${materialCategory.name}`)).toContainText('%');
+    await expect(page.getByTestId(`finance-dashboard-department-${firstDepartment.name}`)).toContainText(formatSmokeMoney(Number(departmentSummary.total)));
+    await expect(page.getByTestId(`finance-dashboard-department-${firstDepartment.name}`)).toContainText(`${departmentSummary.count} 笔`);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/财务看板真实汇总数据.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can complete finance invoice receipt pnl import export CRUD', async ({ page }) => {
     test.setTimeout(120_000);
     await loginEnterprise(page);

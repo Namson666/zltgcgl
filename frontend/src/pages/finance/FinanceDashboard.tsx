@@ -72,6 +72,8 @@ const formatMonthLabel = (month: string): string => {
   return `${parseInt(parts[1])}月`;
 };
 
+const unwrapApiData = (response: any) => response?.data?.data ?? response?.data ?? response;
+
 /* ========================================
  * 子组件 - 统计卡片
  * ======================================== */
@@ -84,6 +86,7 @@ interface StatCardProps {
   trendLabel?: string;
   bgColor: string;
   iconColor: string;
+  testId?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -94,8 +97,9 @@ const StatCard: React.FC<StatCardProps> = ({
   trendLabel,
   bgColor,
   iconColor,
+  testId,
 }) => (
-  <div className="card p-5 flex flex-col gap-3 hover:shadow-md transition-shadow duration-200">
+  <div className="card p-5 flex flex-col gap-3 hover:shadow-md transition-shadow duration-200" data-testid={testId}>
     <div className="flex items-center justify-between">
       <span className="text-sm text-gray-500 font-medium">{title}</span>
       <div
@@ -230,7 +234,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ data, loading }) 
         const pct = Math.max(item.percentage, 0);
         const color = categoryColors[index % categoryColors.length];
         return (
-          <div key={item.categoryName} className="group">
+          <div key={item.categoryName} className="group" data-testid={`finance-dashboard-category-${item.categoryName}`}>
             {/* 类别名称 + 金额 */}
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
@@ -319,6 +323,7 @@ const DepartmentRanking: React.FC<DepartmentRankingProps> = ({ data, loading }) 
             return (
               <tr
                 key={item.departmentName}
+                data-testid={`finance-dashboard-department-${item.departmentName}`}
                 className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
               >
                 <td className="px-4 py-3">
@@ -428,13 +433,12 @@ const FinanceDashboard: React.FC = () => {
 
     /* 并行加载所有数据 */
     const loadSummary = financeApi
-      .getSummary({ year: currentYear, month: currentMonth })
+      .getDashboardSummary()
       .then((res: any) => {
-        const body = res.data;
-        const d = body?.data || body || {};
+        const d = unwrapApiData(res) || {};
         setSummary({
-          monthExpense: d.monthExpense || d.month_expense || d.totalMonth || 0,
-          yearExpense: d.yearExpense || d.year_expense || d.totalYear || 0,
+          monthExpense: d.monthExpense || d.monthExpenseTotal || d.month_expense || d.totalMonth || 0,
+          yearExpense: d.yearExpense || d.yearExpenseTotal || d.year_expense || d.totalYear || 0,
           monthIncome: d.monthIncome || d.month_income || 0,
           yearIncome: d.yearIncome || d.year_income || 0,
           pettyCashBalance: d.pettyCashBalance || d.petty_cash_balance || d.balance || 0,
@@ -447,14 +451,13 @@ const FinanceDashboard: React.FC = () => {
       .finally(() => setLoadingSummary(false));
 
     const loadTrend = financeApi
-      .getMonthlySummary({ months: 12 })
+      .getMonthlyTrend({ months: 12 })
       .then((res: any) => {
-        const body = res.data;
-        const list = body?.data || body || [];
+        const list = unwrapApiData(res) || [];
         const items: MonthlyTrendItem[] = Array.isArray(list)
           ? list.map((item: any) => ({
               month: item.month || item.period || '',
-              amount: item.amount || item.expense || item.total || 0,
+              amount: item.amount || item.expense || item.total || item.totalAmount || 0,
             }))
           : [];
         /* 按月份排序 */
@@ -466,19 +469,26 @@ const FinanceDashboard: React.FC = () => {
       })
       .finally(() => setLoadingTrend(false));
 
+    const monthStart = `${currentYear}-${currentMonth}-01`;
+    const monthEnd = `${currentYear}-${currentMonth}-31`;
+
     const loadCategory = financeApi
-      .getCategorySummary({ year: currentYear, month: currentMonth })
+      .getCategoryBreakdown({ startDate: monthStart, endDate: monthEnd })
       .then((res: any) => {
-        const body = res.data;
-        const list = body?.data || body || [];
-        const items: CategoryBreakdownItem[] = Array.isArray(list)
+        const list = unwrapApiData(res) || [];
+        const rawItems = Array.isArray(list)
           ? list.map((item: any) => ({
               categoryName: item.categoryName || item.category_name || item.name || '未知',
-              amount: item.amount || item.total || 0,
+              amount: item.amount || item.total || item.totalAmount || 0,
               percentage: item.percentage || item.ratio || item.percent || 0,
               count: item.count || item.expenseCount || undefined,
             }))
           : [];
+        const totalAmount = rawItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+        const items: CategoryBreakdownItem[] = rawItems.map((item) => ({
+          ...item,
+          percentage: item.percentage || (totalAmount > 0 ? (Number(item.amount || 0) / totalAmount) * 100 : 0),
+        }));
         setCategoryBreakdown(items);
       })
       .catch((err: any) => {
@@ -487,15 +497,15 @@ const FinanceDashboard: React.FC = () => {
       .finally(() => setLoadingCategory(false));
 
     const loadRanking = financeApi
-      .getSummary({ year: currentYear, month: currentMonth, groupBy: 'department' })
+      .getDepartmentRanking({ month: `${currentYear}-${currentMonth}` })
       .then((res: any) => {
-        const body = res.data;
-        const list = body?.data?.departments || body?.departments || body?.data || body || [];
+        const data = unwrapApiData(res);
+        const list = data?.departments || data || [];
         const items: DepartmentRankingItem[] = Array.isArray(list)
           ? list.map((item: any) => ({
               departmentName:
                 item.departmentName || item.department_name || item.name || '未知',
-              monthExpense: item.monthExpense || item.month_expense || item.amount || 0,
+              monthExpense: item.monthExpense || item.month_expense || item.amount || item.total || 0,
               count: item.count || item.expenseCount || item.billCount || 0,
             }))
           : [];
@@ -513,8 +523,7 @@ const FinanceDashboard: React.FC = () => {
       financeApi
         .getBalanceSummary()
         .then((res: any) => {
-          const body = res.data;
-          const d = body?.data || body || {};
+          const d = unwrapApiData(res) || {};
           const balance = d.totalBalance || d.total_balance || d.balance || 0;
           if (balance > 0) {
             setSummary((prev) => ({ ...prev, pettyCashBalance: balance }));
@@ -580,6 +589,7 @@ const FinanceDashboard: React.FC = () => {
           trend={summary.monthExpense > 0 ? 'up' : null}
           bgColor="oklch(0.95 0.04 25 / 0.12)"
           iconColor="oklch(0.54 0.22 25)"
+          testId="finance-dashboard-month-expense"
         />
 
         {/* 本年累计 */}
@@ -590,6 +600,7 @@ const FinanceDashboard: React.FC = () => {
           trend={summary.yearExpense > 0 ? 'up' : null}
           bgColor="oklch(0.55 0.18 250 / 0.12)"
           iconColor="oklch(0.46 0.19 250)"
+          testId="finance-dashboard-year-expense"
         />
 
         {/* 本月收入 */}
@@ -601,6 +612,7 @@ const FinanceDashboard: React.FC = () => {
           trendLabel={summary.monthIncome > 0 ? '待完善' : undefined}
           bgColor="oklch(0.65 0.18 145 / 0.12)"
           iconColor="oklch(0.65 0.18 145)"
+          testId="finance-dashboard-month-income"
         />
 
         {/* 累计收入 */}
@@ -610,6 +622,7 @@ const FinanceDashboard: React.FC = () => {
           icon={<TrendingDown size={20} />}
           bgColor="oklch(0.75 0.15 85 / 0.15)"
           iconColor="oklch(0.75 0.15 85)"
+          testId="finance-dashboard-year-income"
         />
 
         {/* 备用金余额 */}
@@ -619,6 +632,7 @@ const FinanceDashboard: React.FC = () => {
           icon={<Wallet size={20} />}
           bgColor="oklch(0.50 0.16 200 / 0.12)"
           iconColor="oklch(0.50 0.16 200)"
+          testId="finance-dashboard-petty-cash-balance"
         />
 
         {/* 待审核 */}
@@ -629,6 +643,7 @@ const FinanceDashboard: React.FC = () => {
           trend={summary.pendingCount > 0 ? 'up' : null}
           bgColor="oklch(0.58 0.17 315 / 0.10)"
           iconColor="oklch(0.58 0.17 315)"
+          testId="finance-dashboard-pending-count"
         />
       </div>
 
@@ -637,7 +652,7 @@ const FinanceDashboard: React.FC = () => {
        * ======================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* 左侧：月度支出趋势 */}
-        <div className="card">
+        <div className="card" data-testid="finance-dashboard-monthly-trend">
           <div className="card-header">
             <div className="flex items-center gap-2">
               <Receipt size={18} className="text-blue-500" />
@@ -651,7 +666,7 @@ const FinanceDashboard: React.FC = () => {
         </div>
 
         {/* 右侧：费用类别占比 */}
-        <div className="card">
+        <div className="card" data-testid="finance-dashboard-category-breakdown">
           <div className="card-header">
             <div className="flex items-center gap-2">
               <DollarSign size={18} className="text-green-500" />
@@ -670,7 +685,7 @@ const FinanceDashboard: React.FC = () => {
       {/* ========================================
        * 三、项目部开支排名
        * ======================================== */}
-      <div className="card">
+      <div className="card" data-testid="finance-dashboard-department-ranking">
         <div className="card-header">
           <div className="flex items-center gap-2">
             <Building2 size={18} className="text-orange-500" />
