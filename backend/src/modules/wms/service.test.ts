@@ -15,6 +15,8 @@ const { prismaMock } = vi.hoisted(() => ({
       create: vi.fn(),
     },
     inboundItem: {
+      findMany: vi.fn(),
+      count: vi.fn(),
       create: vi.fn(),
     },
     subProject: {
@@ -25,6 +27,7 @@ const { prismaMock } = vi.hoisted(() => ({
     inventory: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
+      count: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
@@ -34,6 +37,13 @@ const { prismaMock } = vi.hoisted(() => ({
     },
     outboundOrder: {
       findMany: vi.fn(),
+    },
+    outboundItem: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
+    returnItem: {
+      aggregate: vi.fn(),
     },
     transferOrder: {
       findFirst: vi.fn(),
@@ -52,7 +62,7 @@ vi.mock('../../common/utils/prisma', () => ({
   prisma: prismaMock,
 }));
 
-import { createExcelInbound, createTransfer, deleteMaterial, getOutboundExportData, getTransferExportData, listMaterials, listReturnOrders, listTransferOrders, updateMaterial } from './service';
+import { createExcelInbound, createTransfer, deleteMaterial, getInventoryExportData, getOutboundExportData, getTransferExportData, getWorkTeamLedgerExportData, listInventory, listMaterials, listReturnOrders, listTransferOrders, listWorkTeamLedger, updateMaterial } from './service';
 
 describe('wms material service tenant safeguards', () => {
   beforeEach(() => {
@@ -205,11 +215,156 @@ describe('wms material service tenant safeguards', () => {
           gte: new Date('2026-06-01'),
           lte: new Date('2026-06-30'),
         },
-        items: { some: { material: { name: { contains: '钢筋', mode: 'insensitive' } } } },
+        items: { some: { material: { name: { contains: '钢筋' } } } },
       },
       orderBy: { createdAt: 'desc' },
       include: { subProject: true, items: { include: { material: true } }, creator: { select: { name: true } } },
     });
+  });
+
+  it('filters inventory by material name with sqlite-safe contains syntax', async () => {
+    prismaMock.inventory.findMany.mockResolvedValue([]);
+    prismaMock.inventory.count.mockResolvedValue(0);
+
+    await listInventory({
+      tenantId: 'tenant-1',
+      status: 'in',
+      materialName: '钢筋',
+      page: 1,
+      pageSize: 20,
+    });
+
+    expect(prismaMock.inventory.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        AND: [
+          { material: { tenantId: 'tenant-1' } },
+          { isActive: true },
+          { quantity: { gt: 0 } },
+          { material: { name: { contains: '钢筋' } } },
+        ],
+      },
+    }));
+  });
+
+  it('exports inventory using the same active stock filters and department fallback columns', async () => {
+    prismaMock.inventory.findMany.mockResolvedValue([
+      {
+        id: 'inventory-1',
+        projectName: '1号楼',
+        quantity: 7,
+        outQuantity: 3,
+        material: { name: '钢筋', code: 'MAT-001', unit: '吨', unitPrice: 11 },
+        subProject: null,
+        department: { name: '第一项目部', contract: { name: '承包合同A' } },
+      },
+    ]);
+    prismaMock.inventory.count.mockResolvedValue(1);
+
+    const result = await getInventoryExportData({
+      tenantId: 'tenant-1',
+      status: 'in',
+      viewMode: 'summary',
+      materialName: '钢筋',
+    });
+
+    expect(prismaMock.inventory.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        AND: [
+          { material: { tenantId: 'tenant-1' } },
+          { isActive: true },
+          { quantity: { gt: 0 } },
+          { material: { name: { contains: '钢筋' } } },
+        ],
+      },
+      take: 100000,
+    }));
+    expect(result.rows).toEqual([
+      expect.objectContaining({
+        '合同名称': '承包合同A',
+        '项目部': '第一项目部',
+        '项目名称': '1号楼',
+        '物资名称': '钢筋',
+        '在库数量': 7,
+        '已出库数量': 3,
+        '库存金额': 77,
+      }),
+    ]);
+  });
+
+  it('lists active work-team ledger rows with active return quantities only', async () => {
+    prismaMock.outboundItem.findMany.mockResolvedValue([
+      {
+        id: 'outbound-item-1',
+        materialId: 'material-1',
+        quantity: 4,
+        unitPrice: 11,
+        unit: '件',
+        projectName: '1号楼',
+        material: { name: '扣件', unit: '件' },
+        outboundOrder: {
+          workTeamName: '木工班组',
+          outboundDate: new Date('2026-06-23'),
+          subProject: { name: '1号楼' },
+        },
+      },
+    ]);
+    prismaMock.returnItem.aggregate.mockResolvedValue({ _sum: { quantity: 1 } });
+
+    const result = await listWorkTeamLedger({
+      tenantId: 'tenant-1',
+      keyword: '扣件',
+      page: 1,
+      pageSize: 20,
+    });
+
+    expect(prismaMock.outboundItem.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { outboundOrder: { tenantId: 'tenant-1', isActive: true } },
+    }));
+    expect(prismaMock.returnItem.aggregate).toHaveBeenCalledWith({
+      where: { outboundItemId: 'outbound-item-1', materialId: 'material-1', returnOrder: { isActive: true } },
+      _sum: { quantity: true },
+    });
+    expect(result.items[0]).toEqual(expect.objectContaining({
+      materialName: '扣件',
+      quantity: 3,
+      returnedQuantity: 1,
+      totalAmount: 33,
+    }));
+  });
+
+  it('exports work-team ledger through the filtered net-quantity list', async () => {
+    prismaMock.outboundItem.findMany.mockResolvedValue([
+      {
+        id: 'outbound-item-1',
+        materialId: 'material-1',
+        quantity: 4,
+        unitPrice: 11,
+        unit: '件',
+        projectName: '1号楼',
+        material: { name: '扣件', unit: '件' },
+        outboundOrder: {
+          workTeamName: '木工班组',
+          outboundDate: new Date('2026-06-23'),
+          subProject: { name: '1号楼' },
+        },
+      },
+    ]);
+    prismaMock.returnItem.aggregate.mockResolvedValue({ _sum: { quantity: 1 } });
+
+    const result = await getWorkTeamLedgerExportData({
+      tenantId: 'tenant-1',
+      keyword: '扣件',
+    });
+
+    expect(result.rows).toEqual([
+      expect.objectContaining({
+        '班组': '木工班组',
+        '物资名称': '扣件',
+        '已退数量': 1,
+        '净领用数量': 3,
+        '金额': 33,
+      }),
+    ]);
   });
 
   it('lists only active transfer orders', async () => {

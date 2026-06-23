@@ -844,6 +844,9 @@ export const wmsApi = {
   getInventory: (params?: PaginationParams) =>
     http.get('/wms/inventory', params),
 
+  exportInventory: (params?: any) =>
+    http.get('/wms/inventory/export', params || {}, { responseType: 'blob' }),
+
   /**
    * 获取领料单列表
    * @param params - 分页参数
@@ -1019,6 +1022,9 @@ export const wmsApi = {
    */
   getWorkTeamLedger: (params?: PaginationParams) =>
     http.get('/wms/work-team-ledger', params),
+
+  exportWorkTeamLedger: (params?: any) =>
+    http.get('/wms/work-team-ledger/export', params || {}, { responseType: 'blob' }),
 
   /**
    * 获取供应商列表

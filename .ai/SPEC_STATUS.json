@@ -1,9 +1,9 @@
 {
-  "stage": "S32_wms_transfer_export_delete_pushed",
+  "stage": "S33_wms_inventory_ledger_export_verified_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "WMS transfer create/export/delete-preview now has real Chrome API/UI coverage: the browser seeds inbound stock through the real API, creates transfer through the UI, downloads transfer PDF, exports transfer records, previews cascade inventory rollback impact, deletes the transfer order, and verifies it is absent from the active API list. Backend transfer list/export now filters active transfer orders only; department-scoped transfer IDs are persisted and preview/delete rollback supports department-scoped inventory. Full Chrome smoke is 28/28. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T10:45:00Z"
+  "notes": "WMS inventory/work-team ledger export and net-quantity coverage now has real Chrome API/UI evidence: browser creates inbound 10, outbound 4, return 1, verifies active inventory quantity 7, work-team ledger net quantity 3 and returned quantity 1, and downloads inventory summary, outbound inventory, and work-team ledger Excel files. Backend inventory export reuses active stock filters, inventory/outbound search uses SQLite-safe contains, work-team ledger list/export only count active outbound and active return orders. Full Chrome smoke is 29/29. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T11:00:00Z"
 }

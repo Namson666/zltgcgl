@@ -91,6 +91,7 @@ const Materials: React.FC = () => {
   const [deleteMaterialTarget, setDeleteMaterialTarget] = useState<Material | null>(null);
   const [deletingMaterial, setDeletingMaterial] = useState(false);
   const [exportingMaterials, setExportingMaterials] = useState(false);
+  const [exportingInventory, setExportingInventory] = useState(false);
   const pageSize = 50;
 
   const loadMaterialCatalog = async () => {
@@ -238,6 +239,26 @@ const Materials: React.FC = () => {
     }
   };
 
+  const handleExportInventory = async () => {
+    try {
+      setExportingInventory(true);
+      const params: any = { keyword: keyword.trim() || undefined };
+      if (tab === 'in') {
+        params.status = 'in';
+        params.viewMode = viewMode === 'detail' ? 'detail' : 'summary';
+      } else {
+        params.status = 'out';
+      }
+      const res = await wmsApi.exportInventory(params);
+      downloadBlob(res.data as Blob, tab === 'out' ? '已出库库存.xlsx' : viewMode === 'detail' ? '在库明细.xlsx' : '库存汇总.xlsx');
+      toast.success(tab === 'out' ? '已出库记录已导出' : '库存记录已导出');
+    } catch {
+      toast.error('导出库存记录失败');
+    } finally {
+      setExportingInventory(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="page-header">
@@ -245,16 +266,23 @@ const Materials: React.FC = () => {
           <h1 className="page-title">物资总览</h1>
           <p className="page-subtitle">管理所有物资信息和库存，共 {total} 条记录</p>
         </div>
-        {tab === 'catalog' && (
-          <div className="flex gap-2">
+        <div className="flex gap-2">
+          {tab !== 'catalog' && (
+            <button className="btn-secondary flex items-center gap-1.5" onClick={handleExportInventory} disabled={exportingInventory}>
+              <Download size={16} />{exportingInventory ? '导出中...' : (tab === 'out' ? '导出已出库' : '导出库存')}
+            </button>
+          )}
+          {tab === 'catalog' && (
+            <>
             <button className="btn-secondary flex items-center gap-1.5" onClick={handleExportMaterials} disabled={exportingMaterials}>
               <Download size={16} />{exportingMaterials ? '导出中...' : '导出物资档案'}
             </button>
             <button className="btn-primary flex items-center gap-1.5" onClick={openCreateMaterial}>
               <Plus size={16} />新增物资
             </button>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* 标签切换 */}

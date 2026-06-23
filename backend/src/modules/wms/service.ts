@@ -165,10 +165,10 @@ export async function listInventory(params: InventoryListParams) {
     const where: any = { outboundOrder: { tenantId, isActive: true } };
     if (subProjectId) where.outboundOrder.subProjectId = subProjectId;
     else if (contractId) where.outboundOrder = { ...where.outboundOrder, subProject: { contractId } };
-    if (projectCode) where.outboundOrder.subProject = { ...where.outboundOrder?.subProject, code: { contains: projectCode, mode: 'insensitive' } };
+    if (projectCode) where.outboundOrder.subProject = { ...where.outboundOrder?.subProject, code: { contains: projectCode } };
     if (workTeamId) where.outboundOrder.workTeamId = workTeamId;
-    if (materialName) where.material = { name: { contains: materialName, mode: 'insensitive' } };
-    if (materialCode) where.material = { ...where.material, code: { contains: materialCode, mode: 'insensitive' } };
+    if (materialName) where.material = { name: { contains: materialName } };
+    if (materialCode) where.material = { ...where.material, code: { contains: materialCode } };
     if (startDate || endDate) {
       where.outboundOrder.outboundDate = {};
       if (startDate) where.outboundOrder.outboundDate.gte = new Date(startDate);
@@ -191,8 +191,8 @@ export async function listInventory(params: InventoryListParams) {
     const where: any = { inboundOrder: { tenantId } };
     if (subProjectId) where.inboundOrder.subProjectId = subProjectId;
     else if (contractId) where.inboundOrder = { ...where.inboundOrder, subProject: { contractId } };
-    if (materialName) where.material = { name: { contains: materialName, mode: 'insensitive' } };
-    if (materialCode) where.material = { ...where.material, code: { contains: materialCode, mode: 'insensitive' } };
+    if (materialName) where.material = { name: { contains: materialName } };
+    if (materialCode) where.material = { ...where.material, code: { contains: materialCode } };
     if (startDate || endDate) {
       where.inboundOrder.inboundDate = {};
       if (startDate) where.inboundOrder.inboundDate.gte = new Date(startDate);
@@ -246,9 +246,9 @@ export async function listInventory(params: InventoryListParams) {
   }
 
   if (subProjectId) andConditions.push({ subProjectId });
-  if (projectCode) andConditions.push({ department: { code: { contains: projectCode, mode: 'insensitive' } } });
-  if (materialName) andConditions.push({ material: { name: { contains: materialName, mode: 'insensitive' } } });
-  if (materialCode) andConditions.push({ material: { code: { contains: materialCode, mode: 'insensitive' } } });
+  if (projectCode) andConditions.push({ department: { code: { contains: projectCode } } });
+  if (materialName) andConditions.push({ material: { name: { contains: materialName } } });
+  if (materialCode) andConditions.push({ material: { code: { contains: materialCode } } });
   if (projectName) andConditions.push({ projectName });
 
   const where: any = { AND: andConditions };
@@ -265,19 +265,59 @@ export async function listInventory(params: InventoryListParams) {
   return { items, total, page, pageSize };
 }
 
-export async function getInventoryExportData(tenantId: string, subProjectId?: string) {
-  const where: any = { material: { tenantId } };
-  if (subProjectId) where.subProjectId = subProjectId;
+export async function getInventoryExportData(params: Omit<InventoryListParams, 'page' | 'pageSize'>) {
+  const result = await listInventory({ ...params, page: 1, pageSize: 100000 });
+  const status = params.status || 'in';
+  const viewMode = params.viewMode || 'summary';
 
-  const items = await prisma.inventory.findMany({ where, include: { material: true, subProject: true } });
-  const rows = items.map(inv => ({
-    '子项目名称': inv.subProject?.name || '', '子项目编码': inv.subProject?.code || '',
-    '项目名称': inv.projectName || '待分配', '物资名称': inv.material.name,
-    '物资编码': inv.material.code, '单位': inv.material.unit,
-    '在库数量': inv.quantity, '已出库数量': inv.outQuantity,
-    '单价': inv.material.unitPrice,
+  if (status === 'out') {
+    const rows = result.items.map((item: any) => ({
+      '合同名称': item.outboundOrder?.subProject?.department?.contract?.name || '',
+      '项目名称': item.projectName || item.outboundOrder?.subProject?.name || '',
+      '物资名称': item.material?.name || '',
+      '物资编码': item.material?.code || '',
+      '班组': item.outboundOrder?.workTeamName || '',
+      '单位': item.material?.unit || item.unit || '',
+      '出库数量': item.quantity,
+      '单价': item.unitPrice || item.material?.unitPrice || 0,
+      '金额': Number(item.quantity || 0) * Number(item.unitPrice || item.material?.unitPrice || 0),
+      '出库单号': item.outboundOrder?.orderNo || '',
+      '出库日期': item.outboundOrder?.outboundDate ? new Date(item.outboundOrder.outboundDate).toLocaleDateString('zh-CN') : '',
+    }));
+    return { rows, count: result.total };
+  }
+
+  if (status === 'in' && viewMode === 'detail') {
+    const rows = result.items.map((item: any) => ({
+      '入库单号': item.inboundOrder?.orderNo || '',
+      '入库日期': item.inboundOrder?.inboundDate ? new Date(item.inboundOrder.inboundDate).toLocaleDateString('zh-CN') : '',
+      '合同名称': item.inboundOrder?.subProject?.department?.contract?.name || '',
+      '项目名称': item.projectName || item.inboundOrder?.subProject?.name || '',
+      '物资名称': item.material?.name || '',
+      '物资编码': item.material?.code || '',
+      '单位': item.material?.unit || item.unit || '',
+      '入库数量': item.quantity,
+      '单价': item.unitPrice || item.material?.unitPrice || 0,
+      '金额': Number(item.quantity || 0) * Number(item.unitPrice || item.material?.unitPrice || 0),
+    }));
+    return { rows, count: result.total };
+  }
+
+  const rows = result.items.map((inv: any) => ({
+    '合同名称': inv.subProject?.department?.contract?.name || inv.department?.contract?.name || '',
+    '项目部': inv.subProject?.department?.name || inv.department?.name || '',
+    '子项目名称': inv.subProject?.name || '',
+    '子项目编码': inv.subProject?.code || '',
+    '项目名称': inv.projectName || '待分配',
+    '物资名称': inv.material?.name || '',
+    '物资编码': inv.material?.code || '',
+    '单位': inv.material?.unit || '',
+    '在库数量': inv.quantity,
+    '已出库数量': inv.outQuantity,
+    '单价': inv.material?.unitPrice || 0,
+    '库存金额': Number(inv.quantity || 0) * Number(inv.material?.unitPrice || 0),
   }));
-  return { rows, count: items.length };
+  return { rows, count: result.total };
 }
 
 export async function getInventoryProjectNames(tenantId: string, contractId?: string, departmentId?: string) {
@@ -1146,7 +1186,7 @@ export async function getOutboundExportData(tenantId: string, subProjectId?: str
     if (startDate) where.outboundDate.gte = new Date(startDate);
     if (endDate) where.outboundDate.lte = new Date(endDate);
   }
-  if (keyword) where.items = { some: { material: { name: { contains: keyword, mode: 'insensitive' } } } };
+  if (keyword) where.items = { some: { material: { name: { contains: keyword } } } };
 
   const orders = await prisma.outboundOrder.findMany({
     where, orderBy: { createdAt: 'desc' },
@@ -1558,7 +1598,7 @@ export async function listWorkTeamLedger(params: WorkTeamLedgerParams) {
   const { tenantId, workTeamId, subProjectId, keyword, startDate, endDate, page, pageSize } = params;
   const skip = (page - 1) * pageSize;
   const where: any = {
-    outboundOrder: { tenantId },
+    outboundOrder: { tenantId, isActive: true },
   };
   if (workTeamId) where.outboundOrder.workTeamId = workTeamId;
   if (subProjectId) where.outboundOrder.subProjectId = subProjectId;
@@ -1575,7 +1615,7 @@ export async function listWorkTeamLedger(params: WorkTeamLedgerParams) {
 
   const result = await Promise.all(items.map(async item => {
     const returned = await prisma.returnItem.aggregate({
-      where: { outboundItemId: item.id, materialId: item.materialId },
+      where: { outboundItemId: item.id, materialId: item.materialId, returnOrder: { isActive: true } },
       _sum: { quantity: true },
     });
     const returnedQuantity = Number(returned._sum?.quantity || 0);
@@ -1607,42 +1647,18 @@ export async function listWorkTeamLedger(params: WorkTeamLedgerParams) {
   return { items: filtered.slice(skip, skip + pageSize), total: filtered.length, page, pageSize };
 }
 
-export async function getWorkTeamLedgerExportData(tenantId: string, workTeamId?: string, subProjectId?: string) {
-  const where: any = { outboundOrder: { tenantId } };
-  if (workTeamId) where.outboundOrder.workTeamId = workTeamId;
-  if (subProjectId) where.outboundOrder.subProjectId = subProjectId;
-
-  const items = await prisma.outboundItem.findMany({
-    where, orderBy: { outboundOrder: { outboundDate: 'desc' } },
-    include: { material: true, outboundOrder: { include: { subProject: true } } },
-  });
-
-  const rows = await Promise.all(items.map(async item => {
-    const returned = await prisma.returnItem.aggregate({
-      where: { outboundItemId: item.id, materialId: item.materialId },
-      _sum: { quantity: true },
-    });
-    const returnedQuantity = Number(returned._sum?.quantity || 0);
-    const netQuantity = item.quantity - returnedQuantity;
-    const unitPrice = Number(item.unitPrice || 0);
-
-    return {
-      '班组': item.outboundOrder.workTeamName || '',
-      '子项目名称': item.outboundOrder.subProject?.name || '',
-      '子项目编码': item.outboundOrder.subProject?.code || '',
-      '项目名称': item.projectName || item.outboundOrder.subProject?.name || '',
-      '物资名称': item.material?.name || '',
-      '物资编码': item.material?.code || '',
-      '单位': item.material?.unit || item.unit || '',
-      '原领数量': item.quantity,
-      '已退数量': returnedQuantity,
-      '净领用数量': netQuantity,
-      '单价': unitPrice,
-      '金额': netQuantity * unitPrice,
-      '出库单号': item.outboundOrder.orderNo,
-      '出库日期': item.outboundOrder.outboundDate.toLocaleDateString('zh-CN'),
-    };
+export async function getWorkTeamLedgerExportData(params: Omit<WorkTeamLedgerParams, 'page' | 'pageSize'>) {
+  const result = await listWorkTeamLedger({ ...params, page: 1, pageSize: 100000 });
+  const rows = result.items.map((item: any) => ({
+    '班组': item.workTeamName || '',
+    '项目名称': item.projectName || '',
+    '物资名称': item.materialName || '',
+    '单位': item.unit || '',
+    '已退数量': item.returnedQuantity || 0,
+    '净领用数量': item.quantity || 0,
+    '单价': item.unitPrice || 0,
+    '金额': item.totalAmount || 0,
+    '出库日期': item.outboundDate ? new Date(item.outboundDate).toLocaleDateString('zh-CN') : '',
   }));
-
-  return { rows, count: items.length };
+  return { rows, count: result.total };
 }

@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { wmsApi } from '../../api';
+import { downloadBlob, wmsApi } from '../../api';
 import { Search, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Pagination, EmptyState, formatDate, formatMoney } from '../../components/ui/Common';
@@ -28,6 +28,7 @@ const Ledger: React.FC = () => {
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const pageSize = 20;
 
   const loadData = async () => {
@@ -49,6 +50,19 @@ const Ledger: React.FC = () => {
   const totalQty = records.reduce((s, r) => s + Number(r.quantity || 0), 0);
   const totalAmt = records.reduce((s, r) => s + Number(r.totalAmount || 0), 0);
 
+  const handleExportLedger = async () => {
+    try {
+      setExporting(true);
+      const res = await wmsApi.exportWorkTeamLedger({ keyword: keyword.trim() || undefined });
+      downloadBlob(res.data as Blob, '班组台账.xlsx');
+      toast.success('班组台账已导出');
+    } catch {
+      toast.error('导出班组台账失败');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="page-header">
@@ -56,6 +70,9 @@ const Ledger: React.FC = () => {
           <h1 className="page-title">班组台账</h1>
           <p className="page-subtitle">班组物资领用记录与统计汇总</p>
         </div>
+        <button className="btn-secondary flex items-center gap-1.5" onClick={handleExportLedger} disabled={exporting}>
+          <Download size={16} />{exporting ? '导出中...' : '导出班组台账'}
+        </button>
       </div>
 
       {/* 统计卡片 */}

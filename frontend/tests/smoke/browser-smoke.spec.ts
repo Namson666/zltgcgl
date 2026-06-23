@@ -2135,6 +2135,128 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can export wms inventory and work team ledger with net quantities', async ({ page }) => {
+    test.setTimeout(150_000);
+    await loginEnterprise(page);
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+    const stamp = Date.now();
+    const materialName = `浏览器库存台账物资-${stamp}`;
+    const projectName = `库存台账项目-${stamp}`;
+    const supplierName = `库存台账供应商-${stamp}`;
+    const outboundRemark = `库存台账出库-${stamp}`;
+    const returnRemark = `库存台账退库-${stamp}`;
+
+    const departmentsResponse = await page.request.get('/api/departments?pageSize=100', { headers: authHeaders });
+    expect(departmentsResponse.status()).toBe(200);
+    const departmentsBody = await readJson(departmentsResponse);
+    const department = (departmentsBody?.data || []).find((item: any) => item.name === '第一项目部') || (departmentsBody?.data || [])[0];
+    expect(department?.id).toBeTruthy();
+
+    const inboundResponse = await page.request.post('/api/wms/inbound', {
+      headers: authHeaders,
+      data: {
+        departmentId: department.id,
+        supplierName,
+        inboundDate: '2026-06-23',
+        remark: `库存台账前置入库-${stamp}`,
+        items: [
+          { materialName, projectName, unit: '件', quantity: 10, actualQty: 10, unitPrice: 11 },
+        ],
+      },
+    });
+    expect(inboundResponse.status()).toBe(201);
+
+    await page.goto('/wms/outbound');
+    await expect(page.getByRole('heading', { name: '出库管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增出库' }).click();
+    await chooseMultiSelectModalOption(page, '请选择项目部', /选择项目部/, department.name);
+    await expect(page.getByText(materialName)).toBeVisible({ timeout: 15000 });
+    await selectFirstRealOption(page.locator('select').filter({ hasText: '请选择班组' }));
+    await page.getByPlaceholder('可选').fill(outboundRemark);
+    const outboundMaterialRow = page.locator('tr', { hasText: materialName }).first();
+    await outboundMaterialRow.locator('input[type="checkbox"]').check();
+    await outboundMaterialRow.locator('input[type="number"]').fill('4');
+    await page.getByRole('button', { name: /确认出库/ }).click();
+    await expect(page.getByRole('heading', { name: '出库成功' })).toBeVisible();
+    await page.getByRole('button', { name: '返回继续出库' }).click();
+
+    const outboundResponse = await page.request.get('/api/wms/outbound?pageSize=20', { headers: authHeaders });
+    expect(outboundResponse.status()).toBe(200);
+    const outboundBody = await readJson(outboundResponse);
+    const outboundOrder = (outboundBody?.data || []).find((order: any) =>
+      order.remark === outboundRemark
+      && (order.items || []).some((item: any) => (item.material?.name || item.materialName) === materialName)
+    );
+    expect(outboundOrder?.id).toBeTruthy();
+
+    await page.goto('/wms/returns');
+    await expect(page.getByRole('heading', { name: '退库管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增退库' }).click();
+    await page.locator('select').filter({ hasText: '请选择子项目' }).selectOption({ label: projectName });
+    await page.getByPlaceholder('可选').fill(returnRemark);
+    await page.getByRole('button', { name: /查询领料记录/ }).click();
+    await expect(page.getByText(materialName)).toBeVisible({ timeout: 15000 });
+    const returnMaterialRow = page.locator('tr', { hasText: materialName }).first();
+    await returnMaterialRow.locator('input[type="checkbox"]').check();
+    await returnMaterialRow.locator('input[type="number"]').fill('1');
+    await page.getByRole('button', { name: /确认退库/ }).click();
+    await expectToast(page, '退库成功');
+    await page.keyboard.press('Escape');
+
+    const inventoryResponse = await page.request.get(`/api/wms/inventory?materialName=${encodeURIComponent(materialName)}&pageSize=20`, {
+      headers: authHeaders,
+    });
+    expect(inventoryResponse.status()).toBe(200);
+    const inventoryBody = await readJson(inventoryResponse);
+    const inventoryRow = (inventoryBody?.data || []).find((item: any) => item.material?.name === materialName);
+    expect(inventoryRow?.quantity).toBe(7);
+
+    await page.goto('/wms/materials');
+    await expect(page.getByRole('heading', { name: '物资总览' })).toBeVisible();
+    await page.getByRole('button', { name: '按物资汇总' }).click();
+    await page.getByPlaceholder('搜索物资名称...').fill(materialName);
+    await expect(page.locator('tr', { hasText: materialName })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('tr', { hasText: materialName })).toContainText('7');
+    const inventoryDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出库存' }).click();
+    expect((await inventoryDownloadPromise).suggestedFilename()).toBe('库存汇总.xlsx');
+    await expectToast(page, '库存记录已导出');
+
+    await page.getByRole('button', { name: '已出库' }).click();
+    await expect(page.getByPlaceholder('搜索物资名称...')).toHaveValue(materialName);
+    await expect(page.locator('tr', { hasText: materialName })).toBeVisible({ timeout: 15000 });
+    const outboundInventoryDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出已出库' }).click();
+    expect((await outboundInventoryDownloadPromise).suggestedFilename()).toBe('已出库库存.xlsx');
+    await expectToast(page, '已出库记录已导出');
+
+    const ledgerResponse = await page.request.get(`/api/wms/work-team-ledger?keyword=${encodeURIComponent(materialName)}&pageSize=20`, {
+      headers: authHeaders,
+    });
+    expect(ledgerResponse.status()).toBe(200);
+    const ledgerBody = await readJson(ledgerResponse);
+    const ledgerRow = (ledgerBody?.data || []).find((item: any) => item.materialName === materialName);
+    expect(ledgerRow?.quantity).toBe(3);
+    expect(ledgerRow?.returnedQuantity).toBe(1);
+
+    await page.goto('/wms/ledger');
+    await expect(page.getByRole('heading', { name: '班组台账' })).toBeVisible();
+    await page.getByPlaceholder('搜索班组/物资名称...').fill(materialName);
+    await expect(page.locator('tr', { hasText: materialName })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('tr', { hasText: materialName })).toContainText('3');
+    const ledgerDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出班组台账' }).click();
+    expect((await ledgerDownloadPromise).suggestedFilename()).toBe('班组台账.xlsx');
+    await expectToast(page, '班组台账已导出');
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/库存台账导出净数量.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can complete wms inbound outbound return transfer chain', async ({ page }) => {
     test.setTimeout(150_000);
     await loginEnterprise(page);

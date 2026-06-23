@@ -477,7 +477,7 @@ inventoryRouter.get('/', requirePermission('canViewInventory'), wrapHandler(asyn
     tenantId, page: parseInt(q.page) || 1, pageSize: parseInt(q.pageSize) || 20,
     status: q.status, viewMode: q.viewMode,
     subProjectId: q.subProjectId, contractId: q.contractId, contractIds: q.contractIds, departmentId: q.departmentId, departmentIds: q.departmentIds, projectCode: q.projectCode, projectName: q.projectName,
-    workTeamId: q.workTeamId, materialName: q.materialName, materialCode: q.materialCode,
+    workTeamId: q.workTeamId, materialName: q.materialName || q.keyword, materialCode: q.materialCode,
     startDate: q.startDate, endDate: q.endDate,
   });
   res.json({ success: true, data: result.items, meta: { total: result.total, page: result.page, limit: result.pageSize } } as unknown as PaginatedResponse<any>);
@@ -485,8 +485,24 @@ inventoryRouter.get('/', requirePermission('canViewInventory'), wrapHandler(asyn
 
 inventoryRouter.get('/export', requirePermission('canExport'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
-  const { subProjectId } = req.query as any;
-  const { rows, count } = await wms.getInventoryExportData(tenantId, subProjectId);
+  const q = req.query as any;
+  const { rows, count } = await wms.getInventoryExportData({
+    tenantId,
+    status: q.status,
+    viewMode: q.viewMode,
+    contractId: q.contractId,
+    contractIds: q.contractIds,
+    departmentId: q.departmentId,
+    departmentIds: q.departmentIds,
+    subProjectId: q.subProjectId,
+    projectCode: q.projectCode,
+    projectName: q.projectName,
+    workTeamId: q.workTeamId,
+    materialName: q.materialName || q.keyword,
+    materialCode: q.materialCode,
+    startDate: q.startDate,
+    endDate: q.endDate,
+  });
   const buffer = await wms.exportToExcel(rows, '库存报表');
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="inventory_${Date.now()}.xlsx"`);
@@ -1254,8 +1270,15 @@ workTeamLedgerRouter.get('/', requirePermission('canViewWorkTeamLedger'), wrapHa
 
 workTeamLedgerRouter.get('/export', requirePermission('canExport'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
-  const { workTeamId, subProjectId } = req.query as any;
-  const { rows } = await wms.getWorkTeamLedgerExportData(tenantId, workTeamId, subProjectId);
+  const q = req.query as any;
+  const { rows } = await wms.getWorkTeamLedgerExportData({
+    tenantId,
+    workTeamId: q.workTeamId,
+    subProjectId: q.subProjectId,
+    keyword: q.keyword,
+    startDate: q.startDate,
+    endDate: q.endDate,
+  });
   const buffer = await wms.exportToExcel(rows, '班组台账');
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="work_team_ledger_${Date.now()}.xlsx"`);
