@@ -4,8 +4,8 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S26 contract progress receipt verified pending push
-- Current task: 合同管理承包合同进度款收款已通过真实 Chrome：同一合同详情页创建收款记录并回读金额/描述，原合同附件、采购、分包上传下载删除链路继续通过；库存预警仍不恢复、不纳入验收矩阵
+- Current phase: S26 contract progress receipt pushed
+- Current task: 合同管理承包合同进度款收款已通过真实 Chrome 并推送：同一合同详情页创建收款记录并回读金额/描述，原合同附件、采购、分包上传下载删除链路继续通过；库存预警仍不恢复、不纳入验收矩阵
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/系统配置/API Key/套餐生命周期、开发者 AI/OCR 配置生命周期均已通过真实 Chrome
 - In progress: 准备进入下一轮剩余历史业务页面深度 CRUD/上传下载验收；库存预警已移出产品范围，不作为后续功能板块验收项
 - Next action: 继续补齐剩余历史业务页面深度 CRUD/上传下载验收，并配置真实第三方人脸识别网关/密钥
@@ -66,8 +66,8 @@
 - Latest pushed implementation commit: `1fb9b96 test: cover developer AI OCR config lifecycle`
 - Latest pushed implementation commit: `0540256 test: cover developer integration security observability`
 - Latest pushed implementation commit: `c7ae6b5 test: cover developer payments invoices storage`
-- Latest verified implementation pending push: contract construction progress receipt coverage
-- Updated at: 2026-06-23T09:00:00Z
+- Latest pushed implementation commit: `4ae56ed test: cover construction contract progress receipt`
+- Updated at: 2026-06-23T09:05:00Z
 
 ## 项目概览
 
