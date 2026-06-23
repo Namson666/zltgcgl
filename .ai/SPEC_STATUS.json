@@ -1,9 +1,9 @@
 {
-  "stage": "S51_production_readiness_verified",
+  "stage": "S51_production_readiness_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "S51 production readiness self-check is verified locally: backend exposes developer-only /api/developer/readiness and frontend adds /dev/readiness to surface database migration table availability, active tenants, module entitlements, independent portal domains, mini-program routing, and HTTP face gateway readiness. It is read-only, returns warnings for missing external production prerequisites, does not leak endpoint/API keys, and does not claim Product Green. Focused backend auth/readiness tests passed 13/13, focused real Chrome developer readiness path passed 1/1, verify passed with backend 61 tests/build and frontend 38 tests/build, full Chrome smoke passed 36/36 including /dev/readiness route matrix, code-review-graph risk 0.60 with helper/App gaps covered by backend/API/Chrome evidence, Claude audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation and real third-party face gateway credentials.",
-  "updated_at": "2026-06-23T21:50:30Z"
+  "notes": "S51 production readiness self-check is verified and pushed at 24db3cc: backend exposes developer-only /api/developer/readiness and frontend adds /dev/readiness to surface database migration table availability, active tenants, module entitlements, independent portal domains, mini-program routing, and HTTP face gateway readiness. It is read-only, returns warnings for missing external production prerequisites, does not leak endpoint/API keys, and does not claim Product Green. Focused backend auth/readiness tests passed 13/13, focused real Chrome developer readiness path passed 1/1, verify passed with backend 61 tests/build and frontend 38 tests/build, full Chrome smoke passed 36/36 including /dev/readiness route matrix, code-review-graph risk 0.60 with helper/App gaps covered by backend/API/Chrome evidence, Claude audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation and real third-party face gateway credentials.",
+  "updated_at": "2026-06-23T21:54:30Z"
 }

@@ -4,11 +4,11 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S51 production readiness verified
-- Current task: 生产就绪自检已验证，准备提交并推送；库存预警仍不恢复、不纳入验收矩阵
+- Current phase: S51 production readiness pushed
+- Current task: 生产就绪自检已提交并推送；库存预警仍不恢复、不纳入验收矩阵
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖、小程序同手机号多企业冲突保护、冲突后选择企业打卡 appId 校验闭环、管理员手机号预绑定和企业自有 appId 直达验收；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、劳资工资发放生命周期、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/企业端公告首页可见/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总、开发者首页数据看板真实汇总、公开注册企业登录闭环均已通过真实 Chrome
-- In progress: S51 已本地验证：开发者后台新增生产就绪自检，聚合数据库迁移、模块开通、独立登录域名、小程序分流、人脸 HTTP 网关状态；缺外部生产配置时显示 warning，不冒充 Product Green
-- Next action: 提交并推送 S51；之后继续真实生产 DNS/证书和第三方人脸网关密钥验证，或选择下一个剩余历史页面做深度 CRUD/上传下载覆盖
+- In progress: S51 已推送到公开仓库：开发者后台新增生产就绪自检，聚合数据库迁移、模块开通、独立登录域名、小程序分流、人脸 HTTP 网关状态；缺外部生产配置时显示 warning，不冒充 Product Green
+- Next action: 继续真实生产 DNS/证书和第三方人脸网关密钥验证，或选择下一个剩余历史页面做深度 CRUD/上传下载覆盖
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：生产 DNS/反代/证书未接入真实域名验证、真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
 - Do not repeat: 不要恢复库存预警；不要把 Build Green 当 Product Green
 - Must read:
