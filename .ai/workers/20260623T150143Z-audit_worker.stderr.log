@@ -1,0 +1,1 @@
+Interrupted manually after more than two minutes without Claude CLI output. Console traceback showed KeyboardInterrupt inside scripts/run_claude_worker.py while waiting for subprocess communication.

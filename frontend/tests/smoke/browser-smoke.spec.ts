@@ -145,6 +145,64 @@ async function createSmokeTenant(page: any, stamp: number) {
   };
 }
 
+async function loginSmokeTenant(page: any, tenant: { tenantCode: string; username: string; password: string }) {
+  const response = await page.request.post('/api/auth/user/login', {
+    data: {
+      tenantCode: tenant.tenantCode,
+      username: tenant.username,
+      password: tenant.password,
+    },
+  });
+  expect(response.status()).toBe(200);
+  const body = await readJson(response);
+  expect(body?.data?.token).toBeTruthy();
+  return body.data.token as string;
+}
+
+async function ensureSmokeDepartment(page: any, tenantToken: string, stamp: number, suffix: string) {
+  const listResponse = await page.request.get('/api/departments?page=1&pageSize=10', {
+    headers: { Authorization: `Bearer ${tenantToken}` },
+  });
+  expect(listResponse.status()).toBe(200);
+  const listBody = await readJson(listResponse);
+  const existing = (listBody?.data || []).find((item: any) => item?.id);
+  if (existing) return existing.id as string;
+
+  const createResponse = await page.request.post('/api/departments', {
+    headers: { Authorization: `Bearer ${tenantToken}` },
+    data: {
+      name: `小程序分流验收项目部${suffix}`,
+      code: `mp-${suffix}-${String(stamp).slice(-6)}`,
+      description: '小程序手机号分流验收自动创建',
+    },
+  });
+  expect(createResponse.status()).toBe(201);
+  const createBody = await readJson(createResponse);
+  expect(createBody?.data?.id).toBeTruthy();
+  return createBody.data.id as string;
+}
+
+async function createSmokePersonnel(page: any, tenantToken: string, departmentId: string, data: { name: string; phone: string; stamp: number }) {
+  const response = await page.request.post('/api/labor/personnel', {
+    headers: { Authorization: `Bearer ${tenantToken}` },
+    data: {
+      name: data.name,
+      phone: data.phone,
+      idCardNo: generateValidIdCard(data.stamp),
+      type: 'WORKER',
+      departmentId,
+      salaryMode: 'DAILY',
+      dailySalary: 320,
+      workerDailySalary: 320,
+      remark: '小程序手机号分流验收人员',
+    },
+  });
+  expect(response.status()).toBe(201);
+  const body = await readJson(response);
+  expect(body?.data?.id).toBeTruthy();
+  return body.data;
+}
+
 async function getDeveloperToken(page: any) {
   const response = await page.request.post('/api/auth/developer/login', {
     data: developerAccount,
@@ -645,6 +703,128 @@ test.describe('browser smoke: authenticated core navigation', () => {
 	    await expect(page.getByText('企业小程序接入配置已保存')).toBeVisible();
 	    await page.screenshot({
 	      path: '../docs/smoke-evidence/开发者企业管理.png',
+      fullPage: true,
+    });
+  });
+
+  test('mini-program check-in does not silently route duplicated phone and tenant app routes directly', async ({ page }) => {
+    test.setTimeout(90_000);
+    const stamp = Date.now();
+    const defaultAppId = `wx_smoke_default_conflict_${stamp}`;
+    const tenantAppId = `wx_smoke_tenant_direct_${stamp}`;
+    const sharedPhone = `137${String(stamp).slice(-8)}`;
+    const checkDate = '2026-06-24';
+    const facePath = path.resolve(process.cwd(), 'tests/fixtures/checkin-face.svg');
+    const faceBuffer = fs.readFileSync(facePath);
+
+    const developerToken = await getDeveloperToken(page);
+    const devHeaders = { Authorization: `Bearer ${developerToken}` };
+    const defaultMiniProgramResponse = await page.request.put('/api/developer/mini-program/default', {
+      headers: devHeaders,
+      data: {
+        name: '开发者默认打卡小程序',
+        appId: defaultAppId,
+        appSecret: 'smoke-secret',
+        isEnabled: true,
+        remark: '手机号多企业冲突验收',
+      },
+    });
+    expect(defaultMiniProgramResponse.status()).toBe(200);
+
+    const tenantA = await createSmokeTenant(page, stamp + 11);
+    const tenantB = await createSmokeTenant(page, stamp + 22);
+    const tokenA = await loginSmokeTenant(page, tenantA);
+    const tokenB = await loginSmokeTenant(page, tenantB);
+    const headersA = { Authorization: `Bearer ${tokenA}` };
+    const headersB = { Authorization: `Bearer ${tokenB}` };
+    const departmentA = await ensureSmokeDepartment(page, tokenA, stamp, 'a');
+    const departmentB = await ensureSmokeDepartment(page, tokenB, stamp, 'b');
+    const personA = await createSmokePersonnel(page, tokenA, departmentA, {
+      name: `默认小程序冲突A-${stamp}`,
+      phone: sharedPhone,
+      stamp: stamp + 101,
+    });
+    const personB = await createSmokePersonnel(page, tokenB, departmentB, {
+      name: `默认小程序冲突B-${stamp}`,
+      phone: sharedPhone,
+      stamp: stamp + 202,
+    });
+
+    const tenantMiniProgramResponse = await page.request.put(`/api/developer/tenants/${tenantA.tenantId}/mini-program`, {
+      headers: devHeaders,
+      data: {
+        name: `${tenantA.tenantName}自有打卡小程序`,
+        appId: tenantAppId,
+        appSecret: 'tenant-smoke-secret',
+        isEnabled: true,
+        remark: '企业自有 appId 直接分流验收',
+      },
+    });
+    expect(tenantMiniProgramResponse.status()).toBe(200);
+
+    const conflictResponse = await page.request.post('/api/mobile/check-in', {
+      data: {
+        appId: defaultAppId,
+        phone: sharedPhone,
+        checkDate,
+        latitude: 22.5431,
+        longitude: 114.0579,
+        province: '广东省',
+        city: '深圳市',
+        county: '南山区',
+        address: '广东省深圳市南山区默认小程序冲突打卡点',
+      },
+    });
+    expect(conflictResponse.status()).toBe(409);
+    const conflictBody = await readJson(conflictResponse);
+    expect(conflictBody?.error).toBe('MULTIPLE_TENANTS');
+    expect(conflictBody?.message).toContain('请选择企业');
+    const candidateTenantIds = (conflictBody?.data?.candidates || []).map((candidate: any) => candidate.tenantId);
+    expect(candidateTenantIds).toContain(tenantA.tenantId);
+    expect(candidateTenantIds).toContain(tenantB.tenantId);
+
+    const listCheckIns = async (headers: Record<string, string>, personnelId: string) => {
+      const response = await page.request.get(`/api/labor/attendance/mobile/check-ins?personnelId=${personnelId}&date=${checkDate}`, { headers });
+      expect(response.status()).toBe(200);
+      return readJson(response);
+    };
+    let tenantACheckIns = await listCheckIns(headersA, personA.id);
+    let tenantBCheckIns = await listCheckIns(headersB, personB.id);
+    expect(Number(tenantACheckIns?.data?.total || 0)).toBe(0);
+    expect(Number(tenantBCheckIns?.data?.total || 0)).toBe(0);
+
+    const tenantAppCheckInResponse = await page.request.post('/api/mobile/check-in', {
+      multipart: {
+        appId: tenantAppId,
+        phone: sharedPhone,
+        checkDate,
+        latitude: '22.5431',
+        longitude: '114.0579',
+        province: '广东省',
+        city: '深圳市',
+        county: '南山区',
+        address: '广东省深圳市南山区企业自有小程序打卡点',
+        photo: { name: 'checkin-face.svg', mimeType: 'image/svg+xml', buffer: faceBuffer },
+      },
+    });
+    expect(tenantAppCheckInResponse.status()).toBe(201);
+    const tenantAppCheckInBody = await readJson(tenantAppCheckInResponse);
+    expect(tenantAppCheckInBody?.data?.record?.tenantId).toBe(tenantA.tenantId);
+    expect(tenantAppCheckInBody?.data?.record?.personnelId).toBe(personA.id);
+    expect(tenantAppCheckInBody?.data?.record?.appId).toBe(tenantAppId);
+    expect(tenantAppCheckInBody?.data?.record?.photoUrl).toContain('/uploads/');
+
+    tenantACheckIns = await listCheckIns(headersA, personA.id);
+    tenantBCheckIns = await listCheckIns(headersB, personB.id);
+    expect(Number(tenantACheckIns?.data?.total || 0)).toBe(1);
+    expect((tenantACheckIns?.data?.records || [])[0]?.appId).toBe(tenantAppId);
+    expect(Number(tenantBCheckIns?.data?.total || 0)).toBe(0);
+
+    await loginDeveloper(page);
+    await page.goto('/dev/integrations');
+    await expect(page.getByTestId('default-mini-program-config')).toContainText('开发者默认打卡小程序');
+    await page.screenshot({
+      path: '../docs/smoke-evidence/小程序手机号多企业分流.png',
       fullPage: true,
     });
   });
