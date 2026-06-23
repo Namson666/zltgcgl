@@ -2,7 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DB_PATH="${BROWSER_SMOKE_DB_PATH:-/private/tmp/zlt_browser_smoke.db}"
+SMOKE_TMP_DIR="${BROWSER_SMOKE_TMP_DIR:-${TMPDIR:-/tmp}}"
+DB_PATH="${BROWSER_SMOKE_DB_PATH:-$SMOKE_TMP_DIR/zlt_browser_smoke.db}"
 BACKEND_PORT="${BROWSER_SMOKE_BACKEND_PORT:-4101}"
 FRONTEND_PORT="${BROWSER_SMOKE_FRONTEND_PORT:-5173}"
 

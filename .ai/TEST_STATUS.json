@@ -1,5 +1,5 @@
 {
-  "status": "ci_prisma_sqlite_path_fix_verified_pending_remote_ci",
+  "status": "ci_browser_smoke_tmpdir_fix_verified_pending_remote_ci",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -8,6 +8,18 @@
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "ci_browser_smoke_tmpdir_fix",
+      "command": "gh run watch 28062496303 --repo Namson666/zltgcgl --exit-status; fix scripts/start-browser-smoke-server.sh default DB path from /private/tmp to ${TMPDIR:-/tmp}; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S57-ci-browser-smoke-tmpdir-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
+      "status": "verified_claude_pass_pending_remote_ci",
+      "result": "S57 responds to GitHub Actions run 28062496303. The Build and test job passed, proving the S56 Prisma SQLite path fix; the Real browser smoke job failed before tests because start-browser-smoke-server.sh defaulted DB_PATH to /private/tmp/zlt_browser_smoke.db, which Ubuntu CI cannot create. The script now defaults to ${BROWSER_SMOKE_TMP_DIR:-${TMPDIR:-/tmp}}/zlt_browser_smoke.db while preserving exact BROWSER_SMOKE_DB_PATH override. Local real Chrome browser-smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS at .ai/workers/20260623T225835Z-audit_worker.result.md. CI Green remains not_verified until pushed remote CI rerun succeeds.",
+      "evidence_files": [
+        "scripts/start-browser-smoke-server.sh",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        ".ai/workers/20260623T225835Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "ci_prisma_sqlite_path_fix",
       "command": "gh run watch 28061918118 --repo Namson666/zltgcgl --exit-status; fix scripts/verify.sh to initialize backend/prisma/test.db; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S56-ci-prisma-sqlite-path-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",

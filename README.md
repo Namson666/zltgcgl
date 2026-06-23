@@ -4,11 +4,11 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S56 CI Prisma SQLite path fix verified pending remote CI
-- Current task: GitHub Actions run `28061918118` 暴露 `verify.sh` 初始化 `backend/test.db`，但 Prisma 测试实际读取 `backend/prisma/test.db`；路径已修正并本地验证通过，等待推送重跑远端 CI；库存预警仍不恢复、不纳入验收矩阵
+- Current phase: S57 CI browser smoke tmpdir fix verified pending remote CI
+- Current task: GitHub Actions run `28062496303` 的 Build/Test 已通过，但 Real browser smoke 因 Ubuntu 不能创建 `/private/tmp` 失败；浏览器 smoke DB 默认路径已改为 `${TMPDIR:-/tmp}` 并本地真实 Chrome 36/36 通过，等待推送重跑远端 CI；库存预警仍不恢复、不纳入验收矩阵
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖、小程序同手机号多企业冲突保护、冲突后选择企业打卡 appId 校验闭环、管理员手机号预绑定和企业自有 appId 直达验收；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、劳资工资发放生命周期、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/企业端公告首页可见/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总、开发者首页数据看板真实汇总、公开注册企业登录闭环均已通过真实 Chrome
-- In progress: S56 已本地验证：远端 CI run `28061918118` 在 `verify.sh` 后端测试阶段仍缺 `developers` 表；根因是 Prisma `file:./test.db` 相对 schema 目录解析，`verify.sh` 已改为重建 `backend/prisma/test.db`
-- Next action: 推送 S56；随后读取 GitHub Actions run，若通过再把 CI Green 标记为 verified
+- In progress: S57 已本地验证：远端 CI run `28062496303` 已证明 S56 的 `verify.sh` 修复有效；剩余失败是 browser smoke 启动脚本使用 macOS `/private/tmp` 默认路径，已改为跨平台临时目录
+- Next action: 推送 S57；随后读取 GitHub Actions run，若通过再把 CI Green 标记为 verified
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：生产 DNS/反代/证书未接入真实域名验证、真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
 - Do not repeat: 不要恢复库存预警；不要把 Build Green 当 Product Green
 - Must read:
@@ -30,6 +30,8 @@
 - S55 verified command: `bash scripts/verify.sh` passed with explicit Backend test database init；full `bash scripts/browser-smoke.sh` passed real Chrome 36/36 after DB init refactor；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps；Claude CLI worker `.ai/workers/20260623T223550Z-audit_worker.result.md` returned PASS；remote CI run `28061918118` later proved the initialized path must be `backend/prisma/test.db`, not `backend/test.db`
 - S56 verified command: `bash scripts/verify.sh` passed backend 61 + frontend 38 + builds；full `bash scripts/browser-smoke.sh` passed real Chrome 36/36；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps；Claude CLI worker `.ai/workers/20260623T224717Z-audit_worker.result.md` returned PASS
 - Claude worker evidence: latest `.ai/workers/20260623T224717Z-audit_worker.result.md` returned PASS for S56 CI Prisma SQLite path fix.
+- S57 verified command: remote CI run `28062496303` Build/Test passed and Real browser smoke failed on `/private/tmp`; after tmpdir fix, full `bash scripts/browser-smoke.sh` passed real Chrome 36/36；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps；Claude CLI worker `.ai/workers/20260623T225835Z-audit_worker.result.md` returned PASS
+- Claude worker evidence: latest `.ai/workers/20260623T225835Z-audit_worker.result.md` returned PASS for S57 browser smoke tmpdir fix.
 - Claude worker evidence: latest `.ai/workers/20260623T223550Z-audit_worker.result.md` returned PASS for S55 CI test DB initialization fix.
 - Claude worker evidence: latest `.ai/workers/20260623T220545Z-audit_worker.result.md` returned PASS for S52 production external smoke gate.
 - Claude worker evidence: latest `.ai/workers/20260623T214941Z-audit_worker.result.md` returned PASS for S51 production readiness self-check.
