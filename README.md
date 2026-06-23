@@ -4,8 +4,8 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S15 finance department reimbursement review verified pending push
-- Current task: 项目部报账审核/驳回已完成真实 Chrome 深测：项目部提交报账并上传凭证、费用列表审核通过、API 验证已审核不可删、费用列表驳回、删除已拒绝记录、API 验证消失
+- Current phase: S15 finance department reimbursement review pushed
+- Current task: 项目部报账审核/驳回已完成真实 Chrome 深测并推送：项目部提交报账并上传凭证、费用列表审核通过、API 验证已审核不可删、费用列表驳回、删除已拒绝记录、API 验证消失
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、库存预警产品功能移除且历史 alertThreshold 字段已删除、Prisma Client 同步生成护栏、劳资导出修复、劳资人员/考勤/工资/风控深测、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回均已通过真实 Chrome
 - In progress: 准备进入下一轮剩余历史业务页面深度 CRUD/上传下载验收
 - Next action: 继续补齐剩余历史业务页面深度 CRUD/上传下载验收，并配置真实第三方人脸识别网关/密钥
@@ -47,8 +47,8 @@
 - Previous implementation commit: `02d3ffa test: cover labor deep crud flows`
 - Latest pushed implementation commit before S14: `75b2668 chore: remove inventory alert schema residue`; latest pushed status marker before S14: `f0cfb7f chore: mark inventory alert cleanup pushed`
 - Latest pushed implementation commit: `16b26c0 test: cover finance category recycle lifecycle`
-- Pending implementation commit: finance department reimbursement review coverage
-- Updated at: 2026-06-23T03:43:10Z
+- Latest pushed implementation commit: `dc676cb test: cover department reimbursement review`
+- Updated at: 2026-06-23T03:47:00Z
 
 ## 项目概览
 
