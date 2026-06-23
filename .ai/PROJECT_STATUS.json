@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_mini_program_phone_prebinding_toggle_safety_verification",
+    "working_tree": "clean_after_mini_program_phone_prebinding_toggle_safety_push",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "mini_program_phone_prebinding_toggle_safety_pending_push",
-    "pushed_commit": "2d160ba feat: add mini program prebinding toggle",
-    "last_pushed_commit": "2d160ba"
+    "push_status": "mini_program_phone_prebinding_toggle_safety_pushed",
+    "pushed_commit": "347f1a7 feat: confirm mini program prebinding disable",
+    "last_pushed_commit": "347f1a7"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "mini_program_phone_prebinding_toggle_safety_pending_push",
+    "push_status": "mini_program_phone_prebinding_toggle_safety_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "2d160ba feat: add mini program prebinding toggle"
+    "pushed_commit": "347f1a7 feat: confirm mini program prebinding disable"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,12 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "mini_program_phone_prebinding_toggle_safety_verified_pending_push",
-  "updated_at": "2026-06-23T16:12:46Z",
-  "push_status": "mini_program_phone_prebinding_toggle_safety_pending_push",
-  "last_pushed_commit": "2d160ba",
-  "current_commit": "41fb4b9 chore: mark mini program prebinding toggle pushed",
+  "status": "mini_program_phone_prebinding_toggle_safety_pushed",
+  "updated_at": "2026-06-23T16:14:13Z",
+  "push_status": "mini_program_phone_prebinding_toggle_safety_pushed",
+  "last_pushed_commit": "347f1a7",
+  "current_commit": "347f1a7 feat: confirm mini program prebinding disable",
   "notes": [
+    "2026-06-24: S45 default mini-program phone prebinding disable-confirm/type-safety polish pushed at 347f1a7; status marker pending.",
     "2026-06-24: S45 default mini-program phone prebinding disable-confirm and type-safety polish verified locally; focused Chrome 1/1, verify, full Chrome 35/35, code-review-graph risk 0.50, Claude retry PASS; pending commit/push.",
     "2026-06-23: S44 default mini-program phone prebinding enable/disable lifecycle pushed at 2d160ba; status marker pending.",
     "2026-06-23: S44 default mini-program phone prebinding enable/disable lifecycle verified locally;停用后默认小程序无 tenantId 打卡恢复 MULTIPLE_TENANTS 且不写记录，重新启用后恢复自动分流；verify passed, full Chrome 35/35, Claude audit PASS; pending commit/push.",
@@ -74,7 +75,7 @@
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
   "current_phase": "S45_mini_program_phone_prebinding_toggle_safety_verified",
-  "current_task": "Commit and push S45 mini-program phone prebinding disable-confirm and type-safety polish.",
+  "current_task": "Continue remaining deep CRUD/upload/download browser regression or production face gateway/DNS validation.",
   "last_verified_at": "2026-06-23T15:40:34Z",
   "last_verified_command": "focused Chrome mini-program prebinding 1/1; bash scripts/verify.sh backend 57 frontend 36 build; bash scripts/browser-smoke.sh 35/35; code-review-graph risk 0.50; Claude CLI audit WARN nonblocking",
   "history": [
