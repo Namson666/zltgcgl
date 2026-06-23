@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "ci_browser_smoke_delete_toast_selector_fix_verified_pending_remote_ci",
+  "stage": "ci_green_verified_product_green_yellow",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -52,9 +52,9 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-24T00:00:00Z",
-  "current_phase": "S59_ci_browser_smoke_delete_toast_selector_fix_verified_pending_remote_ci",
-  "current_task": "Push S59 exact delete-toast selector fix and inspect remote CI before claiming CI Green.",
+  "updated_at": "2026-06-23T23:42:35Z",
+  "current_phase": "S60_ci_green_verified_product_green_yellow",
+  "current_task": "Commit and push CI Green status marker; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
   "last_completed": "S51 production readiness self-check verified and pushed at 24db3cc: developer-only readiness API/UI, missing migration table warning, portal/mini-program/module/face gateway checks, verify.sh, full Chrome 36/36, code-review-graph, and Claude audit passed.",
-  "next_action": "Push S59 and inspect GitHub Actions run. Product Green still requires running scripts/production-smoke.mjs against real production URL/DNS/cert and third-party face gateway credentials."
+  "next_action": "Push the S60 status marker. Product Green still requires running scripts/production-smoke.mjs against real production URL/DNS/cert and third-party face gateway credentials."
 }

@@ -1,13 +1,24 @@
 {
-  "status": "ci_browser_smoke_delete_toast_selector_fix_verified_pending_remote_ci",
+  "status": "ci_green_verified_product_green_yellow",
   "build_green": "verified",
   "test_green": "verified",
-  "ci_green": "not_verified",
+  "ci_green": "verified",
   "runtime_smoke_green": "verified",
   "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_labor_report_type_export_labor_report_all_frontend_types_labor_legacy_output_value_api_chain_face_provider_diagnostic_production_readiness_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "github_actions_ci_green",
+      "command": "git push origin public-main && git push origin public-main:main; gh run watch 28064450215 --repo Namson666/zltgcgl --exit-status; gh run view 28064450215 --repo Namson666/zltgcgl --json status,conclusion,name,headBranch,headSha,jobs",
+      "status": "verified_remote_ci_success",
+      "result": "S60 marks CI Green verified for pushed head 1808638. GitHub Actions run 28064450215 completed successfully on public-main: Build and test job passed in 1m0s, including dependency install, production-smoke syntax check, missing-target honesty check, and scripts/verify.sh; Real browser smoke job passed in 5m12s, including Chrome installation, bash scripts/browser-smoke.sh, and smoke evidence upload. Product Green remains not_yet_full_production_green until real production HTTPS/DNS/cert and real third-party face gateway credentials/configuration are verified.",
+      "evidence_files": [
+        ".github/workflows/ci.yml",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html"
+      ]
+    },
     {
       "type": "ci_browser_smoke_delete_toast_selector_fix",
       "command": "gh run watch 28063684577 --repo Namson666/zltgcgl --exit-status; fix finance delete-toast strict selector by using exact text; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"enterprise user can manage finance categories\"; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S59-ci-browser-smoke-delete-toast-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",

@@ -4,11 +4,11 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S59 CI browser smoke delete-toast selector fix verified pending remote CI
-- Current task: GitHub Actions run `28063684577` 的 Build/Test 已通过，Real browser smoke 已跑完整 36 项但有 1 项 strict text 歧义失败；`类别已删除` 断言已改为 exact，本地 focused 1/1 与 full Chrome 36/36 通过，code-review-graph 0 gaps，Claude PASS，等待推送和远端 CI；库存预警仍不恢复、不纳入验收矩阵
+- Current phase: S60 CI Green verified, Product Green Yellow
+- Current task: GitHub Actions run `28064450215` 已通过：Build/Test 1m0s success，Real browser smoke 5m12s success，head `1808638`；等待提交/推送 CI Green 状态标记。库存预警仍不恢复、不纳入验收矩阵
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖、小程序同手机号多企业冲突保护、冲突后选择企业打卡 appId 校验闭环、管理员手机号预绑定和企业自有 appId 直达验收；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、劳资工资发放生命周期、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/企业端公告首页可见/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总、开发者首页数据看板真实汇总、公开注册企业登录闭环均已通过真实 Chrome
-- In progress: S59 已本地验证：远端 CI run `28063684577` 证明 S58 后只剩财务类别删除 toast 文案 strict 歧义；已改为 exact text，不降低覆盖范围
-- Next action: 推送 S59；随后读取 GitHub Actions run，若通过再把 CI Green 标记为 verified
+- In progress: S60 状态标记：远端 CI 已绿，Product Green 仍保持 Yellow，因为真实生产 HTTPS/DNS/证书和第三方人脸网关凭证还没做外部生产 smoke
+- Next action: 提交并推送 S60 状态标记；下一轮进入生产外部 smoke 或继续业务重构切片
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：生产 DNS/反代/证书未接入真实域名验证、真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
 - Do not repeat: 不要恢复库存预警；不要把 Build Green 当 Product Green
 - Must read:
@@ -35,6 +35,7 @@
 - S58 verified command: remote CI run `28062934787` Build/Test passed and browser smoke reached 36 tests with 34/36 passed; focused rerun of the two selector-failed tests passed 2/2；final full `bash scripts/browser-smoke.sh` passed real Chrome 36/36；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50 / 0 gaps；Claude CLI worker `.ai/workers/20260623T231020Z-audit_worker.result.md` returned PASS
 - Claude worker evidence: latest `.ai/workers/20260623T231020Z-audit_worker.result.md` returned PASS for S58 browser smoke selector fix.
 - S59 verified command: remote CI run `28063684577` Build/Test passed and browser smoke reached 36 tests with 35/36 passed; focused rerun of the remaining finance category selector-failed test passed 1/1；final full `bash scripts/browser-smoke.sh` passed real Chrome 36/36；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50 / 0 gaps；Claude CLI worker `.ai/workers/20260623T233334Z-audit_worker.result.md` returned PASS
+- S60 verified command: GitHub Actions run `28064450215` passed on `public-main` head `1808638`; Build/Test 1m0s success；Real browser smoke 5m12s success；smoke evidence upload success
 - Claude worker evidence: latest `.ai/workers/20260623T223550Z-audit_worker.result.md` returned PASS for S55 CI test DB initialization fix.
 - Claude worker evidence: latest `.ai/workers/20260623T220545Z-audit_worker.result.md` returned PASS for S52 production external smoke gate.
 - Claude worker evidence: latest `.ai/workers/20260623T214941Z-audit_worker.result.md` returned PASS for S51 production readiness self-check.
