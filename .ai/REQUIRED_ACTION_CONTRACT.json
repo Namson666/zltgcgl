@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "finance_invoice_receipt_import_export_pushed",
+  "stage": "labor_personnel_attendance_salary_risk_verified_pending_push",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Inventory alert / 库存预警 remains removed per user request from product routes, menus, backend APIs, browser route matrix, and active docs while retaining historical DB columns for compatibility. Basic admin roles/users/departments deep CRUD/state-change flow is covered by real Chrome. Labor salary/payment/report exports use real backend downloads. Module entitlement and independent portal login smoke coverage verifies menu hiding, direct route redirect, API 403, enabled wms continuity, and no-tenant-code portal login in real Chrome. WMS main chain is covered by real Chrome. Finance petty-cash/voucher and invoice/receipt/P&L/import/export slices are now covered by real Chrome, including actual upload/download paths and tenant-scoped detail/update/delete fixes. Deep CRUD/upload/download across every remaining historical page and real third-party face gateway credentials remain Yellow before Product Green.",
+  "notes": "Inventory alert / 库存预警 remains removed per user request from product routes, menus, backend APIs, browser route matrix, and active docs while retaining historical DB columns for compatibility. Basic admin roles/users/departments deep CRUD/state-change flow is covered by real Chrome. Labor salary/payment/report exports use real backend downloads, and labor personnel/attendance/salary/risk now has real Chrome create/edit/upload-download-delete/leave/rejoin/batch/patch/calculate/manual-edit/export/anomaly-resolve coverage. Module entitlement and independent portal login smoke coverage verifies menu hiding, direct route redirect, API 403, enabled wms continuity, and no-tenant-code portal login in real Chrome. WMS main chain and finance main slices are covered by real Chrome. Deep CRUD/upload/download across every remaining historical page and real third-party face gateway credentials remain Yellow before Product Green.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-22T18:06:55Z"
+  "updated_at": "2026-06-23T02:45:42Z"
 }

@@ -243,11 +243,19 @@ const Attendance: React.FC = () => {
     setSubmitting(true);
     try {
       const ids = [...selectedPersonnel];
-      await Promise.all(ids.map(personnelId =>
-        laborApi.createAttendance({ personnelId, date: batchDate, value: batchValue, overtimeValue: batchOvertime })
-          .catch(() => null)
-      ));
-      toast.success(`已为 ${ids.length} 人录入考勤`);
+      let success = 0;
+      let fail = 0;
+      await Promise.all(ids.map(async personnelId => {
+        try {
+          await laborApi.createAttendance({ personnelId, date: batchDate, value: batchValue, overtimeValue: batchOvertime });
+          success++;
+        } catch {
+          fail++;
+        }
+      }));
+      if (success === 0) throw new Error('NO_ATTENDANCE_CREATED');
+      if (fail > 0) toast.error(`${fail} 人录入失败`);
+      toast.success(`已为 ${success} 人录入考勤`);
       setSelectedPersonnel(new Set());
     } catch { toast.error('录入失败'); }
     finally { setSubmitting(false); }

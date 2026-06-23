@@ -92,6 +92,15 @@ async function readJson(response: any) {
   }
 }
 
+function generateValidIdCard(stamp: number, birthDate = '19900301') {
+  const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+  const checks = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+  const seq = String(stamp).slice(-3).padStart(3, '0');
+  const base = `110101${birthDate}${seq}`;
+  const sum = base.split('').reduce((acc, digit, index) => acc + Number(digit) * weights[index], 0);
+  return `${base}${checks[sum % 11]}`;
+}
+
 async function createSmokeTenant(page: any, stamp: number) {
   const password = 'Admin@2024';
   const username = `portal_admin_${stamp}`;
@@ -826,6 +835,151 @@ test.describe('browser smoke: authenticated core navigation', () => {
 
     await page.screenshot({
       path: '../docs/smoke-evidence/劳资工资发放导出.png',
+      fullPage: true,
+    });
+  });
+
+  test('enterprise user can complete labor personnel attendance salary and risk CRUD', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const stamp = Date.now();
+    const month = '2026-06';
+    const anomalyMonth = '2026-05';
+    const personName = `浏览器劳资深测-${stamp}`;
+    const editedPersonName = `${personName}-已编辑`;
+    const idCardNo = generateValidIdCard(stamp);
+    const phone = `137${String(stamp).slice(-8)}`;
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+
+    await page.goto('/labor/personnel');
+    await expect(page.getByRole('heading', { name: '人员管理' })).toBeVisible();
+    await page.getByRole('button', { name: /新增项目部人员/ }).click();
+    await page.getByPlaceholder('姓名', { exact: true }).fill(personName);
+    await page.getByPlaceholder('联系电话').fill(phone);
+    await page.getByPlaceholder('18位身份证号').fill(idCardNo);
+    await page.locator('input[type="date"]').fill('2026-06-01');
+    await page.locator('select').filter({ hasText: '请选择项目部' }).selectOption({ label: '第一项目部' });
+    await page.locator('input[type="number"]').first().fill('6000');
+    const createDialog = page.locator('.fixed').filter({ hasText: '新增项目部人员' }).last();
+    await createDialog.getByRole('button', { name: '保存' }).click();
+    await expect(page.getByText('人员添加成功')).toBeVisible();
+    await page.getByPlaceholder('姓名/身份证号').fill(personName);
+    await expect(page.locator('tr', { hasText: personName })).toBeVisible();
+    const personnelResponse = await page.request.get(`/api/labor/personnel?search=${encodeURIComponent(idCardNo)}&limit=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(personnelResponse.status()).toBe(200);
+    const personnelBody = await readJson(personnelResponse);
+    const createdPersonnel = (personnelBody?.data?.personnel || []).find((item: any) => item.idCardNo === idCardNo);
+    expect(createdPersonnel?.id).toBeTruthy();
+
+    const personRow = page.locator('tr', { hasText: personName });
+    await personRow.getByTitle('编辑').click();
+    await expect(page.getByRole('heading', { name: '编辑人员信息' })).toBeVisible();
+    await page.getByPlaceholder('姓名', { exact: true }).fill(editedPersonName);
+    await page.getByRole('button', { name: '保存' }).click();
+    await expect(page.getByText('更新成功')).toBeVisible();
+    await page.getByPlaceholder('姓名/身份证号').fill(editedPersonName);
+    await expect(page.locator('tr', { hasText: editedPersonName })).toBeVisible();
+
+    await page.locator('tr', { hasText: editedPersonName }).getByTitle('查看详情').click();
+    await expect(page.getByRole('heading', { name: new RegExp(`人员详情 — ${editedPersonName}`) })).toBeVisible();
+    const detailDialog = page.locator('.fixed').filter({ hasText: `人员详情 — ${editedPersonName}` }).last();
+    await detailDialog.getByText('上传文件').first().click();
+    await page.locator('input[type="file"]').setInputFiles(path.resolve(process.cwd(), 'tests/fixtures/contract-attachment.pdf'));
+    await expect(page.getByText('已上传 1 个文件')).toBeVisible({ timeout: 10000 });
+    await expect(detailDialog.getByRole('link', { name: 'contract-attachment.pdf' })).toBeVisible();
+    const personnelAttachmentDownloadPromise = page.waitForEvent('download');
+    await detailDialog.getByRole('link', { name: 'contract-attachment.pdf' }).click();
+    expect((await personnelAttachmentDownloadPromise).suggestedFilename()).toBe('contract-attachment.pdf');
+    await detailDialog.locator('.group', { hasText: 'contract-attachment.pdf' }).locator('button').click();
+    await expect(page.getByText('附件已删除')).toBeVisible();
+    await expect(detailDialog.getByRole('link', { name: 'contract-attachment.pdf' })).toHaveCount(0);
+    await page.getByTitle('关闭').click();
+
+    await page.locator('tr', { hasText: editedPersonName }).getByTitle('登记离职').click();
+    await page.locator('input[type="date"]').fill('2026-06-23');
+    await page.getByRole('button', { name: '确认离职' }).click();
+    await expect(page.getByText('离职登记成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: editedPersonName })).toHaveCount(0);
+    await page.getByRole('button', { name: '离职' }).click();
+    await expect(page.locator('tr', { hasText: editedPersonName })).toBeVisible();
+    await page.locator('tr', { hasText: editedPersonName }).getByTitle('复职').click();
+    await expect(page.getByText('复职成功')).toBeVisible();
+    await page.getByRole('button', { name: '在职' }).click();
+    await expect(page.locator('tr', { hasText: editedPersonName })).toBeVisible();
+
+    await page.goto('/labor/attendance');
+    await expect(page.getByRole('heading', { name: '考勤管理' })).toBeVisible();
+    await page.getByPlaceholder('搜索姓名').fill(editedPersonName);
+    await expect(page.getByText(editedPersonName).first()).toBeVisible();
+    await page.getByText(editedPersonName).first().click();
+    await page.locator('input[type="date"]').fill('2026-06-21');
+    await page.getByRole('button', { name: '1.5天' }).click();
+    await page.locator('select').filter({ hasText: '无加班' }).selectOption('HALF');
+    await page.getByRole('button', { name: /录入 1 人/ }).click();
+    await expect(page.getByText('已为 1 人录入考勤')).toBeVisible();
+    await page.getByText(editedPersonName).first().click();
+    await page.getByRole('button', { name: '为已选人员补卡' }).click();
+    await expect(page.getByRole('heading', { name: '批量补卡' })).toBeVisible();
+    await page.getByRole('button', { name: '22' }).click();
+    await page.getByRole('button', { name: /提交补卡/ }).click();
+    await expect(page.getByRole('heading', { name: '批量补卡' })).toHaveCount(0);
+    const attendanceResponse = await page.request.get(`/api/labor/attendance/monthly?month=${month}&personnelId=${createdPersonnel.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(attendanceResponse.status()).toBe(200);
+    const attendanceBody = await readJson(attendanceResponse);
+    const attendanceSummary = attendanceBody?.data?.[0];
+    expect(attendanceSummary?.records?.length).toBeGreaterThanOrEqual(2);
+
+    await page.goto('/labor/salary');
+    await expect(page.getByRole('heading', { name: '工资核算' })).toBeVisible();
+    await page.locator('input[type="month"]').fill(month);
+    await page.getByRole('button', { name: '工资核算' }).click();
+    await expect(page.getByRole('heading', { name: '工资自动核算' })).toBeVisible();
+    await page.getByRole('button', { name: '开始核算' }).click();
+    await expect(page.getByText(/核算完成/)).toBeVisible({ timeout: 15000 });
+    const salaryRow = page.locator('tr', { hasText: editedPersonName });
+    await expect(salaryRow).toBeVisible();
+    await salaryRow.getByTitle('手动调整工资').click();
+    await expect(page.getByRole('heading', { name: '手动调整工资' })).toBeVisible();
+    await page.locator('.fixed').filter({ hasText: '手动调整工资' }).last().locator('input[type="number"]').first().fill('1234.56');
+    await page.getByPlaceholder('请输入调整原因').fill('真实浏览器工资手动调整');
+    await page.getByRole('button', { name: '保存调整' }).click();
+    await expect(page.getByText('工资记录修改成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: editedPersonName })).toContainText('¥1,234.56');
+    const laborSalaryDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /导出报表/ }).click();
+    expect((await laborSalaryDownloadPromise).suggestedFilename()).toBe(`${month}工资核算明细.xlsx`);
+
+    const paymentResponse = await page.request.post('/api/labor/payment', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        recipientName: editedPersonName,
+        idCardNo,
+        amount: 321,
+        paymentDate: '2026-05-20',
+        month: anomalyMonth,
+        paymentMethod: 'bank',
+        remark: '真实浏览器风控异常触发',
+      },
+    });
+    expect(paymentResponse.status()).toBe(201);
+
+    await page.goto('/labor/risk');
+    await expect(page.getByRole('heading', { name: '风控管理' })).toBeVisible();
+    await expect(page.locator('tr', { hasText: editedPersonName })).toBeVisible({ timeout: 10000 });
+    await page.locator('tr', { hasText: editedPersonName }).getByRole('button', { name: '处理' }).click();
+    await page.getByPlaceholder('备注说明').fill('真实浏览器处理异常记录');
+    await page.getByRole('button', { name: '确认处理' }).click();
+    await expect(page.getByText('异常已处理')).toBeVisible();
+    await page.getByText('合规检查').click();
+    await expect(page.getByText('合规检查')).toBeVisible();
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/劳资人员考勤工资风控CRUD.png',
       fullPage: true,
     });
   });

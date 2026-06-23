@@ -133,7 +133,7 @@ personnelRouter.put('/:id', authenticate, requireUser, requirePermission('canMan
 personnelRouter.post('/:id/leave', authenticate, requireUser, requirePermission('canManagePersonnel'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const tenantId = req.user!.tenantId!;
-    const { leftAt } = req.body;
+    const leftAt = req.body.leftAt || req.body.leaveDate;
     if (!leftAt) {
       res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '离职日期为必填项' } as ApiResponse);
       return;

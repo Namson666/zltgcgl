@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { laborApi, downloadBlob } from '../../api';
-import { Download, Calculator, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Download, Calculator, RefreshCw, AlertTriangle, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../../components/ui/Modal';
 import { Pagination, EmptyState, formatMoney, formatDate } from '../../components/ui/Common';
@@ -40,7 +40,11 @@ const Salary: React.FC = () => {
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [loading, setLoading] = useState(true);
   const [showCalcModal, setShowCalcModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<SalaryRecord | null>(null);
+  const [editForm, setEditForm] = useState({ totalPayable: '', overtimePay: '', remark: '' });
   const [calculating, setCalculating] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [exporting, setExporting] = useState(false);
   const pageSize = 50;
 
@@ -86,6 +90,39 @@ const Salary: React.FC = () => {
       toast.success('工资核算报表已导出');
     } catch { toast.error('导出失败'); }
     finally { setExporting(false); }
+  };
+
+  const openEdit = (record: SalaryRecord) => {
+    setEditingRecord(record);
+    setEditForm({
+      totalPayable: String(record.totalPayable ?? ''),
+      overtimePay: String(record.overtimePay ?? 0),
+      remark: '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingRecord) return;
+    const totalPayable = Number(editForm.totalPayable);
+    const overtimePay = Number(editForm.overtimePay || 0);
+    if (!Number.isFinite(totalPayable) || totalPayable < 0) return toast.error('请输入有效应发工资');
+    if (!Number.isFinite(overtimePay) || overtimePay < 0) return toast.error('请输入有效加班工资');
+    setSavingEdit(true);
+    try {
+      await laborApi.updateSalary(editingRecord.id, {
+        totalPayable,
+        overtimePay,
+        remark: editForm.remark,
+      });
+      toast.success('工资记录修改成功');
+      setShowEditModal(false);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '修改失败');
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   return (
@@ -150,10 +187,11 @@ const Salary: React.FC = () => {
               <th className="table-th">实发工资</th>
               <th className="table-th">欠薪</th>
               <th className="table-th">状态</th>
+              <th className="table-th">操作</th>
             </tr></thead>
             <tbody>
-              {loading ? <tr><td colSpan={10} className="table-td text-center py-12 text-gray-400">加载中...</td></tr>
-                : !records.length ? <tr><td colSpan={10} className="table-td text-center py-12"><EmptyState title="暂无工资数据" description="请点击「工资核算」按钮进行自动核算" /></td></tr>
+              {loading ? <tr><td colSpan={11} className="table-td text-center py-12 text-gray-400">加载中...</td></tr>
+                : !records.length ? <tr><td colSpan={11} className="table-td text-center py-12"><EmptyState title="暂无工资数据" description="请点击「工资核算」按钮进行自动核算" /></td></tr>
                 : records.map(r => (
                   <tr key={r.id} className={`border-b border-gray-50 hover:bg-gray-50
                     ${Number(r.arrearsAmount) > 0 ? 'bg-red-50/30' : ''}
@@ -178,6 +216,11 @@ const Salary: React.FC = () => {
                     <td className="table-td">
                       {r.needsRecalculation && <span className="badge-yellow"><AlertTriangle size={10} className="inline" /> 需重算</span>}
                       {r.isManuallyEdited && <span className="badge-blue">已手改</span>}
+                    </td>
+                    <td className="table-td">
+                      <button className="btn-ghost btn-sm" title="手动调整工资" onClick={() => openEdit(r)}>
+                        <Edit size={14} />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -204,6 +247,40 @@ const Salary: React.FC = () => {
             </button>
           </div>
         </div>
+      </Modal>
+
+      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="手动调整工资" size="sm">
+        {editingRecord && (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              正在调整：{editingRecord.personnel?.name || '未知人员'} · {editingRecord.month}
+            </div>
+            <div>
+              <label className="label">应发工资</label>
+              <input className="input" type="number" min="0" step="0.01"
+                value={editForm.totalPayable}
+                onChange={e => setEditForm({ ...editForm, totalPayable: e.target.value })} />
+            </div>
+            <div>
+              <label className="label">加班工资</label>
+              <input className="input" type="number" min="0" step="0.01"
+                value={editForm.overtimePay}
+                onChange={e => setEditForm({ ...editForm, overtimePay: e.target.value })} />
+            </div>
+            <div>
+              <label className="label">调整备注</label>
+              <input className="input" placeholder="请输入调整原因"
+                value={editForm.remark}
+                onChange={e => setEditForm({ ...editForm, remark: e.target.value })} />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button className="btn-ghost" onClick={() => setShowEditModal(false)}>取消</button>
+              <button className="btn-primary" onClick={handleSaveEdit} disabled={savingEdit}>
+                {savingEdit ? '保存中...' : '保存调整'}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

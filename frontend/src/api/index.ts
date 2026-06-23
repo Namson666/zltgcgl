@@ -1093,6 +1093,15 @@ export const laborApi = {
   createPersonnel: (data: any) =>
     http.post('/labor/personnel', data),
 
+  updatePersonnel: (id: string | number, data: any) =>
+    http.put(`/labor/personnel/${id}`, data),
+
+  leavePersonnel: (id: string | number, leftAt: string) =>
+    http.post(`/labor/personnel/${id}/leave`, { leftAt }),
+
+  rejoinPersonnel: (id: string | number) =>
+    http.post(`/labor/personnel/${id}/rejoin`),
+
   /* ---------- 考勤管理 ---------- */
 
   /**
@@ -1283,8 +1292,8 @@ export const laborApi = {
    * @param anomalyId - 异常记录 ID
    * @param data - 处理结果
    */
-  resolveAnomaly: (anomalyId: number, data: any) =>
-    http.put(`/labor/anomalies/${anomalyId}/resolve`, data),
+  resolveAnomaly: (anomalyId: number | string, data: any) =>
+    http.post(`/labor/anomalies/${anomalyId}/resolve`, data),
 
   /**
    * 获取异常统计数据

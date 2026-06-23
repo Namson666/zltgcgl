@@ -36,6 +36,12 @@ const severityConfig: Record<string, { label: string; class: string }> = {
   low: { label: '低风险', class: 'badge-blue' },
 };
 
+const normalizeSeverity = (level?: string): 'low' | 'medium' | 'high' => {
+  if (level === 'RED' || level === 'high') return 'high';
+  if (level === 'YELLOW' || level === 'medium') return 'medium';
+  return 'low';
+};
+
 const Risk: React.FC = () => {
   const [anomalies, setAnomalies] = useState<AnomalyRecord[]>([]);
   const [compliance, setCompliance] = useState<ComplianceItem[]>([]);
@@ -51,11 +57,31 @@ const Risk: React.FC = () => {
       if (tab === 'anomaly') {
         const res = await laborApi.getAnomalies({ pageSize: 100 });
         const data = (res.data as any).data;
-        setAnomalies(data.anomalies || []);
+        setAnomalies((data.anomalies || []).map((item: any) => ({
+          ...item,
+          type: item.type || (item.level === 'RED' ? '红色异常' : '黄色预警'),
+          severity: normalizeSeverity(item.level || item.severity),
+          personnelName: item.personnelName || item.personnel?.name,
+        })));
       } else {
         const res = await laborApi.getCompliance({ pageSize: 100 });
         const data = (res.data as any).data;
-        setCompliance(data.items || data.compliance || []);
+        const items = Array.isArray(data) ? data : (data.items || data.compliance || []);
+        setCompliance(items.map((item: any) => {
+          const failedItems = [
+            item.isUnderAge ? '未成年用工' : '',
+            item.isOverAge ? '超龄用工' : '',
+            item.isDuplicateId ? '身份证重复' : '',
+          ].filter(Boolean);
+          return {
+            ...item,
+            personnelName: item.personnelName || item.name,
+            type: item.type === 'STAFF' ? '项目部人员' : item.type === 'WORKER' ? '务工人员' : (item.type || '人员'),
+            status: failedItems.length ? 'fail' : (item.status || 'pass'),
+            checkItem: item.checkItem || failedItems.join('、') || '实名制合规',
+            checkedAt: item.checkedAt || item.updatedAt || item.createdAt,
+          };
+        }));
       }
     } catch { toast.error('加载数据失败'); }
     finally { setLoading(false); }
@@ -65,8 +91,7 @@ const Risk: React.FC = () => {
 
   const handleResolve = async () => {
     try {
-      const { http } = await import('../../api/client');
-      await http.post(`/labor/anomalies/${resolveTarget}/resolve`, { remark: resolveRemark });
+      await laborApi.resolveAnomaly(resolveTarget, { remark: resolveRemark, resolveReason: resolveRemark });
       toast.success('异常已处理');
       setShowResolveModal(false);
       fetchData();

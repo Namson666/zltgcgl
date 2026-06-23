@@ -1,13 +1,44 @@
 {
-  "status": "finance_invoice_receipt_import_export_browser_verified_pushed",
+  "status": "labor_personnel_attendance_salary_risk_browser_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "labor_personnel_attendance_salary_risk_deep_flow",
+      "command": "bash scripts/verify.sh; BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_labor_deep.db npx playwright test --config playwright.config.ts -g \"labor personnel attendance salary and risk CRUD\"; rm -rf backend/uploads docs/smoke-evidence/test-results && bash scripts/browser-smoke.sh; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/labor-deep-crud-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00; code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified",
+      "result": "劳资人员/考勤/工资/风控切片已通过真实 Chrome：人员新增、编辑、附件上传/下载/删除、离职、复职；考勤批量录入和批量补卡，并通过 /api/labor/attendance/monthly 校验真实写入；工资核算、手动调整、导出；工资发放触发异常、风控列表展示、异常处理。修复了离职 payload 兼容、复职状态回 active、考勤 DateTime upsert、批量考勤假成功、工资手动调整入口、风控字段/API 映射。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/劳资人员考勤工资风控CRUD.png",
+        ".ai/workers/20260623T024042Z-audit_worker.result.md"
+      ]
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "rm -rf backend/uploads docs/smoke-evidence/test-results && bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "12 Playwright smoke tests passed in system Google Chrome, including the new labor personnel/attendance/salary/risk deep CRUD/upload/download flow plus existing route matrix, WMS, finance, admin, module entitlement, and independent portal coverage."
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/labor-deep-crud-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "PASS; Claude confirmed no blockers for personnel tenant scope, leave/rejoin, attachment safety, attendance DateTime persistence, no fake-success behavior, salary/risk routes, public repo secret leakage, or module entitlement boundaries.",
+      "evidence_file": ".ai/workers/20260623T024042Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 135 files / 1529 nodes / 19019 edges. detect-changes risk score 0.50. Function-level unit gaps remain for labor helpers/components, while the changed labor product journey is covered by real Chrome and backend API assertions."
+    },
     {
       "type": "finance_invoice_receipt_pnl_import_export_flow",
       "command": "bash scripts/verify.sh; rm -rf backend/uploads docs/smoke-evidence/test-results && bash scripts/browser-smoke.sh; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/finance-invoice-receipt-import-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00; code-review-graph build --skip-flows && code-review-graph detect-changes",
@@ -693,8 +724,9 @@
     "Supplier/work-team CRUD has real Chrome create/edit/delete/search coverage; basic admin roles/users/departments now also have real Chrome deep CRUD/state-change coverage. Remaining historical business pages still need equivalent deep CRUD/upload/download where business rules support it.",
     "Inventory alert product feature has been removed per user request; historical Prisma alertThreshold column remains only for compatibility.",
     "Labor report export still writes the existing fixed workbook sheets; attendance/social preview is supported but adding those sheets to workbook export remains a non-blocking follow-up.",
-    "Finance invoice/receipt/P&L/import/export has real Chrome CRUD/upload/download coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow evidence."
+    "Finance invoice/receipt/P&L/import/export has real Chrome CRUD/upload/download coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow evidence.",
+    "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
-  "notes": "Inventory alert remains removed from active WMS product requirements. Finance invoice/receipt/P&L/import/export is now included in real Chrome CRUD/upload/download coverage. Real Chrome now passes 11 tests. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-22T18:06:55Z"
+  "notes": "Inventory alert remains removed from active WMS product requirements. Finance invoice/receipt/P&L/import/export and labor personnel/attendance/salary/risk are now included in real Chrome CRUD/upload/download/state-change coverage. Real Chrome now passes 12 tests. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
+  "updated_at": "2026-06-23T02:45:42Z"
 }

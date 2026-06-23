@@ -256,7 +256,7 @@ export async function rejoinPersonnel(tenantId: string, id: string) {
   const person = await prisma.personnel.findFirst({ where: { id, tenantId } });
   if (!person) throw { status: 404, code: 'NOT_FOUND', message: '人员不存在' };
   if (person.status !== 'left') throw { status: 400, code: 'NOT_LEFT', message: '该人员未离职，无需复职' };
-  return prisma.personnel.update({ where: { id }, data: { status: 'rejoin', leftAt: null } });
+  return prisma.personnel.update({ where: { id }, data: { status: 'active', leftAt: null } });
 }
 
 // ============================================
@@ -274,10 +274,11 @@ export interface CreateAttendanceData {
 export async function createAttendance(data: CreateAttendanceData) {
   const person = await prisma.personnel.findFirst({ where: { id: data.personnelId, tenantId: data.tenantId } });
   if (!person) throw { status: 404, code: 'NOT_FOUND', message: '人员不存在' };
+  const attendanceDate = new Date(data.date);
 
   return prisma.attendanceRecord.upsert({
-    where: { personnelId_date: { personnelId: data.personnelId, date: data.date } },
-    create: { tenantId: data.tenantId, personnelId: data.personnelId, date: data.date, value: data.value, overtimeValue: data.overtimeValue },
+    where: { personnelId_date: { personnelId: data.personnelId, date: attendanceDate } },
+    create: { tenantId: data.tenantId, personnelId: data.personnelId, date: attendanceDate, value: data.value, overtimeValue: data.overtimeValue },
     update: { value: data.value, overtimeValue: data.overtimeValue },
   });
 }
@@ -294,9 +295,10 @@ export async function createBatchAttendance(data: BatchAttendanceData) {
   for (let i = 0; i < data.records.length; i++) {
     try {
       const r = data.records[i];
+      const attendanceDate = new Date(r.date);
       await prisma.attendanceRecord.upsert({
-        where: { personnelId_date: { personnelId: r.personnelId, date: r.date } },
-        create: { tenantId: data.tenantId, personnelId: r.personnelId, date: r.date, value: r.value, overtimeValue: r.overtimeValue },
+        where: { personnelId_date: { personnelId: r.personnelId, date: attendanceDate } },
+        create: { tenantId: data.tenantId, personnelId: r.personnelId, date: attendanceDate, value: r.value, overtimeValue: r.overtimeValue },
         update: { value: r.value, overtimeValue: r.overtimeValue },
       });
       created++;

@@ -225,8 +225,7 @@ const Personnel: React.FC = () => {
         socialInsurance: form.hasSocialInsurance && form.socialInsuranceMonthly ? Number(form.socialInsuranceMonthly) : undefined,
       };
       if (editItem) {
-        const { http } = await import('../../api/client');
-        await http.put(`/labor/personnel/${editItem.id}`, payload);
+        await laborApi.updatePersonnel(editItem.id, payload);
       } else {
         await laborApi.createPersonnel(payload);
       }
@@ -238,21 +237,26 @@ const Personnel: React.FC = () => {
     } finally { setSaving(false); }
   };
 
-  // Actually, let me recheck the API client - it has getPersonnel and createPersonnel
-  // For update, leave, rejoin I'll need to use http directly
-
   const totalPages = Math.ceil(total / 50);
 
   const handleLeave = async () => {
     try {
-      // Using http directly since there's no dedicated method
-      const { http } = await import('../../api/client');
-      await http.post(`/labor/personnel/${leaveTarget}/leave`, { leaveDate });
+      await laborApi.leavePersonnel(leaveTarget, leaveDate);
       toast.success('离职登记成功');
       setShowLeaveModal(false);
       fetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.message || '操作失败');
+    }
+  };
+
+  const handleRejoin = async (id: number) => {
+    try {
+      await laborApi.rejoinPersonnel(id);
+      toast.success('复职成功');
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '复职失败');
     }
   };
 
@@ -364,6 +368,12 @@ const Personnel: React.FC = () => {
                           <button className="btn-ghost btn-sm text-orange-500" title="登记离职"
                             onClick={() => { setLeaveTarget(p.id); setLeaveDate(''); setShowLeaveModal(true); }}>
                             <LogOut size={14} />
+                          </button>
+                        )}
+                        {p.status === 'left' && (
+                          <button className="btn-ghost btn-sm text-emerald-600" title="复职"
+                            onClick={() => handleRejoin(p.id)}>
+                            <RefreshCw size={14} />
                           </button>
                         )}
                       </div>
@@ -578,7 +588,7 @@ const Personnel: React.FC = () => {
                           className="group relative flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
                           <span className="text-sm">{getFileIcon(file.mimeType)}</span>
                           <div className="min-w-0 max-w-[180px]">
-                            <a href={file.filePath} target="_blank" rel="noreferrer"
+                            <a href={file.filePath} download={file.fileName} target="_blank" rel="noreferrer"
                               className="text-xs text-gray-700 hover:text-primary-600 truncate block">
                               {file.fileName}
                             </a>
