@@ -1,9 +1,9 @@
 {
-  "stage": "S28_wms_material_catalog_verified_pending_push",
+  "stage": "S28_wms_material_catalog_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "WMS material catalog CRUD/export now has real Chrome API/UI coverage: the material catalog tab creates, edits, deletes, exports, and reads back records via backend API. Backend material filters are SQLite-safe and update/delete are tenant-scoped with unit coverage. Full Chrome smoke is 24/24. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T09:40:00Z"
+  "updated_at": "2026-06-23T09:45:00Z"
 }

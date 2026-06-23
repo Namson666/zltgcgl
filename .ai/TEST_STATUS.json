@@ -1,18 +1,18 @@
 {
-  "status": "wms_material_catalog_browser_verified_pending_push",
+  "status": "wms_material_catalog_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_pending_push",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_pushed",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
     {
       "type": "wms_material_catalog_flow",
       "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_material_catalog.db npx playwright test --config playwright.config.ts -g \"wms material catalog CRUD and export\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T093200Z-wms-material-catalog-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
-      "status": "verified_pending_push",
-      "result": "物资档案 CRUD/导出切片已通过真实 Chrome：物资总览新增物资档案 tab，支持新建/编辑/删除/导出；真实 Chrome 完成 create/edit/export/delete + API readback；focused 1/1, verify backend 7/40 + frontend 2/36 + build, full Chrome 24/24, code-review-graph risk 0.50 with function-level gaps covered by backend unit + Chrome e2e, Claude PASS. 库存预警未恢复.",
+      "status": "verified_pushed",
+      "result": "物资档案 CRUD/导出切片已通过真实 Chrome：物资总览新增物资档案 tab，支持新建/编辑/删除/导出；真实 Chrome 完成 create/edit/export/delete + API readback；focused 1/1, verify backend 7/40 + frontend 2/36 + build, full Chrome 24/24, code-review-graph risk 0.50 with function-level gaps covered by backend unit + Chrome e2e, Claude PASS. 库存预警未恢复. Implementation pushed at bb1022c to origin public-main and main.",
       "evidence_files": [
         "docs/smoke-evidence/playwright-results.json",
         "docs/smoke-evidence/playwright-report/index.html",
@@ -1108,5 +1108,5 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "WMS material catalog CRUD/export now has focused and full real Chrome coverage, including UI create/edit/delete/export, backend API read-back, tenant-scoped update/delete, and SQLite-safe material filters. Enterprise subscription lifecycle, developer payments/invoices/storage, integrations/security/monitoring/logs, AI/OCR, plans, system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T09:40:00Z"
+  "updated_at": "2026-06-23T09:45:00Z"
 }
