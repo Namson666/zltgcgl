@@ -7,16 +7,16 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_labor_legacy_output_value_api_verification",
+    "working_tree": "dirty_after_labor_legacy_output_value_api_push",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "labor_legacy_output_value_api_pending_push",
-    "pushed_commit": "7b8420c chore: mark labor report all types pushed",
-    "last_pushed_commit": "7b8420c"
+    "push_status": "labor_legacy_output_value_api_pushed",
+    "pushed_commit": "e32fef9 test: cover labor legacy output value api chain",
+    "last_pushed_commit": "e32fef9"
   },
   "github": {
     "requested_repo_exists": true,
@@ -25,7 +25,7 @@
     "requested_repo_has_refs": false,
     "push_status": "labor_report_all_types_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "7b8420c chore: mark labor report all types pushed"
+    "pushed_commit": "e32fef9 test: cover labor legacy output value api chain"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,13 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "labor_legacy_output_value_api_verified_pending_push",
-  "updated_at": "2026-06-23T17:32:10Z",
-  "push_status": "labor_legacy_output_value_api_pending_push",
-  "last_pushed_commit": "7b8420c",
-  "current_commit": "7b8420c chore: mark labor report all types pushed",
+  "status": "labor_legacy_output_value_api_pushed",
+  "updated_at": "2026-06-23T17:36:20Z",
+  "push_status": "labor_legacy_output_value_api_pushed",
+  "last_pushed_commit": "e32fef9",
+  "current_commit": "e32fef9 test: cover labor legacy output value api chain",
   "notes": [
-    "2026-06-24: S49 labor legacy subcontract output-value/progress-payment API chain verified locally; frontend wrapper path fixed to /labor/output-value/payments, Vitest API wrapper 1/1, focused real Chrome API chain 1/1, verify backend 57 + frontend 37 + builds, full Chrome 36/36, code-review-graph risk 0.50 / 0 test gaps, Claude audit and re-audit PASS; pending commit/push.",
+    "2026-06-24: S49 labor legacy subcontract output-value/progress-payment API chain verified locally and pushed at e32fef9; frontend wrapper path fixed to /labor/output-value/payments, Vitest API wrapper 1/1, focused real Chrome API chain 1/1, verify backend 57 + frontend 37 + builds, full Chrome 36/36, code-review-graph risk 0.50 / 0 test gaps, Claude audit and re-audit PASS.",
     "2026-06-24: S48 labor report all frontend types verified locally and pushed at e0d146c; status marker pushed at 7b8420c; salary/social/payment/attendance each selected in real Chrome, xlsx sheet names parsed, UI downloads checked, focused 1/1, verify, full Chrome 35/35, code-review-graph risk 0.50, Claude audit PASS.",
     "2026-06-24: S47 labor report typed export pushed at eb8ee97; follow-up status marker pushed at e98e23a.",
     "2026-06-24: S47 labor report typed export verified locally; payment/attendance typed xlsx sheets, invalid type 400, and no-type legacy four-sheet compatibility covered by real Chrome + ExcelJS parsing; verify, full Chrome 35/35, code-review-graph risk 0.50, Claude final audit PASS; pushed to public-main and main.",
@@ -80,8 +80,8 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S49_labor_legacy_output_value_api_verified",
-  "current_task": "Commit and push S49 labor legacy output-value API chain coverage.",
+  "current_phase": "S49_labor_legacy_output_value_api_pushed",
+  "current_task": "Continue remaining deep CRUD/upload/download browser regression or production face gateway/DNS validation.",
   "last_verified_at": "2026-06-23T15:40:34Z",
   "last_verified_command": "frontend API focused unit 1/1; focused Chrome legacy labor subcontract output value API chain 1/1; bash scripts/verify.sh backend 57 frontend 37 build; bash scripts/browser-smoke.sh 36/36; code-review-graph risk 0.50 with 0 test gaps; Claude CLI audit and re-audit PASS",
   "history": [
