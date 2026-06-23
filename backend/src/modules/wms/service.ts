@@ -86,8 +86,8 @@ export async function exportToExcel(rows: any[], sheetName: string): Promise<Buf
 
 export async function listMaterials(tenantId: string, filters?: { name?: string; code?: string }) {
   const where: any = { tenantId };
-  if (filters?.name) where.name = { contains: filters.name, mode: 'insensitive' };
-  if (filters?.code) where.code = { contains: filters.code, mode: 'insensitive' };
+  if (filters?.name) where.name = { contains: filters.name };
+  if (filters?.code) where.code = { contains: filters.code };
   return prisma.material.findMany({ where, orderBy: { createdAt: 'desc' } });
 }
 
@@ -109,11 +109,15 @@ export async function createMaterial(data: CreateMaterialData) {
   });
 }
 
-export async function updateMaterial(id: string, data: Partial<CreateMaterialData>) {
+export async function updateMaterial(tenantId: string, id: string, data: Partial<CreateMaterialData>) {
+  const existing = await prisma.material.findFirst({ where: { id, tenantId } });
+  if (!existing) throw { status: 404, code: 'MATERIAL_NOT_FOUND', message: '物资不存在' };
   return prisma.material.update({ where: { id }, data });
 }
 
-export async function deleteMaterial(id: string) {
+export async function deleteMaterial(tenantId: string, id: string) {
+  const existing = await prisma.material.findFirst({ where: { id, tenantId } });
+  if (!existing) throw { status: 404, code: 'MATERIAL_NOT_FOUND', message: '物资不存在' };
   return prisma.material.delete({ where: { id } });
 }
 

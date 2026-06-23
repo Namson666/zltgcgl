@@ -1687,6 +1687,90 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can manage wms material catalog CRUD and export', async ({ page }) => {
+    test.setTimeout(90_000);
+    await loginEnterprise(page);
+    const stamp = Date.now();
+    const materialName = `浏览器物资档案-${stamp}`;
+    const editedMaterialName = `${materialName}-已编辑`;
+    const materialCode = `MAT-${stamp}`;
+    const editedCode = `${materialCode}-E`;
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+
+    await page.goto('/wms/materials');
+    await page.getByRole('button', { name: '物资档案' }).click();
+    await expect(page.getByRole('button', { name: '新增物资' })).toBeVisible();
+
+    await page.getByRole('button', { name: '新增物资' }).click();
+    await page.getByPlaceholder('请输入物资编码').fill(materialCode);
+    await page.getByPlaceholder('请输入物资名称').fill(materialName);
+    await page.getByPlaceholder('请输入规格型号').fill('E2E-10mm');
+    await page.getByPlaceholder('请输入单位').fill('吨');
+    await page.getByPlaceholder('请输入单价').fill('321.45');
+    await page.getByPlaceholder('请输入分类').fill('测试材料');
+    await page.getByRole('button', { name: '创建物资' }).click();
+    await expect(page.getByText('物资已创建')).toBeVisible();
+    await expect(page.locator('tr', { hasText: materialName })).toBeVisible();
+
+    const createdResponse = await page.request.get(`/api/wms/materials?name=${encodeURIComponent(materialName)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(createdResponse.status()).toBe(200);
+    const createdBody = await readJson(createdResponse);
+    const createdMaterial = (createdBody?.data || []).find((item: any) => item.name === materialName);
+    expect(createdMaterial?.id).toBeTruthy();
+    expect(createdMaterial?.code).toBe(materialCode);
+    expect(createdMaterial?.unit).toBe('吨');
+
+    await page.getByPlaceholder('搜索物资档案...').fill(materialName);
+    const materialRow = page.locator('tr', { hasText: materialName });
+    await expect(materialRow).toBeVisible();
+    await materialRow.getByTitle('编辑物资').click();
+    await page.getByPlaceholder('请输入物资编码').fill(editedCode);
+    await page.getByPlaceholder('请输入物资名称').fill(editedMaterialName);
+    await page.getByPlaceholder('请输入单价').fill('654.32');
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('物资已更新')).toBeVisible();
+    await page.getByPlaceholder('搜索物资档案...').fill(editedMaterialName);
+    const editedRow = page.locator('tr', { hasText: editedMaterialName });
+    await expect(editedRow).toBeVisible();
+    await expect(editedRow).toContainText(editedCode);
+    await expect(editedRow).toContainText('¥654.32');
+
+    const editedResponse = await page.request.get(`/api/wms/materials?name=${encodeURIComponent(editedMaterialName)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(editedResponse.status()).toBe(200);
+    const editedBody = await readJson(editedResponse);
+    const editedMaterial = (editedBody?.data || []).find((item: any) => item.name === editedMaterialName);
+    expect(editedMaterial?.id).toBe(createdMaterial.id);
+    expect(editedMaterial?.code).toBe(editedCode);
+    expect(Number(editedMaterial?.unitPrice)).toBe(654.32);
+
+    const exportPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出物资档案' }).click();
+    expect((await exportPromise).suggestedFilename()).toBe('物资档案.xlsx');
+    await expect(page.getByText('物资档案已导出')).toBeVisible();
+
+    await editedRow.getByTitle('删除物资').click();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('物资已删除')).toBeVisible();
+    await expect(page.locator('tr', { hasText: editedMaterialName })).toHaveCount(0);
+
+    const afterDeleteResponse = await page.request.get(`/api/wms/materials?name=${encodeURIComponent(editedMaterialName)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(afterDeleteResponse.status()).toBe(200);
+    const afterDeleteBody = await readJson(afterDeleteResponse);
+    expect((afterDeleteBody?.data || []).some((item: any) => item.id === createdMaterial.id)).toBe(false);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/物资档案CRUD导出.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can complete wms inbound outbound return transfer chain', async ({ page }) => {
     test.setTimeout(150_000);
     await loginEnterprise(page);

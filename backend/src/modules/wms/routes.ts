@@ -444,12 +444,14 @@ materialsRouter.post('/', requirePermission('canManageSystem'), wrapHandler(asyn
 }));
 
 materialsRouter.put('/:id', requirePermission('canManageSystem'), wrapHandler(async (req, res) => {
-  const material = await wms.updateMaterial(req.params.id, req.body);
+  const tenantId = getTenantId(req);
+  const material = await wms.updateMaterial(tenantId, req.params.id, req.body);
   res.json({ success: true, data: material } as unknown as ApiResponse);
 }));
 
 materialsRouter.delete('/:id', requirePermission('canManageSystem'), wrapHandler(async (req, res) => {
-  await wms.deleteMaterial(req.params.id);
+  const tenantId = getTenantId(req);
+  await wms.deleteMaterial(tenantId, req.params.id);
   res.json({ success: true, data: null } as unknown as ApiResponse);
 }));
 

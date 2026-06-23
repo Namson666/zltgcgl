@@ -827,6 +827,15 @@ export const wmsApi = {
   createMaterial: (data: any) =>
     http.post('/wms/materials', data),
 
+  updateMaterial: (id: string, data: any) =>
+    http.put(`/wms/materials/${id}`, data),
+
+  deleteMaterial: (id: string) =>
+    http.delete(`/wms/materials/${id}`),
+
+  exportMaterials: () =>
+    http.get('/wms/materials/export', undefined, { responseType: 'blob' }),
+
   /**
    * 获取库存列表
    * @param params - 分页和筛选参数
