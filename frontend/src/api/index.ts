@@ -1281,8 +1281,11 @@ export const laborApi = {
    * 批量确认发放
    * @param paymentIds - 发放记录 ID 列表
    */
-  confirmBatchPayment: (paymentIds: number[]) =>
+  confirmBatchPayment: (paymentIds: Array<string | number>) =>
     http.post('/labor/payment/confirm-batch', { ids: paymentIds }),
+
+  deletePayment: (id: string | number) =>
+    http.delete(`/labor/payment/${id}`),
 
   /* ---------- 分包管理 ---------- */
 

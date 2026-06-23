@@ -1,9 +1,9 @@
 {
-  "stage": "S38_public_register_tenant_code_login_verified",
+  "stage": "S39_labor_payment_lifecycle_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Public enterprise registration and original tenant-code login closure is verified in real Chrome: Register now persists token/user to localStorage after self-registration with tenant identity and enabled modules; browser smoke creates a tenant through /register, verifies automatic dashboard login, reload persistence, default module visibility, logout, original tenant-code login, and developer API cleanup. Full Chrome smoke is 34/34. Inventory alert / 库存预警 remains out of scope and was not restored. Claude CLI audit attempt produced no output and is recorded as Yellow external-tool evidence; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T12:45:00Z"
+  "notes": "Labor payment lifecycle is verified in real Chrome: PaymentRecord.bankAccount is now persisted; creating a labor payment creates a pending/unconfirmed record without salary settlement or anomaly creation; confirmation performs settlement/anomaly detection; unconfirmed payments can be deleted; confirmed payments are protected from deletion. Focused Chrome labor payment and risk flows passed, verify passed with backend 8 files / 57 tests and frontend 36 tests/build, full Chrome smoke passed 34/34, code-review-graph risk 0.50. Inventory alert / 库存预警 remains out of scope and was not restored. Claude CLI audit attempt produced no output and is recorded as Yellow external-tool evidence; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T14:30:00Z"
 }

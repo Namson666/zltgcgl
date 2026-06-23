@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "public_register_tenant_code_login_verified",
+  "stage": "labor_payment_lifecycle_verified",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",

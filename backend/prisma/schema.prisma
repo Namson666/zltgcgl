@@ -1029,6 +1029,7 @@ model PaymentRecord {
   recipientName String
   idCardNo      String?
   amount        Float
+  bankAccount   String?
   paymentMethod String?
   paymentDate   DateTime
   arrearsOffset String?

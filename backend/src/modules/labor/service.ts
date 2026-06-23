@@ -646,6 +646,7 @@ export interface CreatePaymentData {
   recipientName: string;
   idCardNo: string;
   amount: number;
+  bankAccount?: string;
   paymentDate?: string;
   month?: string;
   paymentMethod?: string;
@@ -658,29 +659,6 @@ export async function createPayment(data: CreatePaymentData) {
     where: { tenantId: data.tenantId, idCardNo: data.idCardNo, status: 'active' },
   });
 
-  const arrearsOffset: Array<{ month: string; amount: number }> = [];
-  let remainingAmount = data.amount;
-
-  if (matchedPersonnel) {
-    const arrearsRecords = await prisma.salaryRecord.findMany({
-      where: { personnelId: matchedPersonnel.id, arrearsAmount: { gt: 0 } },
-      orderBy: { month: 'asc' },
-    });
-
-    for (const record of arrearsRecords) {
-      if (remainingAmount <= 0) break;
-      const arrears = Number(record.arrearsAmount);
-      const deduct = Math.min(remainingAmount, arrears);
-      arrearsOffset.push({ month: record.month, amount: deduct });
-      remainingAmount = formatAmount(remainingAmount - deduct);
-
-      await prisma.salaryRecord.update({
-        where: { id: record.id },
-        data: { arrearsAmount: formatAmount(arrears - deduct), totalPaid: { increment: deduct } },
-      });
-    }
-  }
-
   const resolvedMonth = data.month || (data.paymentDate ? new Date(data.paymentDate).toISOString().slice(0, 7) : new Date().toISOString().slice(0, 7));
 
   const record = await prisma.paymentRecord.create({
@@ -691,51 +669,92 @@ export async function createPayment(data: CreatePaymentData) {
       recipientName: data.recipientName,
       idCardNo: data.idCardNo,
       amount: data.amount,
+      bankAccount: data.bankAccount || undefined,
       paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
       month: resolvedMonth,
       paymentMethod: data.paymentMethod || undefined,
-      arrearsOffset: arrearsOffset.length > 0 ? JSON.stringify(arrearsOffset) : undefined,
-      isConfirmed: true,
+      isConfirmed: false,
       remark: data.remark || undefined,
     },
   });
 
-  if (matchedPersonnel && record.month) {
-    const currentMonthAmount = remainingAmount > 0
-      ? formatAmount(data.amount - arrearsOffset.reduce((s, o) => s + o.amount, 0))
-      : 0;
-    if (currentMonthAmount > 0) {
-      await prisma.salaryRecord.updateMany({
-        where: { personnelId: matchedPersonnel.id, month: record.month },
-        data: { totalPaid: { increment: currentMonthAmount }, arrearsAmount: { decrement: currentMonthAmount } },
-      });
-    }
-  }
-
-  await detectAndCreateAnomalies(record.id, data.tenantId);
-
-  return { record, arrearsOffset };
+  return { record, arrearsOffset: [] };
 }
 
 export async function confirmPaymentsBatch(tenantId: string, ids: string[]) {
-  return prisma.paymentRecord.updateMany({
-    where: { id: { in: ids }, tenantId, isConfirmed: false },
-    data: { isConfirmed: true },
-  });
+  let count = 0;
+  for (const id of ids) {
+    const confirmed = await confirmPayment(tenantId, id);
+    if (confirmed) count += 1;
+  }
+  return { count };
 }
 
 export async function confirmPaymentAi(tenantId: string, id: string) {
+  return confirmPayment(tenantId, id, true);
+}
+
+export async function confirmPayment(tenantId: string, id: string, isAiMatched = false) {
   const payment = await prisma.paymentRecord.findFirst({ where: { id, tenantId } });
   if (!payment) throw { status: 404, code: 'NOT_FOUND', message: '发放记录不存在' };
   if (payment.isConfirmed) throw { status: 400, code: 'ALREADY_CONFIRMED', message: '该记录已确认' };
 
-  const updated = await prisma.paymentRecord.update({
-    where: { id },
-    data: { isConfirmed: true, isAiMatched: true },
+  const updated = await prisma.$transaction(async (tx) => {
+    let remainingAmount = Number(payment.amount);
+    const arrearsOffset: Array<{ month: string; amount: number }> = [];
+
+    if (payment.personnelId) {
+      const arrearsRecords = await tx.salaryRecord.findMany({
+        where: { personnelId: payment.personnelId, arrearsAmount: { gt: 0 } },
+        orderBy: { month: 'asc' },
+      });
+
+      for (const record of arrearsRecords) {
+        if (remainingAmount <= 0) break;
+        const arrears = Number(record.arrearsAmount);
+        const deduct = Math.min(remainingAmount, arrears);
+        arrearsOffset.push({ month: record.month, amount: deduct });
+        remainingAmount = formatAmount(remainingAmount - deduct);
+
+        await tx.salaryRecord.update({
+          where: { id: record.id },
+          data: { arrearsAmount: formatAmount(arrears - deduct), totalPaid: { increment: deduct } },
+        });
+      }
+
+      if (payment.month) {
+        const currentMonthAmount = remainingAmount > 0
+          ? formatAmount(Number(payment.amount) - arrearsOffset.reduce((s, o) => s + o.amount, 0))
+          : 0;
+        if (currentMonthAmount > 0) {
+          await tx.salaryRecord.updateMany({
+            where: { personnelId: payment.personnelId, month: payment.month },
+            data: { totalPaid: { increment: currentMonthAmount }, arrearsAmount: { decrement: currentMonthAmount } },
+          });
+        }
+      }
+    }
+
+    return tx.paymentRecord.update({
+      where: { id },
+      data: {
+        isConfirmed: true,
+        isAiMatched,
+        arrearsOffset: arrearsOffset.length > 0 ? JSON.stringify(arrearsOffset) : undefined,
+      },
+    });
   });
 
   await detectAndCreateAnomalies(id, tenantId);
   return updated;
+}
+
+export async function deletePayment(tenantId: string, id: string) {
+  const payment = await prisma.paymentRecord.findFirst({ where: { id, tenantId } });
+  if (!payment) throw { status: 404, code: 'NOT_FOUND', message: '发放记录不存在' };
+  if (payment.isConfirmed) throw { status: 400, code: 'ALREADY_CONFIRMED', message: '已确认发放记录不可删除' };
+  await prisma.paymentRecord.delete({ where: { id } });
+  return payment;
 }
 
 // ============================================

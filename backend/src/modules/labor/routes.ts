@@ -563,7 +563,7 @@ paymentRouter.get('/', authenticate, requireUser, requirePermission('canManagePa
 paymentRouter.post('/', authenticate, requireUser, requirePermission('canManagePayment'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const tenantId = req.user!.tenantId!;
-    const { recipientName, idCardNo, amount, paymentDate, month, paymentMethod, departmentId, remark } = req.body;
+    const { recipientName, idCardNo, amount, bankAccount, paymentDate, month, paymentMethod, departmentId, remark } = req.body;
 
     if (!recipientName || !idCardNo || !amount) {
       res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '收款人姓名、身份证号、发放金额为必填项' } as ApiResponse);
@@ -576,13 +576,26 @@ paymentRouter.post('/', authenticate, requireUser, requirePermission('canManageP
 
     const { record, arrearsOffset } = await laborService.createPayment({
       tenantId, recipientName, idCardNo, amount: parseFloat(amount),
-      paymentDate, month, paymentMethod, departmentId, remark,
+      bankAccount, paymentDate, month, paymentMethod, departmentId, remark,
     });
     await createLog({ tenantId, userId: req.user!.id, action: 'CREATE', module: '工资发放', description: `录入发放：${recipientName}，金额：${amount}元`, detail: { recipientName, amount, arrearsOffset }, ip: req.ip, userAgent: req.headers['user-agent'] });
     res.status(201).json({ success: true, data: record, message: '发放记录录入成功' } as ApiResponse);
   } catch (error: any) {
     console.error('录入发放记录失败:', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '录入发放记录过程中发生服务器错误' } as ApiResponse);
+  }
+});
+
+paymentRouter.delete('/:id', authenticate, requireUser, requirePermission('canManagePayment'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const tenantId = req.user!.tenantId!;
+    const deleted = await laborService.deletePayment(tenantId, req.params.id);
+    await createLog({ tenantId, userId: req.user!.id, action: 'DELETE', module: '工资发放', description: `删除未确认发放：${deleted.recipientName}，金额：${deleted.amount}元`, detail: { id: deleted.id, recipientName: deleted.recipientName, amount: deleted.amount }, ip: req.ip, userAgent: req.headers['user-agent'] });
+    res.json({ success: true, data: { id: deleted.id }, message: '发放记录已删除' } as ApiResponse);
+  } catch (error: any) {
+    console.error('删除发放记录失败:', error);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '删除发放记录过程中发生服务器错误' } as ApiResponse);
   }
 });
 

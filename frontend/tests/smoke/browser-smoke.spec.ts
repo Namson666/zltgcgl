@@ -3005,13 +3005,50 @@ test.describe('browser smoke: authenticated core navigation', () => {
 
   test('enterprise user can download labor salary payment and report exports', async ({ page }) => {
     await loginEnterprise(page);
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token'));
+    expect(token).toBeTruthy();
     const stamp = Date.now();
     const month = '2026-06';
+    const deleteRecipientName = `浏览器发放删除-${stamp}`;
+    const deleteIdCardNo = generateValidIdCard(stamp, '19900201');
     const recipientName = `浏览器发放导出-${stamp}`;
-    const idCardNo = `110101199001${String(stamp).slice(-6)}`;
+    const idCardNo = generateValidIdCard(stamp + 1, '19900301');
 
     await page.goto('/labor/payment');
     await expect(page.getByRole('heading', { name: '工资发放' })).toBeVisible();
+
+    await page.getByRole('button', { name: '新增发放' }).click();
+    await page.getByPlaceholder('收款人姓名').fill(deleteRecipientName);
+    await page.getByPlaceholder('18位身份证号').fill(deleteIdCardNo);
+    await page.getByPlaceholder('0.00').fill('55.55');
+    await page.locator('input[type="month"]').fill(month);
+    await page.getByPlaceholder('银行卡号').fill('6222020202020202055');
+    await page.getByPlaceholder('备注').fill('真实浏览器工资发放删除验收');
+    await page.getByRole('button', { name: '确认发放' }).click();
+    await expect(page.getByText('发放记录创建成功')).toBeVisible();
+    const deleteRow = page.locator('tr', { hasText: deleteRecipientName });
+    await expect(deleteRow).toBeVisible();
+    await expect(deleteRow).toContainText('待确认');
+    await expect(deleteRow).toContainText('6222020202020202055');
+    const deleteCandidateResponse = await page.request.get(`/api/labor/payment?search=${encodeURIComponent(deleteRecipientName)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(deleteCandidateResponse.status()).toBe(200);
+    const deleteCandidateBody = await readJson(deleteCandidateResponse);
+    const deleteCandidate = deleteCandidateBody?.data?.records?.find((item: any) => item.recipientName === deleteRecipientName);
+    expect(deleteCandidate?.isConfirmed).toBe(false);
+    expect(deleteCandidate?.bankAccount).toBe('6222020202020202055');
+    page.once('dialog', dialog => dialog.accept());
+    await deleteRow.getByRole('button', { name: '删除' }).click();
+    await expect(page.getByText('发放记录已删除')).toBeVisible();
+    await expect(page.locator('tr', { hasText: deleteRecipientName })).toHaveCount(0);
+    const deletedLookupResponse = await page.request.get(`/api/labor/payment?search=${encodeURIComponent(deleteRecipientName)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(deletedLookupResponse.status()).toBe(200);
+    const deletedLookupBody = await readJson(deletedLookupResponse);
+    expect((deletedLookupBody?.data?.records || []).some((item: any) => item.recipientName === deleteRecipientName)).toBe(false);
+
     await page.getByRole('button', { name: '新增发放' }).click();
     await page.getByPlaceholder('收款人姓名').fill(recipientName);
     await page.getByPlaceholder('18位身份证号').fill(idCardNo);
@@ -3021,7 +3058,27 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await page.getByPlaceholder('备注').fill('真实浏览器工资发放导出验收');
     await page.getByRole('button', { name: '确认发放' }).click();
     await expect(page.getByText('发放记录创建成功')).toBeVisible();
-    await expect(page.locator('tr', { hasText: recipientName })).toBeVisible();
+    const paymentRow = page.locator('tr', { hasText: recipientName });
+    await expect(paymentRow).toBeVisible();
+    await expect(paymentRow).toContainText('待确认');
+    await expect(paymentRow).toContainText('6222020202020202020');
+    const paymentLookupResponse = await page.request.get(`/api/labor/payment?search=${encodeURIComponent(recipientName)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(paymentLookupResponse.status()).toBe(200);
+    const paymentLookupBody = await readJson(paymentLookupResponse);
+    const paymentRecord = paymentLookupBody?.data?.records?.find((item: any) => item.recipientName === recipientName);
+    expect(paymentRecord?.isConfirmed).toBe(false);
+    expect(paymentRecord?.bankAccount).toBe('6222020202020202020');
+    await paymentRow.getByRole('button', { name: '确认' }).click();
+    await expect(page.getByText('已确认')).toBeVisible();
+    await expect(paymentRow).toContainText('已入账不可删');
+    const confirmedDeleteResponse = await page.request.delete(`/api/labor/payment/${paymentRecord.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(confirmedDeleteResponse.status()).toBe(400);
+    const confirmedDeleteBody = await readJson(confirmedDeleteResponse);
+    expect(confirmedDeleteBody?.message).toContain('不可删除');
 
     const paymentDownloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: '导出', exact: true }).click();
@@ -3186,6 +3243,12 @@ test.describe('browser smoke: authenticated core navigation', () => {
       },
     });
     expect(paymentResponse.status()).toBe(201);
+    const paymentBody = await readJson(paymentResponse);
+    const confirmRiskPaymentResponse = await page.request.post('/api/labor/payment/confirm-batch', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { ids: [paymentBody?.data?.id] },
+    });
+    expect(confirmRiskPaymentResponse.status()).toBe(200);
 
     await page.goto('/labor/risk');
     await expect(page.getByRole('heading', { name: '风控管理' })).toBeVisible();

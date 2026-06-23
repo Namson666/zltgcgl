@@ -1,13 +1,26 @@
 {
-  "status": "public_register_tenant_code_login_verified",
+  "status": "labor_payment_lifecycle_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "labor_payment_lifecycle_flow",
+      "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"labor salary payment\"; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"personnel attendance salary and risk\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T142633Z-audit_worker.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
+      "status": "verified_claude_timeout_yellow",
+      "result": "劳资工资发放生命周期切片已通过真实 Chrome：修复银行卡号字段前端存在但后端/数据库未持久化的问题；新增 PaymentRecord.bankAccount 迁移并纳入浏览器临时库；工资发放新增现在创建未确认记录，不提前结算工资/欠薪或触发风控；确认后才入账并触发异常检测；未确认发放可删除，已确认发放 API/UI 均不可删除。浏览器测试覆盖新增未确认、银行卡 API/UI 回读、删除未确认、再次新增、确认、已确认删除 400、导出工资发放明细、工资核算导出、报表导出；劳资风控深测改为确认发放后再验证异常。Focused Chrome labor payment 1/1 passed，focused Chrome labor risk 1/1 passed，verify backend 8/57 + frontend 2/36 + builds passed，full Chrome 34/34 passed，code-review-graph risk 0.50。Claude CLI invoked but produced no output for about 120 seconds and was interrupted; recorded Yellow external-tool evidence, not PASS。库存预警未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/劳资工资发放导出.png",
+        "docs/smoke-evidence/劳资人员考勤工资风控CRUD.png",
+        ".ai/workers/20260623T142633Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "public_register_tenant_code_login_flow",
       "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"public register\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/public-register-login-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",

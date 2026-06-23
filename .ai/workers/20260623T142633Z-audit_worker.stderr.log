@@ -1,0 +1,1 @@
+Claude CLI worker was interrupted by Codex after approximately 120 seconds with no stdout. The wrapper exited via KeyboardInterrupt / exit 130 while waiting for subprocess output.

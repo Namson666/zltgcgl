@@ -5,13 +5,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { laborApi, downloadBlob } from '../../api';
-import { Plus, Search, CheckCircle, Download } from 'lucide-react';
+import { Plus, Search, CheckCircle, Download, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../../components/ui/Modal';
 import { Pagination, EmptyState, formatMoney, formatDate } from '../../components/ui/Common';
 
 interface PaymentRecord {
-  id: number;
+  id: string;
   recipientName: string;
   idCardNo: string;
   amount: number;
@@ -41,7 +41,8 @@ const Payment: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState({ recipientName: '', idCardNo: '', amount: '', bankAccount: '', month: new Date().toISOString().slice(0, 7), remark: '' });
   const [saving, setSaving] = useState(false);
-  const [confirming, setConfirming] = useState<number[]>([]);
+  const [confirming, setConfirming] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState<string[]>([]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -85,7 +86,7 @@ const Payment: React.FC = () => {
     } finally { setSaving(false); }
   };
 
-  const handleConfirm = async (id: number) => {
+  const handleConfirm = async (id: string) => {
     setConfirming(prev => [...prev, id]);
     try {
       await laborApi.confirmBatchPayment([id]);
@@ -105,6 +106,21 @@ const Payment: React.FC = () => {
       fetchData();
     } catch { toast.error('批量确认失败'); }
     finally { setConfirming([]); }
+  };
+
+  const handleDelete = async (record: PaymentRecord) => {
+    if (record.isConfirmed) return toast.error('已确认发放记录不可删除');
+    if (!window.confirm(`确认删除 ${record.recipientName} 的发放记录？`)) return;
+    setDeleting(prev => [...prev, record.id]);
+    try {
+      await laborApi.deletePayment(record.id);
+      toast.success('发放记录已删除');
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '删除失败');
+    } finally {
+      setDeleting(prev => prev.filter(x => x !== record.id));
+    }
   };
 
   const handleExport = async () => {
@@ -197,12 +213,21 @@ const Payment: React.FC = () => {
                         : <span className="badge-yellow">待确认</span>}
                     </td>
                     <td className="table-td">
-                      {!r.isConfirmed && (
-                        <button className="btn-primary btn-sm" onClick={() => handleConfirm(r.id)}
-                          disabled={confirming.includes(r.id)}>
-                          <CheckCircle size={13} /> 确认
-                        </button>
-                      )}
+                      <div className="flex gap-2">
+                        {!r.isConfirmed && (
+                          <>
+                            <button className="btn-primary btn-sm" onClick={() => handleConfirm(r.id)}
+                              disabled={confirming.includes(r.id)}>
+                              <CheckCircle size={13} /> 确认
+                            </button>
+                            <button className="btn-danger btn-sm" onClick={() => handleDelete(r)}
+                              disabled={deleting.includes(r.id)}>
+                              <Trash2 size={13} /> 删除
+                            </button>
+                          </>
+                        )}
+                        {r.isConfirmed && <span className="text-xs text-gray-400">已入账不可删</span>}
+                      </div>
                     </td>
                   </tr>
                 ))
