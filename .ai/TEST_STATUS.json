@@ -1,5 +1,5 @@
 {
-  "status": "ci_browser_smoke_tmpdir_fix_verified_pending_remote_ci",
+  "status": "ci_browser_smoke_selector_fix_verified_pending_remote_ci",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -8,6 +8,16 @@
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "ci_browser_smoke_selector_fix",
+      "command": "gh run watch 28062934787 --repo Namson666/zltgcgl --exit-status; fix duplicate-toast and duplicate-button strict selectors; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"enterprise user can login and open core enabled modules|enterprise user can manage finance categories\"; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S58-ci-browser-smoke-selector-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00; bash scripts/browser-smoke.sh",
+      "status": "verified_claude_pass_pending_remote_ci",
+      "result": "S58 responds to GitHub Actions run 28062934787. Remote Build/Test passed and browser smoke ran all 36 tests; 34 passed and 2 failed due Playwright strict selector ambiguity: duplicate success toasts and regex matching both 新增子类别 and 点击新增子类别. Narrowed selectors with .first() for the success toast and exact button name for 新增子类别. Focused Chrome rerun of the two failed tests passed 2/2; code-review-graph showed 0 test gaps; Claude audit PASS at .ai/workers/20260623T231020Z-audit_worker.result.md; final local full real Chrome browser-smoke passed 36/36. CI Green remains not_verified until pushed remote CI rerun succeeds.",
+      "evidence_files": [
+        "frontend/tests/smoke/browser-smoke.spec.ts",
+        ".ai/workers/20260623T231020Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "ci_browser_smoke_tmpdir_fix",
       "command": "gh run watch 28062496303 --repo Namson666/zltgcgl --exit-status; fix scripts/start-browser-smoke-server.sh default DB path from /private/tmp to ${TMPDIR:-/tmp}; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S57-ci-browser-smoke-tmpdir-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",

@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_s57_ci_browser_smoke_tmpdir_fix",
+    "working_tree": "dirty_s58_ci_browser_smoke_selector_fix",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "ci_prisma_sqlite_path_fix_pushed_browser_smoke_failed",
-    "pushed_commit": "c4445f2 ci: fix prisma sqlite test db path",
-    "last_pushed_commit": "c4445f2"
+    "push_status": "ci_browser_smoke_tmpdir_fix_pushed_selector_failed",
+    "pushed_commit": "3e9ff47 ci: use portable tmpdir for browser smoke",
+    "last_pushed_commit": "3e9ff47"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "ci_prisma_sqlite_path_fix_pushed_browser_smoke_failed",
+    "push_status": "ci_browser_smoke_tmpdir_fix_pushed_selector_failed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "c4445f2 ci: fix prisma sqlite test db path"
+    "pushed_commit": "3e9ff47 ci: use portable tmpdir for browser smoke"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,12 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "ci_browser_smoke_tmpdir_fix_verified_pending_remote_ci",
-  "updated_at": "2026-06-23T23:00:26Z",
-  "push_status": "ci_prisma_sqlite_path_fix_pushed_browser_smoke_failed",
-  "last_pushed_commit": "c4445f2",
-  "current_commit": "c4445f2 ci: fix prisma sqlite test db path",
+  "status": "ci_browser_smoke_selector_fix_verified_pending_remote_ci",
+  "updated_at": "2026-06-23T23:17:25Z",
+  "push_status": "ci_browser_smoke_tmpdir_fix_pushed_selector_failed",
+  "last_pushed_commit": "3e9ff47",
+  "current_commit": "3e9ff47 ci: use portable tmpdir for browser smoke",
   "notes": [
+    "2026-06-24: S58 CI browser smoke selector fix verified pending remote CI. Remote GitHub Actions run 28062934787 passed Build/Test and launched browser smoke successfully after S57; browser smoke ran all 36 tests with 34 passed and 2 failed due Playwright strict selector ambiguity, not product/API failures. Narrowed the duplicate toast assertion to first() and the finance subcategory button to exact name. Focused Chrome rerun of the two failed tests passed 2/2; final local full real Chrome browser smoke passed 36/36; code-review-graph 0 gaps; Claude audit PASS. Push and remote CI rerun are still required before CI Green can move from not_verified.",
     "2026-06-24: S57 CI browser smoke tmpdir fix verified pending remote CI. Remote GitHub Actions run 28062496303 passed Build and test, confirming S56 fixed verify.sh, but Real browser smoke failed before tests because start-browser-smoke-server.sh tried to create /private/tmp/zlt_browser_smoke.db on Ubuntu. Changed the default browser-smoke DB directory to ${BROWSER_SMOKE_TMP_DIR:-${TMPDIR:-/tmp}} while preserving BROWSER_SMOKE_DB_PATH as exact override. Local real Chrome browser smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. Push and remote CI rerun are still required before CI Green can move from not_verified.",
     "2026-06-24: S56 CI Prisma SQLite path fix verified pending remote CI. Remote GitHub Actions run 28061918118 executed the S55 database initializer but verify.sh still failed with main.developers missing because backend/vitest.config.ts uses DATABASE_URL file:./test.db and Prisma resolves that path relative to backend/prisma/schema.prisma. Changed verify.sh to rebuild backend/prisma/test.db instead of backend/test.db. Local verify passed backend 61 + frontend 38 + builds; real Chrome browser smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. Push and remote CI rerun are still required before CI Green can move from not_verified.",
     "2026-06-24: S55 CI test database initialization verified pending push. Remote GitHub Actions run 28061459724 passed npm ci but failed in verify.sh because clean runner had no backend/test.db schema (developers table missing). Added scripts/init-sqlite-db.sh, made verify.sh rebuild backend/test.db before backend tests, made browser-smoke reuse the same initializer, and installed sqlite3 in the CI verify job. verify.sh passed with explicit Backend test database init, full real Chrome 36/36 passed after refactor, code-review-graph risk 0.00 / 0 gaps, Claude audit PASS. Push and remote CI rerun still required before CI Green can move from not_verified.",
@@ -88,10 +89,10 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S57_ci_browser_smoke_tmpdir_fix_verified_pending_remote_ci",
-  "current_task": "Push S57 browser-smoke tmpdir fix, then watch GitHub Actions before claiming CI Green.",
-  "last_verified_at": "2026-06-23T23:00:26Z",
-  "last_verified_command": "bash scripts/browser-smoke.sh passed real Chrome 36/36; code-review-graph risk 0.00 / 0 gaps; Claude CLI audit PASS at .ai/workers/20260623T225835Z-audit_worker.result.md. Previous S56 verify.sh and remote Build/test job passed.",
+  "current_phase": "S58_ci_browser_smoke_selector_fix_verified_pending_remote_ci",
+  "current_task": "Push S58 selector-stability fix, then watch GitHub Actions before claiming CI Green.",
+  "last_verified_at": "2026-06-23T23:17:25Z",
+  "last_verified_command": "Focused Chrome rerun of two failed browser-smoke tests passed 2/2; code-review-graph risk 0.50 / 0 gaps; Claude CLI audit PASS at .ai/workers/20260623T231020Z-audit_worker.result.md; final bash scripts/browser-smoke.sh passed real Chrome 36/36. Previous S57 remote Build/Test passed.",
   "history": [
     {
       "date": "2026-06-23T15:59:33Z",

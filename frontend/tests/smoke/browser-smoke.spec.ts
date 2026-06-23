@@ -503,10 +503,10 @@ test.describe('browser smoke: authenticated core navigation', () => {
 	        await page.locator('select').filter({ hasText: '每天一次' }).selectOption('2');
 	        await page.locator('select').filter({ hasText: '本地测试 / Stub' }).selectOption('http');
 	        await page.getByRole('button', { name: '保存打卡规则' }).click();
-	        await expect(page.getByText('小程序打卡规则已保存')).toBeVisible();
+	        await expect(page.getByText('小程序打卡规则已保存').first()).toBeVisible();
 	        await page.locator('select').filter({ hasText: '本地测试 / Stub' }).selectOption('stub');
 	        await page.getByRole('button', { name: '保存打卡规则' }).click();
-	        await expect(page.getByText('小程序打卡规则已保存')).toBeVisible();
+	        await expect(page.getByText('小程序打卡规则已保存').first()).toBeVisible();
 
 	        const postCheckIn = async (checkDate: string, county: string) => {
 	          const response = await page.request.post('/api/mobile/check-in', {
@@ -4345,7 +4345,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
 
     await page.getByText(categoryNameEdited, { exact: true }).click();
     await expect(page.getByText(`子类别 - ${categoryNameEdited}`)).toBeVisible();
-    await page.getByRole('button', { name: /新增子类别/ }).click();
+    await page.getByRole('button', { name: '新增子类别', exact: true }).click();
     await expect(page.getByRole('heading', { name: '新增子类别' })).toBeVisible();
     await page.getByPlaceholder('例如：燃油费、过路费、停车费').fill(subCategoryName);
     await page.getByPlaceholder('数字越小越靠前').fill('3');
