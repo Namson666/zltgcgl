@@ -1,18 +1,18 @@
 {
-  "status": "wms_inventory_ledger_export_browser_verified_pending_push",
+  "status": "wms_inventory_ledger_export_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_pending_push",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_pushed",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
     {
       "type": "wms_inventory_ledger_export_flow",
       "command": "cd frontend && BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_wms_inventory_ledger_export_final.db npx playwright test --config playwright.config.ts -g \"export wms inventory and work team ledger|create export and delete wms outbound records\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T105329Z-wms-inventory-ledger-export-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
-      "status": "verified_pending_push",
-      "result": "WMS 库存/班组台账导出与净数量切片已通过真实 Chrome：物资总览新增在库/已出库导出入口，班组台账新增导出入口；后端库存导出复用 active stock/listInventory 过滤语义并修复 keyword/materialName 搜索在 SQLite/Prisma 下的 500；班组台账列表/导出仅统计 active 出库单，退库聚合仅统计 active 退库单；顺手修复出库导出 keyword 过滤不再使用 SQLite 不兼容的 insensitive mode。真实 Chrome 创建入库 10、出库 4、退库 1，API/UI 验证库存剩余 7、班组台账净领用 3、已退 1，并实际下载 库存汇总.xlsx、已出库库存.xlsx、班组台账.xlsx。Focused Chrome 2/2 passed，verify backend 7/50 + frontend 2/36 + build，full Chrome 29/29 passed，code-review-graph risk 0.50 with static gaps covered by backend service tests + focused/full Chrome，Claude PASS。库存预警未恢复。",
+      "status": "verified_pushed",
+      "result": "WMS 库存/班组台账导出与净数量切片已通过真实 Chrome：物资总览新增在库/已出库导出入口，班组台账新增导出入口；后端库存导出复用 active stock/listInventory 过滤语义并修复 keyword/materialName 搜索在 SQLite/Prisma 下的 500；班组台账列表/导出仅统计 active 出库单，退库聚合仅统计 active 退库单；顺手修复出库导出 keyword 过滤不再使用 SQLite 不兼容的 insensitive mode。真实 Chrome 创建入库 10、出库 4、退库 1，API/UI 验证库存剩余 7、班组台账净领用 3、已退 1，并实际下载 库存汇总.xlsx、已出库库存.xlsx、班组台账.xlsx。Focused Chrome 2/2 passed，verify backend 7/50 + frontend 2/36 + build，full Chrome 29/29 passed，code-review-graph risk 0.50 with static gaps covered by backend service tests + focused/full Chrome，Claude PASS。库存预警未恢复. Implementation pushed at 0cb6997 to origin public-main and main.",
       "evidence_files": [
         "docs/smoke-evidence/playwright-results.json",
         "docs/smoke-evidence/playwright-report/index.html",

@@ -7,7 +7,7 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_wms_inventory_ledger_export_verification",
+    "working_tree": "dirty_after_wms_inventory_ledger_export_push_marker",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
@@ -20,9 +20,9 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "wms_inventory_ledger_export_pending_push",
+    "push_status": "wms_inventory_ledger_export_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "c533781 chore: mark wms transfer export delete pushed"
+    "pushed_commit": "0cb6997 feat: cover wms inventory ledger exports"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -31,11 +31,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_wms_inventory_ledger_export_verified_pending_push",
-  "updated_at": "2026-06-23T11:00:00Z",
-  "push_status": "wms_inventory_ledger_export_pending_push",
-  "last_pushed_commit": "c533781",
-  "current_commit": "wms_inventory_ledger_export_verified_pending_push",
+  "status": "yellow_wms_inventory_ledger_export_pushed",
+  "updated_at": "2026-06-23T11:05:00Z",
+  "push_status": "wms_inventory_ledger_export_pushed",
+  "last_pushed_commit": "0cb6997",
+  "current_commit": "wms_inventory_ledger_export_pushed",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -65,12 +65,12 @@
     "2026-06-23: Developer platform plan lifecycle verified locally in real Chrome. Plans now cover UI create/edit/delete, API read-back for tier/type/price/maxUsers/extraUser/description, invalid tier 400, subscribed combination delete 409, cleanup delete after changing to an unreferenced combination, and enterprise GET/POST/PUT/DELETE developer plan API 403. User reconfirmed WMS inventory alert / 库存预警 is not needed; current product code, schema, route/API/menu, and browser matrix remain free of inventory-alert residue. verify passed, focused Chrome 1/1 passed, full real Chrome 18/18 passed, Claude audit PASS, code-review-graph risk 0.60; pushed at 68e2874.",
     "2026-06-23: Developer AI/OCR configuration lifecycle verified locally in real Chrome. AI covers create, API masked read-back, enable, credential edit reset to disabled, sensitive input clearing, delete, and enterprise GET/PUT/PATCH/DELETE 403. OCR covers create, API masked read-back, tencent test-enable path, credential edit reset to disabled, no-refresh re-enable after useConfigList state refresh fix, sensitive input clearing, delete, and enterprise GET/PUT/PATCH/DELETE 403. Claude first WARN found missing OCR sensitiveFields; fixed and final Claude PASS. verify passed, focused Chrome 1/1 passed, full real Chrome 19/19 passed, code-review-graph risk 0.50; pushed at 1fb9b96."
   ],
-  "current_phase": "S33_wms_inventory_ledger_export_verified_pending_push",
-  "current_task": "WMS 库存/班组台账导出与净数量已通过真实 Chrome：库存汇总/已出库/班组台账三类 Excel 下载、库存剩余数量、台账净领用数量、active-only 统计和 SQLite-safe 搜索均已验证；库存预警仍不恢复。",
+  "current_phase": "S33_wms_inventory_ledger_export_pushed",
+  "current_task": "WMS 库存/班组台账导出与净数量已通过真实 Chrome 并推送：库存汇总/已出库/班组台账三类 Excel 下载、库存剩余数量、台账净领用数量、active-only 统计和 SQLite-safe 搜索均已验证；库存预警仍不恢复。",
   "last_verified_at": "2026-06-23T11:00:00Z",
   "last_verified_command": "focused Chrome wms inventory ledger export + outbound export 2/2; bash scripts/verify.sh backend 7/50 frontend 2/36 build; bash scripts/browser-smoke.sh 29/29; code-review-graph risk 0.50 with static gaps covered by backend service tests + Chrome e2e; Claude worker PASS",
   "history": [
-    "2026-06-23: WMS inventory and work-team ledger export/net-quantity verified locally in real Chrome. Added inventory export buttons for in-stock summary/detail and outbound inventory, added work-team ledger export, made inventory export reuse active stock list filters, fixed keyword/materialName inventory search for SQLite-safe contains, made work-team ledger list/export count only active outbound and active return orders, and removed Prisma insensitive mode from outbound export keyword filtering. Browser test creates inbound 10, outbound 4, return 1, verifies active inventory quantity 7 and work-team ledger net quantity 3/returned 1, downloads inventory summary, outbound inventory, and work-team ledger Excel files. verify passed, focused Chrome 2/2 passed, full real Chrome 29/29 passed, Claude audit PASS, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e; pending push.",
+    "2026-06-23: WMS inventory and work-team ledger export/net-quantity verified locally in real Chrome. Added inventory export buttons for in-stock summary/detail and outbound inventory, added work-team ledger export, made inventory export reuse active stock list filters, fixed keyword/materialName inventory search for SQLite-safe contains, made work-team ledger list/export count only active outbound and active return orders, and removed Prisma insensitive mode from outbound export keyword filtering. Browser test creates inbound 10, outbound 4, return 1, verifies active inventory quantity 7 and work-team ledger net quantity 3/returned 1, downloads inventory summary, outbound inventory, and work-team ledger Excel files. verify passed, focused Chrome 2/2 passed, full real Chrome 29/29 passed, Claude audit PASS, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e; pushed at 0cb6997.",
     "2026-06-23: WMS transfer create/export/delete-preview verified locally in real Chrome. Added transfer record export from the transfer page, fixed backend transfer list/export to filter active transfer orders only, persisted department-scoped transfer fromDepartmentId/toDepartmentId, added department fallback display/export, and fixed cascade preview/delete rollback for department-scoped inventory. Browser test prepares inbound stock through the real API, creates transfer through the UI, downloads the transfer PDF, exports transfer records, verifies cascade inventory rollback preview, deletes, and confirms API absence. verify passed, focused Chrome 1/1 passed, full real Chrome 28/28 passed, Claude audit PASS, code-review-graph risk 0.50 with function-level gaps covered by backend unit and Chrome e2e; pushed at 714028e.",
     "2026-06-23: WMS outbound create/export/delete-preview verified locally in real Chrome. Added outbound record export from the outbound page and fixed backend outbound export to filter active outbound orders only, so soft-deleted outbound orders cannot leak into exports. Browser test prepares inbound stock through the real API, creates outbound through the UI, downloads the outbound PDF, exports outbound records, verifies cascade inventory restore preview, deletes, and confirms API absence. verify passed, focused Chrome 1/1 passed, full real Chrome 27/27 passed, Claude audit PASS, code-review-graph risk 0.50 with function-level gaps covered by backend unit and Chrome e2e; pushed at 48b2e18.",
     "2026-06-23: WMS return Excel import/export/delete-preview verified locally in real Chrome. Added return record export from the return page and fixed backend return list/export to filter active return orders only, so soft-deleted return orders no longer remain visible after delete. Browser test downloads the return template, uploads it, API reads back the Excel return order, exports return records, verifies cascade inventory impact, deletes, and confirms API absence. verify passed, focused Chrome 1/1 passed, full real Chrome 26/26 passed, Claude audit PASS, code-review-graph risk 0.50 with function-level gaps covered by backend unit and Chrome e2e; pushed at 157fefa.",
