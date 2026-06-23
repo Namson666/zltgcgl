@@ -507,6 +507,9 @@ export interface CreateExcelInboundData {
   tenantId: string;
   userId?: string;
   subProjectId?: string;
+  contractId?: string;
+  departmentId?: string;
+  supplierName?: string;
   inboundDate?: string;
   remark?: string;
   items: Array<{
@@ -533,18 +536,38 @@ export async function createExcelInbound(data: CreateExcelInboundData) {
       return { ...item, materialId: material.id };
     }));
 
-    // Resolve departmentId from subProject if available
-    let departmentId: string | null = null;
+    // Resolve department/sub-project similarly to manual inbound so Excel imports
+    // keep the same project association and cascade-preview behavior.
+    const contractId = data.contractId || null;
+    let departmentId: string | null = data.departmentId || null;
     if (data.subProjectId) {
       const sp = await tx.subProject.findUnique({ where: { id: data.subProjectId }, select: { departmentId: true } });
       departmentId = sp?.departmentId || null;
+    }
+
+    let resolvedSubProjectId = data.subProjectId || null;
+    if (!resolvedSubProjectId && departmentId) {
+      const firstProjectName = resolvedItems.find(item => item.projectName?.trim())?.projectName?.trim();
+      if (firstProjectName) {
+        const existingSubProject = await tx.subProject.findFirst({
+          where: { tenantId: data.tenantId, departmentId, name: firstProjectName, isActive: true },
+        });
+        const subProject = existingSubProject || await tx.subProject.create({
+          data: { tenantId: data.tenantId, departmentId, name: firstProjectName, code: null, description: '由Excel入库项目名称自动创建' },
+        });
+        resolvedSubProjectId = subProject.id;
+      }
     }
 
     // Create order first (without items), then create items separately
     // to avoid Prisma nested-create foreign key validation issue with just-created materials
     const order = await tx.inboundOrder.create({
       data: {
-        tenantId: data.tenantId, orderNo, subProjectId: data.subProjectId,
+        tenantId: data.tenantId, orderNo,
+        subProjectId: resolvedSubProjectId,
+        contractId,
+        departmentId,
+        supplierName: data.supplierName || null,
         inboundDate: data.inboundDate ? new Date(data.inboundDate) : new Date(),
         source: 'excel', createdBy: data.userId || undefined, remark: data.remark,
       },
@@ -565,7 +588,7 @@ export async function createExcelInbound(data: CreateExcelInboundData) {
     for (const item of resolvedItems) {
       if (item.materialId) {
         const projectName = item.projectName || '待分配物资';
-        const spId = data.subProjectId || null;
+        const spId = resolvedSubProjectId;
         const existing = await tx.inventory.findFirst({
           where: { subProjectId: spId, materialId: item.materialId, projectName },
         });

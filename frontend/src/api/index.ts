@@ -906,6 +906,12 @@ export const wmsApi = {
     http.get('/wms/inbound/template', {}, { responseType: 'blob' }),
 
   /**
+   * 导出入库记录
+   */
+  exportInbound: (params?: any) =>
+    http.get('/wms/inbound/export', params || {}, { responseType: 'blob' }),
+
+  /**
    * 获取入库物资的去重项目名称列表
    * 用于出库时选择项目
    */

@@ -85,6 +85,7 @@ const Inbound: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [ocrLoading, setOcrLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const excelRef = useRef<HTMLInputElement>(null);
   const ocrRef = useRef<HTMLInputElement>(null);
 
@@ -286,6 +287,8 @@ const Inbound: React.FC = () => {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('deliveryDate', deliveryDate);
+    if (selectedContractId) fd.append('contractId', selectedContractId);
+    if (selectedDepartmentId) fd.append('departmentId', selectedDepartmentId);
     if (supplierName.trim()) fd.append('supplierName', supplierName.trim());
     try {
       await wmsApi.uploadInboundExcel(fd);
@@ -323,6 +326,19 @@ const Inbound: React.FC = () => {
     } finally { setDeleting(false); }
   };
 
+  const handleExportInbound = async () => {
+    setExporting(true);
+    try {
+      const res = await wmsApi.exportInbound();
+      downloadBlob(res.data as Blob, '入库记录.xlsx');
+      toast.success('入库记录已导出');
+    } catch {
+      toast.error('导出入库记录失败');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const calcSubtotal = (item: FormItem) => (Number(item.deliveryQty) || 0) * (Number(item.unitPrice) || 0);
   const calcTotal = () => formItems.reduce((sum, item) => sum + calcSubtotal(item), 0);
 
@@ -334,6 +350,9 @@ const Inbound: React.FC = () => {
           <p className="page-subtitle">物资入库登记与查询，支持送货单 OCR 识别和 Excel 批量导入</p>
         </div>
         <div className="flex gap-2">
+          <button className="btn-secondary" onClick={handleExportInbound} disabled={exporting}>
+            <Download size={16} /> {exporting ? '导出中...' : '导出入库记录'}
+          </button>
           <button className="btn-primary" onClick={openCreate}><Plus size={16} /> 新增入库</button>
         </div>
       </div>

@@ -1771,6 +1771,82 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can import and export wms inbound records with cascade delete preview', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+    const supplierName = `Excel入库供应商-${Date.now()}`;
+
+    await page.goto('/wms/inbound');
+    await expect(page.getByRole('heading', { name: '入库管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增入库' }).click();
+    await page.getByPlaceholder('输入供应商名称').fill(supplierName);
+    await page.locator('select').filter({ hasText: '不选择项目部' }).selectOption({ label: '第一项目部' });
+    await page.getByText('Excel 导入').click();
+    await page.locator('input[type="date"]').fill('2026-06-23');
+
+    const templateDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '下载模板' }).click();
+    const templateDownload = await templateDownloadPromise;
+    expect(templateDownload.suggestedFilename()).toMatch(/^(入库模板|inbound_template)\.xlsx$/);
+    const templatePath = await templateDownload.path();
+    expect(templatePath).toBeTruthy();
+
+    await page.locator('input[type="file"][accept=".xlsx,.xls"]').setInputFiles(templatePath!);
+    await expect(page.getByRole('button', { name: '开始导入' })).toBeEnabled();
+    await page.getByRole('button', { name: '开始导入' }).click();
+    await expectToast(page, 'Excel 导入成功！');
+
+    const importedResponse = await page.request.get('/api/wms/inbound?source=excel&pageSize=5', {
+      headers: authHeaders,
+    });
+    expect(importedResponse.status()).toBe(200);
+    const importedBody = await readJson(importedResponse);
+    const importedOrder = (importedBody?.data || []).find((order: any) =>
+      order.source === 'excel'
+      && order.supplierName === supplierName
+      && (order.department?.name === '第一项目部' || order.subProject?.department?.name === '第一项目部')
+      && (order.items || []).some((item: any) => (item.material?.name || item.materialName) === '举例：水泥42.5')
+    );
+    expect(importedOrder?.id).toBeTruthy();
+    expect(importedOrder?.orderNo).toBeTruthy();
+    expect((importedOrder.items || []).some((item: any) => Number(item.quantity || 0) === 10)).toBe(true);
+
+    await page.goto('/wms/inbound');
+    await expect(page.locator('tr', { hasText: importedOrder.orderNo })).toBeVisible();
+    await expect(page.locator('tr', { hasText: importedOrder.orderNo })).toContainText(supplierName);
+
+    const inboundExportPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出入库记录' }).click();
+    expect((await inboundExportPromise).suggestedFilename()).toBe('入库记录.xlsx');
+    await expectToast(page, '入库记录已导出');
+
+    const rowForDelete = page.locator('tr', { hasText: importedOrder.orderNo });
+    await rowForDelete.getByTitle('删除').click();
+    await expect(page.getByRole('heading', { name: '确认删除入库单' })).toBeVisible();
+    const deleteDialog = page.locator('.fixed').filter({ hasText: '确认删除入库单' }).last();
+    await expect(deleteDialog.getByText(importedOrder.orderNo)).toBeVisible();
+    await expect(deleteDialog.getByText('库存影响')).toBeVisible();
+    await expect(deleteDialog.getByText('举例：水泥42.5')).toBeVisible();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expectToast(page, '入库单已删除，可在回收站恢复');
+    await expect(page.locator('tr', { hasText: importedOrder.orderNo })).toHaveCount(0);
+
+    const afterDeleteResponse = await page.request.get('/api/wms/inbound?source=excel&pageSize=20', {
+      headers: authHeaders,
+    });
+    expect(afterDeleteResponse.status()).toBe(200);
+    const afterDeleteBody = await readJson(afterDeleteResponse);
+    expect((afterDeleteBody?.data || []).some((order: any) => order.id === importedOrder.id)).toBe(false);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/入库导入导出删除预览.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can complete wms inbound outbound return transfer chain', async ({ page }) => {
     test.setTimeout(150_000);
     await loginEnterprise(page);

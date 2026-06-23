@@ -779,8 +779,18 @@ inboundRouter.post('/excel', requirePermission('canInbound'), upload.single('fil
     unit: row['单位'] || '个', quantity: parseFloat(row['数量']) || 0,
     unitPrice: parseFloat(row['单价']) || 0,
   })).filter(item => item.materialName && item.quantity > 0);
-  const { subProjectId, inboundDate, remark } = req.body;
-  const order = await wms.createExcelInbound({ tenantId, userId: getEffectiveUserId(req), subProjectId, inboundDate, remark, items });
+  const { subProjectId, contractId, departmentId, supplierName, inboundDate, deliveryDate, remark } = req.body;
+  const order = await wms.createExcelInbound({
+    tenantId,
+    userId: getEffectiveUserId(req),
+    subProjectId,
+    contractId,
+    departmentId,
+    supplierName,
+    inboundDate: inboundDate || deliveryDate,
+    remark,
+    items,
+  });
   await createLog({ tenantId, userId: getEffectiveUserId(req), action: 'CREATE', module: '物资管理', description: `Excel导入入库 ${order.orderNo}（${items.length}条）`, ip: req.ip, userAgent: req.headers['user-agent'] });
   res.status(201).json({ success: true, data: order } as unknown as ApiResponse);
 }));
