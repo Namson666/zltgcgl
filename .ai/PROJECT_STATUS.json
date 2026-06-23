@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_mini_program_selected_tenant_checkin",
+    "working_tree": "clean_after_mini_program_selected_tenant_checkin_push",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "mini_program_selected_tenant_checkin_pending_commit_push",
-    "pushed_commit": "e53b09e test: cover mini program routing conflicts",
-    "last_pushed_commit": "e53b09e"
+    "push_status": "mini_program_selected_tenant_checkin_pushed",
+    "pushed_commit": "d52c4c5 fix: require mini program app for selected tenant checkin",
+    "last_pushed_commit": "d52c4c5"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "mini_program_selected_tenant_checkin_pending_commit_push",
+    "push_status": "mini_program_selected_tenant_checkin_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "e53b09e test: cover mini program routing conflicts"
+    "pushed_commit": "d52c4c5 fix: require mini program app for selected tenant checkin"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,11 +34,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "mini_program_selected_tenant_checkin_verified_pending_commit_push",
-  "updated_at": "2026-06-23T15:22:00Z",
-  "push_status": "mini_program_selected_tenant_checkin_pending_commit_push",
-  "last_pushed_commit": "1510611",
-  "current_commit": "1510611 chore: mark mini program routing pushed",
+  "status": "mini_program_selected_tenant_checkin_pushed",
+  "updated_at": "2026-06-23T15:27:23Z",
+  "push_status": "mini_program_selected_tenant_checkin_pushed",
+  "last_pushed_commit": "d52c4c5",
+  "current_commit": "d52c4c5 fix: require mini program app for selected tenant checkin",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -75,7 +75,7 @@
   "last_verified_at": "2026-06-23T15:22:00Z",
   "last_verified_command": "focused Chrome mini-program routing/selected tenant 1/1; bash scripts/verify.sh backend 57 frontend 36 build; bash scripts/browser-smoke.sh 35/35; code-review-graph risk 0.50; Claude CLI audit PASS",
   "history": [
-    "2026-06-23: Mini-program selected-tenant check-in verified locally in real Chrome. Closed tenantId bypass by requiring createMobileCheckIn requests with tenantId to resolve through a valid enabled mini-program appId; unknown appId + tenantId now returns MINI_PROGRAM_NOT_FOUND, tenant-owned appId mismatches return MINI_PROGRAM_TENANT_MISMATCH, and default appId + selected tenant writes to the selected active tenant/personnel. Browser smoke asserts two tenants with the same phone: conflict returns MULTIPLE_TENANTS with no writes, invalid appId + tenantId is rejected, selected tenantB via default app writes one photo-backed check-in only for tenantB, and tenant-owned appId still writes only to tenantA on a separate date. Focused Chrome 1/1 passed, verify backend 57 + frontend 36 + builds passed, full Chrome 35/35 passed, code-review-graph risk 0.50, Claude audit PASS. Pending commit/push.",
+    "2026-06-23: Mini-program selected-tenant check-in verified locally in real Chrome and pushed at d52c4c5. Closed tenantId bypass by requiring createMobileCheckIn requests with tenantId to resolve through a valid enabled mini-program appId; unknown appId + tenantId now returns MINI_PROGRAM_NOT_FOUND, tenant-owned appId mismatches return MINI_PROGRAM_TENANT_MISMATCH, and default appId + selected tenant writes to the selected active tenant/personnel. Browser smoke asserts two tenants with the same phone: conflict returns MULTIPLE_TENANTS with no writes, invalid appId + tenantId is rejected, selected tenantB via default app writes one photo-backed check-in only for tenantB, and tenant-owned appId still writes only to tenantA on a separate date. Focused Chrome 1/1 passed, verify backend 57 + frontend 36 + builds passed, full Chrome 35/35 passed, code-review-graph risk 0.50, Claude audit PASS.",
     "2026-06-23: Mini-program same-phone routing conflict verified locally in real Chrome and pushed at e53b09e. Added smoke helpers and a browser/API test that creates two tenants with personnel sharing one phone, configures a developer default mini-program appId, asserts /api/mobile/check-in returns 409 MULTIPLE_TENANTS with both tenant candidates and writes zero check-in records, then configures a tenant-owned appId and verifies multipart photo check-in writes exactly one record to the target tenant/personnel while the other tenant remains empty. verify passed with backend 57 + frontend 36 + builds, focused Chrome 1/1 passed, full Chrome 35/35 passed, code-review-graph risk 0.60. Claude CLI produced no output for more than two minutes and was interrupted; recorded Yellow, not PASS.",
     "2026-06-23: Enterprise announcements dashboard visibility verified locally in real Chrome and pushed at 2afa30a. Added tenant-user-only /api/announcements and /api/v1/announcements returning only published announcements, wired Dashboard to show recent announcements, and expanded announcement lifecycle smoke to prove developer normal token 403 on enterprise endpoint, enterprise token 403 on developer management APIs, published announcements visible in API/Dashboard, edits sync, unpublish hides, republish shows, and delete hides. verify passed with backend 57 + frontend 36 + builds, focused Chrome 1/1 passed, full Chrome 34/34 passed, code-review-graph risk 0.50, Claude audit PASS.",
     "2026-06-23: Labor payment lifecycle verified locally in real Chrome. Added persisted PaymentRecord.bankAccount and browser-smoke migration wiring; createPayment now creates pending/unconfirmed records without salary settlement/anomaly side effects; confirmation performs settlement/anomaly detection; unconfirmed payments can be deleted; confirmed payments return 400 and UI shows protected state. Added backend service tests for create/confirm/delete and browser coverage for create/delete/confirm/export/report plus risk flow confirmation. verify passed with backend 8 files / 57 tests + frontend 36 tests/build, focused Chrome labor payment 1/1 passed, focused Chrome labor risk 1/1 passed, full Chrome 34/34 passed, code-review-graph risk 0.50. Claude CLI produced no output for about 120 seconds and was interrupted; recorded Yellow, not PASS. Pending commit/push.",

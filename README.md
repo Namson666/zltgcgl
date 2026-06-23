@@ -58,7 +58,7 @@
 - Safe rollback point: pushed commit `f171bc2 chore: mark full route matrix pushed`
 - Browser smoke evidence: `docs/smoke-evidence/playwright-results.json`, `docs/smoke-evidence/playwright-report/index.html`, legacy screenshots, `docs/smoke-evidence/full-route-*.png`, `docs/smoke-evidence/供应商班组CRUD.png`, `docs/smoke-evidence/劳资工资发放导出.png`, `docs/smoke-evidence/劳资人员考勤工资风控CRUD.png`, `docs/smoke-evidence/模块开通独立登录验收.png`, `docs/smoke-evidence/开发者UI模块开通独立登录.png`, `docs/smoke-evidence/基础后台CRUD.png`, `docs/smoke-evidence/物资主链路CRUD.png`, `docs/smoke-evidence/物资档案CRUD导出.png`, `docs/smoke-evidence/入库导入导出删除预览.png`, `docs/smoke-evidence/退库导入导出删除预览.png`, `docs/smoke-evidence/出库导出删除预览.png`, `docs/smoke-evidence/调拨导出删除预览.png`, `docs/smoke-evidence/财务备用金费用CRUD上传.png`, `docs/smoke-evidence/财务看板真实汇总数据.png`, `docs/smoke-evidence/财务发票收款盈亏导入导出.png`, `docs/smoke-evidence/财务类别回收站CRUD.png`, `docs/smoke-evidence/项目部报账审核驳回CRUD.png`, `docs/smoke-evidence/开发者套餐生命周期CRUD.png`, `docs/smoke-evidence/开发者AIOCR配置生命周期CRUD.png`, `docs/smoke-evidence/开发者集成安全监控日志CRUD.png`, `docs/smoke-evidence/开发者支付发票存储CRUD.png`, `docs/smoke-evidence/企业订阅计划生命周期CRUD.png`, `docs/smoke-evidence/企业首页数据看板真实汇总.png`, `docs/smoke-evidence/开发者首页数据看板真实汇总.png`, `docs/smoke-evidence/公开注册企业登录闭环.png`, and `docs/smoke-evidence/小程序手机号多企业分流.png`; latest real Chrome smoke passed 35 tests
 - Previous pushed implementation commit: `e7c0772 feat: remove inventory alerts and fix labor exports`
-- Last pushed implementation commit: `e53b09e test: cover mini program routing conflicts`; S42 selected-tenant implementation verified locally and pending push
+- Last pushed implementation commit: `d52c4c5 fix: require mini program app for selected tenant checkin`
 - Previous implementation commit: `5fe8382 test: cover admin crud and remove inventory alert docs`
 - Previous implementation commit: current HEAD `test: cover wms main inventory flow`
 - Previous implementation commit: `692025b test: cover finance voucher upload crud`
@@ -88,7 +88,7 @@
 - Latest pushed implementation commit: `7311a49 feat: cover public registration login`
 - Latest pushed implementation commit: `a616f85 feat: cover labor payment lifecycle`
 - Latest pushed implementation commit: `2afa30a feat: show announcements on enterprise dashboard`
-- Updated at: 2026-06-23T15:22:00Z
+- Updated at: 2026-06-23T15:27:23Z
 
 ## 项目概览
 
