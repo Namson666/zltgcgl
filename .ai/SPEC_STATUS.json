@@ -1,9 +1,9 @@
 {
-  "stage": "S22_developer_integration_security_observability_verified_pending_push",
+  "stage": "S22_developer_integration_security_observability_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "Developer third-party integration/security/monitoring/logs lifecycle now has real Chrome coverage: integration save/read/test-enable/edit reset plus enterprise 403; security save/read-back with correct string-to-number/boolean coercion plus enterprise 403; monitoring read/refresh plus enterprise 403; logs API and UI module/action filtering for integration/security. Full Chrome smoke is now 20/20. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T06:45:00Z"
+  "updated_at": "2026-06-23T06:55:00Z"
 }

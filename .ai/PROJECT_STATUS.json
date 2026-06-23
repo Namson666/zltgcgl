@@ -65,11 +65,11 @@
     "2026-06-23: Developer platform plan lifecycle verified locally in real Chrome. Plans now cover UI create/edit/delete, API read-back for tier/type/price/maxUsers/extraUser/description, invalid tier 400, subscribed combination delete 409, cleanup delete after changing to an unreferenced combination, and enterprise GET/POST/PUT/DELETE developer plan API 403. User reconfirmed WMS inventory alert / 库存预警 is not needed; current product code, schema, route/API/menu, and browser matrix remain free of inventory-alert residue. verify passed, focused Chrome 1/1 passed, full real Chrome 18/18 passed, Claude audit PASS, code-review-graph risk 0.60; pushed at 68e2874.",
     "2026-06-23: Developer AI/OCR configuration lifecycle verified locally in real Chrome. AI covers create, API masked read-back, enable, credential edit reset to disabled, sensitive input clearing, delete, and enterprise GET/PUT/PATCH/DELETE 403. OCR covers create, API masked read-back, tencent test-enable path, credential edit reset to disabled, no-refresh re-enable after useConfigList state refresh fix, sensitive input clearing, delete, and enterprise GET/PUT/PATCH/DELETE 403. Claude first WARN found missing OCR sensitiveFields; fixed and final Claude PASS. verify passed, focused Chrome 1/1 passed, full real Chrome 19/19 passed, code-review-graph risk 0.50; pushed at 1fb9b96."
   ],
-  "current_phase": "S22_developer_integration_security_observability_verified_pending_push",
-  "current_task": "开发者第三方集成、安全策略、系统监控、操作日志生命周期已通过真实 Chrome：集成保存/测试启用/编辑重置、安全策略保存回读、监控读取、日志 API/UI 筛选、企业账号 403；库存预警仍不恢复。",
-  "last_verified_at": "2026-06-23T06:45:00Z",
+  "current_phase": "S22_developer_integration_security_observability_pushed",
+  "current_task": "开发者第三方集成、安全策略、系统监控、操作日志生命周期已通过真实 Chrome 并推送：集成保存/测试启用/编辑重置、安全策略保存回读、监控读取、日志 API/UI 筛选、企业账号 403；库存预警仍不恢复。",
+  "last_verified_at": "2026-06-23T06:55:00Z",
   "last_verified_command": "focused Chrome integrations/security/monitoring/logs 1/1; bash scripts/verify.sh; bash scripts/browser-smoke.sh 20/20; code-review-graph risk 0.50; Claude worker PASS",
   "history": [
-    "2026-06-23: Developer third-party integration + security + monitoring/logs slice verified locally in real Chrome. Fixed integration response unwrap, saved-vs-enabled UI state, test-enable UI sync, security string-to-boolean/number coercion, and log module/action filtering. verify passed, focused Chrome 1/1 passed, full real Chrome 20/20 passed, Claude audit PASS, code-review-graph risk 0.50; pending push."
+    "2026-06-23: Developer third-party integration + security + monitoring/logs slice verified locally in real Chrome. Fixed integration response unwrap, saved-vs-enabled UI state, test-enable UI sync, security string-to-boolean/number coercion, and log module/action filtering. verify passed, focused Chrome 1/1 passed, full real Chrome 20/20 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 0540256."
   ]
 }
