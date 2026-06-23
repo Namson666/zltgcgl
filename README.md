@@ -83,7 +83,7 @@
 - Latest pushed implementation commit: `714028e feat: cover wms transfer export delete flow`
 - Latest pushed implementation commit: `0cb6997 feat: cover wms inventory ledger exports`
 - Latest pushed implementation commit: `bbb943a feat: cover wms delivery export ocr guard`
-- Latest verified implementation pending push: enterprise main dashboard real-summary coverage
+- Latest pushed implementation commit: `e31544b feat: cover enterprise dashboard summary`
 - Updated at: 2026-06-23T11:55:00Z
 
 ## 项目概览

@@ -13,16 +13,19 @@
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
-    "requested_new_repository": "git@github.com:Namson666/zltgcgl.git"
+    "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
+    "push_status": "enterprise_main_dashboard_real_summary_pushed",
+    "pushed_commit": "e31544b feat: cover enterprise dashboard summary",
+    "last_pushed_commit": "e31544b"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "enterprise_main_dashboard_real_summary_pending_push",
+    "push_status": "enterprise_main_dashboard_real_summary_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "this commit: feat: cover developer tenant lifecycle"
+    "pushed_commit": "e31544b feat: cover enterprise dashboard summary"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -31,11 +34,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_wms_delivery_ocr_export_pushed",
-  "updated_at": "2026-06-23T11:30:00Z",
-  "push_status": "wms_delivery_ocr_export_pushed",
-  "last_pushed_commit": "bbb943a",
-  "current_commit": "wms_delivery_ocr_export_pushed",
+  "status": "enterprise_main_dashboard_real_summary_pushed",
+  "updated_at": "2026-06-23T12:20:00Z",
+  "push_status": "enterprise_main_dashboard_real_summary_pushed",
+  "last_pushed_commit": "e31544b",
+  "current_commit": "e31544b feat: cover enterprise dashboard summary",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -87,5 +90,8 @@
     "2026-06-23: Enterprise subscription plan lifecycle verified locally in real Chrome. Fixed frontend subscription API contract from legacy planId /subscription/change to current {plan,tier} /subscription/change-plan, normalized current subscription and grouped plan+tier API responses, added UI test ids, and covered UI switch FULL/SMALL -> FULL/MEDIUM, API current read-back, payment record read-back, and restore to FULL/SMALL. verify passed, focused Chrome 1/1 passed, full real Chrome 22/22 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at c344381.",
     "2026-06-23: Developer payments + invoices + storage observability slice verified locally in real Chrome. Fixed developer payment/invoice/storage DTOs and frontend invoice tenant contract, added seed payment, UI filters/testids, invoice create/issue flow, storage summary/tenant/file read-back, and enterprise 403 API coverage. verify passed, focused Chrome 1/1 passed, full real Chrome 21/21 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at c7ae6b5.",
     "2026-06-23: Developer third-party integration + security + monitoring/logs slice verified locally in real Chrome. Fixed integration response unwrap, saved-vs-enabled UI state, test-enable UI sync, security string-to-boolean/number coercion, and log module/action filtering. verify passed, focused Chrome 1/1 passed, full real Chrome 20/20 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 0540256."
+  ],
+  "history_after_initial_push": [
+    "2026-06-23: Enterprise main dashboard real-summary implementation committed at e31544b and prepared for push to origin public-main and main."
   ]
 }
