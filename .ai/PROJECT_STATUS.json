@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_mini_program_phone_prebinding_toggle_verification",
+    "working_tree": "clean_after_mini_program_phone_prebinding_toggle_push",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "mini_program_phone_prebinding_toggle_pending_push",
-    "pushed_commit": "ade9e28 chore: mark mini program prebinding pushed",
-    "last_pushed_commit": "ade9e28"
+    "push_status": "mini_program_phone_prebinding_toggle_pushed",
+    "pushed_commit": "2d160ba feat: add mini program prebinding toggle",
+    "last_pushed_commit": "2d160ba"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "mini_program_phone_prebinding_toggle_pending_push",
+    "push_status": "mini_program_phone_prebinding_toggle_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "ade9e28 chore: mark mini program prebinding pushed"
+    "pushed_commit": "2d160ba feat: add mini program prebinding toggle"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,12 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "mini_program_phone_prebinding_toggle_verified_pending_push",
-  "updated_at": "2026-06-23T15:59:33Z",
-  "push_status": "mini_program_phone_prebinding_toggle_pending_push",
-  "last_pushed_commit": "ade9e28",
-  "current_commit": "ade9e28 chore: mark mini program prebinding pushed",
+  "status": "mini_program_phone_prebinding_toggle_pushed",
+  "updated_at": "2026-06-23T16:02:22Z",
+  "push_status": "mini_program_phone_prebinding_toggle_pushed",
+  "last_pushed_commit": "2d160ba",
+  "current_commit": "2d160ba feat: add mini program prebinding toggle",
   "notes": [
+    "2026-06-23: S44 default mini-program phone prebinding enable/disable lifecycle pushed at 2d160ba; status marker pending.",
     "2026-06-23: S44 default mini-program phone prebinding enable/disable lifecycle verified locally;停用后默认小程序无 tenantId 打卡恢复 MULTIPLE_TENANTS 且不写记录，重新启用后恢复自动分流；verify passed, full Chrome 35/35, Claude audit PASS; pending commit/push.",
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
