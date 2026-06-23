@@ -23,7 +23,7 @@ sqlite3 "$DB_PATH" \
 
 cd "$ROOT/backend"
 DATABASE_URL="file:$DB_PATH" npx ts-node prisma/seed.ts >/dev/null
-DATABASE_URL="file:$DB_PATH" JWT_SECRET="browser-smoke-jwt-secret-change-me" PORT="$BACKEND_PORT" NODE_ENV=test npm run dev >/tmp/zlt-browser-smoke-backend.log 2>&1 &
+DATABASE_URL="file:$DB_PATH" JWT_SECRET="browser-smoke-jwt-secret-change-me" PORT="$BACKEND_PORT" NODE_ENV=test DISABLE_RATE_LIMIT=true npm run dev >/tmp/zlt-browser-smoke-backend.log 2>&1 &
 BACKEND_PID=$!
 
 cd "$ROOT/frontend"

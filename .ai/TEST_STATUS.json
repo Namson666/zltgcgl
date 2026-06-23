@@ -1,13 +1,55 @@
 {
-  "status": "labor_personnel_attendance_salary_risk_browser_verified_pushed",
+  "status": "finance_category_recycle_lifecycle_browser_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "finance_category_recycle_lifecycle_flow",
+      "command": "bash scripts/verify.sh; BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_category_recycle_keyword.db npx playwright test --config playwright.config.ts -g \"finance categories and recycle bin\"; bash scripts/browser-smoke.sh; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/finance-category-recycle-final-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00; code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified",
+      "result": "财务类别设置和回收站生命周期切片已通过真实 Chrome：主类别新建/编辑/删除，子类别新建/编辑/删除，/api/finance/categories 真实读回；合同管理中创建合同并软删除；回收站 UI 关键字搜索、/api/recycle-bin keyword/search 参数兼容验证、恢复、再次删除、永久删除、最终 API 验证记录消失。为避免扩展 smoke 套件后触发测试环境全局限流，browser-smoke 专用启动脚本设置 DISABLE_RATE_LIMIT=true，生产启动路径不设置该变量。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/财务类别回收站CRUD.png",
+        ".ai/workers/20260623T032115Z-audit_worker.result.md"
+      ]
+    },
+    {
+      "type": "unified_verify",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend Prisma generate passed; backend tests 5 files / 33 tests passed; backend TypeScript build passed; frontend tests 2 files / 36 tests passed; frontend production build passed after finance category/recycle-bin lifecycle fixes."
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "13 Playwright smoke tests passed in system Google Chrome, including the new finance category settings and recycle-bin lifecycle CRUD/restore/permanent-delete flow plus existing route matrix, WMS, finance, labor, admin, module entitlement, and independent portal coverage.",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/财务类别回收站CRUD.png"
+      ]
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/finance-category-recycle-final-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "PASS; Claude confirmed no blockers and no Yellow risks for production rate-limit safety, recycle-bin tenant isolation, search/keyword compatibility, CategorySettings UX fix, real-browser coverage, and authenticated API checks.",
+      "evidence_file": ".ai/workers/20260623T032115Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 135 files / 1532 nodes / 19498 edges. detect-changes risk score 0.50. Function-level gaps reported for isRateLimitDisabled, CategorySettings/loadCategories, and dialog handling are covered by the real Chrome product flow and Claude audit."
+    },
     {
       "type": "labor_personnel_attendance_salary_risk_deep_flow",
       "command": "bash scripts/verify.sh; BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_labor_deep.db npx playwright test --config playwright.config.ts -g \"labor personnel attendance salary and risk CRUD\"; rm -rf backend/uploads docs/smoke-evidence/test-results && bash scripts/browser-smoke.sh; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/labor-deep-crud-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00; code-review-graph build --skip-flows && code-review-graph detect-changes",

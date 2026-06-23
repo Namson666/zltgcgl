@@ -1237,6 +1237,151 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can manage finance categories and recycle bin lifecycle', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const stamp = Date.now();
+    const categoryName = `浏览器费用大类-${stamp}`;
+    const categoryNameEdited = `${categoryName}-已编辑`;
+    const subCategoryName = `浏览器费用子类-${stamp}`;
+    const subCategoryNameEdited = `${subCategoryName}-已编辑`;
+    const contractName = `浏览器回收站合同-${stamp}`;
+    const contractCode = `RB-${stamp}`;
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+
+    await page.goto('/finance/settings');
+    await expect(page.getByRole('heading', { name: '费用类别设置' })).toBeVisible();
+    const mainCategoryCard = page.locator('.card').filter({ hasText: '主类别' }).first();
+    await mainCategoryCard.getByRole('button', { name: /新增/ }).click();
+    await expect(page.getByRole('heading', { name: '新增主类别' })).toBeVisible();
+    await page.getByPlaceholder('例如：办公费、差旅费、车辆费用').fill(categoryName);
+    await page.getByPlaceholder('数字越小越靠前').fill('7');
+    await page.getByRole('button', { name: '创建' }).click();
+    await expect(page.getByText('类别创建成功')).toBeVisible();
+    await expect(page.getByText(categoryName)).toBeVisible();
+
+    await page.getByTitle(`编辑主类别 ${categoryName}`).click();
+    await expect(page.getByRole('heading', { name: '编辑主类别' })).toBeVisible();
+    await page.getByPlaceholder('例如：办公费、差旅费、车辆费用').fill(categoryNameEdited);
+    await page.getByPlaceholder('数字越小越靠前').fill('8');
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('类别更新成功')).toBeVisible();
+    await expect(page.getByText(categoryNameEdited)).toBeVisible();
+
+    await page.getByText(categoryNameEdited, { exact: true }).click();
+    await expect(page.getByText(`子类别 - ${categoryNameEdited}`)).toBeVisible();
+    await page.getByRole('button', { name: /新增子类别/ }).click();
+    await expect(page.getByRole('heading', { name: '新增子类别' })).toBeVisible();
+    await page.getByPlaceholder('例如：燃油费、过路费、停车费').fill(subCategoryName);
+    await page.getByPlaceholder('数字越小越靠前').fill('3');
+    await page.getByRole('button', { name: '创建' }).click();
+    await expect(page.getByText('子类别创建成功')).toBeVisible();
+    await expect(page.getByText(subCategoryName)).toBeVisible();
+
+    await page.getByTitle(`编辑子类别 ${subCategoryName}`).click();
+    await expect(page.getByRole('heading', { name: '编辑子类别' })).toBeVisible();
+    await page.getByPlaceholder('例如：燃油费、过路费、停车费').fill(subCategoryNameEdited);
+    await page.getByPlaceholder('数字越小越靠前').fill('4');
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('子类别更新成功')).toBeVisible();
+    await expect(page.getByText(subCategoryNameEdited)).toBeVisible();
+
+    const categoriesResponse = await page.request.get('/api/finance/categories', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(categoriesResponse.status()).toBe(200);
+    const categoriesBody = await readJson(categoriesResponse);
+    const createdCategory = (categoriesBody?.data || []).find((item: any) => item.name === categoryNameEdited);
+    expect(createdCategory?.id).toBeTruthy();
+    expect((createdCategory?.subCategories || []).some((item: any) => item.name === subCategoryNameEdited)).toBe(true);
+
+    await page.getByTitle(`删除子类别 ${subCategoryNameEdited}`).click();
+    await expect(page.getByRole('heading', { name: '删除子类别' })).toBeVisible();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('子类别已删除')).toBeVisible();
+    await expect(page.getByText(subCategoryNameEdited)).toHaveCount(0);
+
+    await page.getByTitle(`删除主类别 ${categoryNameEdited}`).click();
+    await expect(page.getByRole('heading', { name: '删除主类别' })).toBeVisible();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('类别已删除')).toBeVisible();
+    await expect(page.getByText(categoryNameEdited)).toHaveCount(0);
+
+    const categoriesAfterDeleteResponse = await page.request.get('/api/finance/categories', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(categoriesAfterDeleteResponse.status()).toBe(200);
+    const categoriesAfterDeleteBody = await readJson(categoriesAfterDeleteResponse);
+    expect((categoriesAfterDeleteBody?.data || []).some((item: any) => item.name === categoryNameEdited)).toBe(false);
+
+    await page.goto('/contracts');
+    await expect(page.getByRole('heading', { name: '合同管理' })).toBeVisible();
+    await page.getByRole('button', { name: /新增承包合同/ }).click();
+    await page.getByPlaceholder('请输入合同名称').fill(contractName);
+    await page.getByPlaceholder('请输入合同编号').fill(contractCode);
+    await page.getByPlaceholder('请输入合同总金额').fill('4321');
+    await page.getByRole('button', { name: '确认创建' }).click();
+    await expect(page.getByText(contractName)).toBeVisible();
+    const contractRow = page.locator('tr', { hasText: contractName });
+    await contractRow.getByTitle('删除').click();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('合同已删除')).toBeVisible();
+
+    await page.goto('/admin/recycle-bin');
+    await expect(page.getByRole('heading', { name: '回收站' })).toBeVisible();
+    await page.getByRole('button', { name: '合同' }).click();
+    await page.getByPlaceholder('搜索名称/编号...').fill(contractName);
+    await page.getByRole('button', { name: '搜索' }).click();
+    const recycleRow = page.locator('tr', { hasText: contractName });
+    await expect(recycleRow).toBeVisible();
+    await expect(recycleRow).toContainText(contractCode);
+    const recycleKeywordResponse = await page.request.get(`/api/recycle-bin?type=contract&keyword=${encodeURIComponent(contractName)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(recycleKeywordResponse.status()).toBe(200);
+    const recycleKeywordBody = await readJson(recycleKeywordResponse);
+    expect((recycleKeywordBody?.data || []).some((item: any) => item.name === contractName)).toBe(true);
+    await recycleRow.getByTitle('恢复').click();
+    await expect(page.getByText('成功恢复 1 个项目')).toBeVisible();
+    await expect(page.locator('tr', { hasText: contractName })).toHaveCount(0);
+
+    await page.goto('/contracts');
+    await page.getByPlaceholder('搜索合同名称或编号...').fill(contractName);
+    await page.keyboard.press('Enter');
+    const restoredContractRow = page.locator('tr', { hasText: contractName });
+    await expect(restoredContractRow).toBeVisible();
+    await restoredContractRow.getByTitle('删除').click();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('合同已删除')).toBeVisible();
+
+    await page.goto('/admin/recycle-bin');
+    await page.getByRole('button', { name: '合同' }).click();
+    await page.getByPlaceholder('搜索名称/编号...').fill(contractCode);
+    await page.getByRole('button', { name: '搜索' }).click();
+    const rowForPermanentDelete = page.locator('tr', { hasText: contractName });
+    await expect(rowForPermanentDelete).toBeVisible();
+    page.once('dialog', async dialog => {
+      expect(dialog.message()).toContain('永久删除 1 个项目');
+      await dialog.accept();
+    });
+    await rowForPermanentDelete.getByTitle('永久删除').click();
+    await expect(page.getByText('永久删除 1 个项目')).toBeVisible();
+    await expect(page.locator('tr', { hasText: contractName })).toHaveCount(0);
+
+    const recycleAfterDeleteResponse = await page.request.get(`/api/recycle-bin?type=contract&search=${encodeURIComponent(contractName)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(recycleAfterDeleteResponse.status()).toBe(200);
+    const recycleAfterDeleteBody = await readJson(recycleAfterDeleteResponse);
+    expect((recycleAfterDeleteBody?.data || []).some((item: any) => item.name === contractName)).toBe(false);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/财务类别回收站CRUD.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can open every enabled business route', async ({ page }) => {
     await loginEnterprise(page);
     for (const [label, route] of enterpriseRouteMatrix) {

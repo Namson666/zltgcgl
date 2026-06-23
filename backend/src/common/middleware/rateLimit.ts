@@ -8,6 +8,8 @@
 
 import rateLimit from 'express-rate-limit';
 
+const isRateLimitDisabled = () => process.env.DISABLE_RATE_LIMIT === 'true';
+
 /**
  * 全局 API 限流中间件
  *
@@ -26,6 +28,7 @@ import rateLimit from 'express-rate-limit';
  * app.use('/api', globalRateLimit);
  */
 export const globalRateLimit = rateLimit({
+  skip: isRateLimitDisabled,
   /** 时间窗口（毫秒）：15 分钟 */
   windowMs: 15 * 60 * 1000,
   /** 每个 IP 在时间窗口内的最大请求数 */
@@ -62,6 +65,7 @@ export const globalRateLimit = rateLimit({
  * app.post('/api/auth/login', loginRateLimit, authController.login);
  */
 export const loginRateLimit = rateLimit({
+  skip: isRateLimitDisabled,
   /** 时间窗口（毫秒）：15 分钟 */
   windowMs: 15 * 60 * 1000,
   /** 每个 IP 在时间窗口内的最大请求数（登录接口限制更严格） */
@@ -86,6 +90,7 @@ export const loginRateLimit = rateLimit({
  * 用于附件、报表等二进制下载接口，降低被盗 token 或异常脚本批量拉取文件的风险。
  */
 export const fileDownloadRateLimit = rateLimit({
+  skip: isRateLimitDisabled,
   windowMs: 15 * 60 * 1000,
   max: 120,
   standardHeaders: true,

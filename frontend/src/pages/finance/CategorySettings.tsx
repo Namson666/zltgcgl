@@ -77,6 +77,7 @@ const CategorySettings: React.FC = () => {
       // 如果当前没有选中且列表非空，自动选中第一个
       if (!selectedCategory && data.length > 0) {
         setSelectedCategory(data[0]);
+        loadSubCategories(data[0].id);
       }
     } catch (err: any) {
       toast.error('加载类别失败');
@@ -298,14 +299,16 @@ const CategorySettings: React.FC = () => {
                     <button
                       onClick={(e) => { e.stopPropagation(); openEditCategory(cat); }}
                       className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                      title="编辑"
+                      title={`编辑主类别 ${cat.name}`}
+                      aria-label={`编辑主类别 ${cat.name}`}
                     >
                       <Edit3 size={12} />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); openDeleteCategoryConfirm(cat.id); }}
                       className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                      title="删除"
+                      title={`删除主类别 ${cat.name}`}
+                      aria-label={`删除主类别 ${cat.name}`}
                     >
                       <Trash2 size={12} />
                     </button>
@@ -368,14 +371,16 @@ const CategorySettings: React.FC = () => {
                     <button
                       onClick={() => openEditSub(sub)}
                       className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                      title="编辑"
+                      title={`编辑子类别 ${sub.name}`}
+                      aria-label={`编辑子类别 ${sub.name}`}
                     >
                       <Edit3 size={12} />
                     </button>
                     <button
                       onClick={() => openDeleteSubConfirm(sub.id)}
                       className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                      title="删除"
+                      title={`删除子类别 ${sub.name}`}
+                      aria-label={`删除子类别 ${sub.name}`}
                     >
                       <Trash2 size={12} />
                     </button>

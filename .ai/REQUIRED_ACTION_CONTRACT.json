@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "inventory_alert_schema_cleanup_verified",
+  "stage": "finance_category_recycle_lifecycle_verified",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Inventory alert / 库存预警 remains removed per user request from product routes, menus, backend APIs, browser route matrix, active docs, and now the historical Prisma Material.alertThreshold field / initialization SQL column are removed as well. verify/browser-smoke force Prisma Client generation so deleted fields cannot survive through a stale generated client. Basic admin roles/users/departments deep CRUD/state-change flow is covered by real Chrome. Labor salary/payment/report exports use real backend downloads, and labor personnel/attendance/salary/risk now has real Chrome create/edit/upload-download-delete/leave/rejoin/batch/patch/calculate/manual-edit/export/anomaly-resolve coverage. Module entitlement and independent portal login smoke coverage verifies menu hiding, direct route redirect, API 403, enabled wms continuity, and no-tenant-code portal login in real Chrome. WMS main chain and finance main slices are covered by real Chrome. Deep CRUD/upload/download across every remaining historical page and real third-party face gateway credentials remain Yellow before Product Green.",
+  "notes": "Finance category settings and recycle-bin lifecycle are now covered by real Chrome: main category create/edit/delete, subcategory create/edit/delete, API read-back, contract soft-delete, recycle-bin UI keyword search, direct recycle-bin API keyword/search checks, restore, second delete, and permanent delete. Inventory alert / 库存预警 remains removed per user request from product routes, menus, backend APIs, browser route matrix, active docs, and historical Prisma schema/init SQL. verify/browser-smoke force Prisma Client generation so deleted fields cannot survive through a stale generated client. Basic admin, WMS main chain, finance voucher/invoice/receipt/import/export, and labor personnel/attendance/salary/risk slices have real Chrome CRUD/upload/download/state-change evidence. Deep CRUD/upload/download across every remaining historical page and real third-party face gateway credentials remain Yellow before Product Green.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-23T02:58:00Z"
+  "updated_at": "2026-06-23T03:24:19Z"
 }

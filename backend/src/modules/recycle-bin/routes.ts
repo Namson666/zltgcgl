@@ -28,7 +28,7 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): 
     const type = req.query.type as string | undefined; // contract | inbound | outbound | all
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 20));
-    const search = req.query.search as string | undefined;
+    const search = (req.query.search || req.query.keyword) as string | undefined;
 
     // 按类型查询回收站项目
     const results: any[] = [];

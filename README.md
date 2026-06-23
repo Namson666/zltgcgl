@@ -4,9 +4,9 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S13 inventory alert schema cleanup verified
-- Current task: 库存预警已再次彻底删除：产品路由/菜单/API/文档此前已移除，本轮删除历史 Prisma Material.alertThreshold 字段与初始化 SQL 列，并让 verify/browser-smoke 强制生成 Prisma Client 防止旧字段残留
-- Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、库存预警产品功能移除且历史 alertThreshold 字段已删除、Prisma Client 同步生成护栏、劳资导出修复、劳资人员/考勤/工资/风控深测、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出均已通过真实 Chrome
+- Current phase: S14 finance category + recycle-bin lifecycle verified pending push
+- Current task: 财务类别设置与回收站生命周期已完成真实 Chrome 深测：主/子类别新建编辑删除、类别 API 读回、合同软删除、回收站搜索、恢复、再次删除、永久删除
+- Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、库存预警产品功能移除且历史 alertThreshold 字段已删除、Prisma Client 同步生成护栏、劳资导出修复、劳资人员/考勤/工资/风控深测、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期均已通过真实 Chrome
 - In progress: 准备进入下一轮剩余历史业务页面深度 CRUD/上传下载验收
 - Next action: 继续补齐剩余历史业务页面深度 CRUD/上传下载验收，并配置真实第三方人脸识别网关/密钥
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
@@ -22,7 +22,7 @@
   8. .ai/session/HANDOFF.md
 - Must read spec:
   1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
-- Last verified command: `bash scripts/verify.sh` passed with backend Prisma generate + backend tests/build + frontend tests/build; full `bash scripts/browser-smoke.sh` passed real Chrome 12/12 after fixing stale Prisma Client generation; Claude audit PASS; `code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50
+- Last verified command: `bash scripts/verify.sh` passed with backend Prisma generate + backend tests/build + frontend tests/build; focused Chrome `finance categories and recycle bin` passed 1/1; full `bash scripts/browser-smoke.sh` passed real Chrome 13/13; Claude audit PASS; `code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50
 - Claude worker evidence: `.ai/workers/20260622T142134Z-audit_worker.result.md` first found a blocker-risk around photo read failure; fixed. `.ai/workers/20260622T142430Z-audit_worker.result.md` returned PASS / BLOCKERS none; path traversal Yellow was also fixed and reverified.
 - Claude worker evidence: latest `.ai/workers/20260622T150714Z-audit_worker.result.md` returned PASS after fixing the WorkTeam search field blocker found by `.ai/workers/20260622T150334Z-audit_worker.result.md`.
 - Claude worker evidence: latest `.ai/workers/20260622T153551Z-audit_worker.result.md` returned PASS for inventory alert removal and labor export fixes.
@@ -32,10 +32,11 @@
 - Claude worker evidence: latest `.ai/workers/20260622T175646Z-audit_worker.result.md` returned PASS for finance invoice/receipt/P&L/import/export.
 - Claude worker evidence: latest `.ai/workers/20260623T024042Z-audit_worker.result.md` returned PASS for labor personnel/attendance/salary/risk deep CRUD.
 - Claude worker evidence: `.ai/workers/20260623T025250Z-audit_worker.result.md` returned PASS for inventory alert schema cleanup; latest `.ai/workers/20260623T030102Z-audit_worker.result.md` returned PASS for final inventory alert schema cleanup + Prisma generate guard audit.
-- code-review-graph evidence: latest `code-review-graph build --skip-flows && code-review-graph detect-changes` ran; graph built 135 files / 1529 nodes / 19024 edges; risk score 0.50 because the SQL materials table change is reported as a function-level gap while verify plus real Chrome WMS main chain cover the product path.
+- Claude worker evidence: latest `.ai/workers/20260623T032115Z-audit_worker.result.md` returned PASS for finance category settings + recycle-bin lifecycle, with no blockers and no Yellow risks.
+- code-review-graph evidence: latest `code-review-graph build --skip-flows && code-review-graph detect-changes` ran; graph built 135 files / 1532 nodes / 19498 edges; risk score 0.50. Function-level gaps for rate-limit smoke guard, CategorySettings/loadCategories, and dialog handling are covered by real Chrome product paths and Claude audit.
 - Previous pushed implementation commit: `ebf731c feat: add supplier and work team CRUD coverage`
 - Safe rollback point: pushed commit `f171bc2 chore: mark full route matrix pushed`
-- Browser smoke evidence: `docs/smoke-evidence/playwright-results.json`, `docs/smoke-evidence/playwright-report/index.html`, legacy screenshots, `docs/smoke-evidence/full-route-*.png`, `docs/smoke-evidence/供应商班组CRUD.png`, `docs/smoke-evidence/劳资工资发放导出.png`, `docs/smoke-evidence/劳资人员考勤工资风控CRUD.png`, `docs/smoke-evidence/模块开通独立登录验收.png`, `docs/smoke-evidence/基础后台CRUD.png`, `docs/smoke-evidence/物资主链路CRUD.png`, `docs/smoke-evidence/财务备用金费用CRUD上传.png`, and `docs/smoke-evidence/财务发票收款盈亏导入导出.png`; latest real Chrome smoke passed 12 tests
+- Browser smoke evidence: `docs/smoke-evidence/playwright-results.json`, `docs/smoke-evidence/playwright-report/index.html`, legacy screenshots, `docs/smoke-evidence/full-route-*.png`, `docs/smoke-evidence/供应商班组CRUD.png`, `docs/smoke-evidence/劳资工资发放导出.png`, `docs/smoke-evidence/劳资人员考勤工资风控CRUD.png`, `docs/smoke-evidence/模块开通独立登录验收.png`, `docs/smoke-evidence/基础后台CRUD.png`, `docs/smoke-evidence/物资主链路CRUD.png`, `docs/smoke-evidence/财务备用金费用CRUD上传.png`, `docs/smoke-evidence/财务发票收款盈亏导入导出.png`, and `docs/smoke-evidence/财务类别回收站CRUD.png`; latest real Chrome smoke passed 13 tests
 - Previous pushed implementation commit: `e7c0772 feat: remove inventory alerts and fix labor exports`
 - Last pushed implementation commit: `b122ebc test: cover module entitlements and portal login`
 - Previous implementation commit: `5fe8382 test: cover admin crud and remove inventory alert docs`
@@ -43,8 +44,9 @@
 - Previous implementation commit: `692025b test: cover finance voucher upload crud`
 - Previous implementation commit: `dad2f12 test: cover finance invoice receipt import export`
 - Previous implementation commit: `02d3ffa test: cover labor deep crud flows`
-- Latest pushed implementation commit: `75b2668 chore: remove inventory alert schema residue`
-- Updated at: 2026-06-23T03:08:00Z
+- Latest pushed implementation commit before S14: `75b2668 chore: remove inventory alert schema residue`; latest pushed status marker before S14: `f0cfb7f chore: mark inventory alert cleanup pushed`
+- Pending implementation commit: finance category settings + recycle-bin lifecycle coverage
+- Updated at: 2026-06-23T03:24:19Z
 
 ## 项目概览
 
