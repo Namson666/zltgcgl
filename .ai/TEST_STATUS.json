@@ -1,5 +1,5 @@
 {
-  "status": "ci_browser_smoke_selector_fix_verified_pending_remote_ci",
+  "status": "ci_browser_smoke_delete_toast_selector_fix_verified_pending_remote_ci",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -8,6 +8,18 @@
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "ci_browser_smoke_delete_toast_selector_fix",
+      "command": "gh run watch 28063684577 --repo Namson666/zltgcgl --exit-status; fix finance delete-toast strict selector by using exact text; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"enterprise user can manage finance categories\"; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S59-ci-browser-smoke-delete-toast-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
+      "status": "verified_claude_pass_pending_remote_ci",
+      "result": "S59 responds to GitHub Actions run 28063684577. Remote Build/Test passed and browser smoke ran all 36 tests; 35 passed and 1 failed due Playwright strict text ambiguity: 类别已删除 also matched 子类别已删除. Tightened the assertion to page.getByText('类别已删除', { exact: true }). Focused Chrome rerun of the failed finance category test passed 1/1; final local full real Chrome browser-smoke passed 36/36; code-review-graph risk 0.50 / 0 gaps; Claude audit PASS at .ai/workers/20260623T233334Z-audit_worker.result.md. Push and remote CI rerun are still required before CI Green can move from not_verified. 库存预警 remains deleted and out of scope.",
+      "evidence_files": [
+        "frontend/tests/smoke/browser-smoke.spec.ts",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        ".ai/workers/20260623T233334Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "ci_browser_smoke_selector_fix",
       "command": "gh run watch 28062934787 --repo Namson666/zltgcgl --exit-status; fix duplicate-toast and duplicate-button strict selectors; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"enterprise user can login and open core enabled modules|enterprise user can manage finance categories\"; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S58-ci-browser-smoke-selector-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00; bash scripts/browser-smoke.sh",

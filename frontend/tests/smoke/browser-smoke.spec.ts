@@ -4379,7 +4379,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await page.getByTitle(`删除主类别 ${categoryNameEdited}`).click();
     await expect(page.getByRole('heading', { name: '删除主类别' })).toBeVisible();
     await page.getByRole('button', { name: '确认删除' }).click();
-    await expect(page.getByText('类别已删除')).toBeVisible();
+    await expect(page.getByText('类别已删除', { exact: true })).toBeVisible();
     await expect(page.getByText(categoryNameEdited)).toHaveCount(0);
 
     const categoriesAfterDeleteResponse = await page.request.get('/api/finance/categories', {
