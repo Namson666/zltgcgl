@@ -1538,6 +1538,76 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can manage subscription plan lifecycle', async ({ page }) => {
+    await loginEnterprise(page);
+    const enterpriseToken = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(enterpriseToken).toBeTruthy();
+
+    const authHeaders = { Authorization: `Bearer ${enterpriseToken}` };
+
+    const resetResponse = await page.request.post('/api/subscription/change-plan', {
+      headers: authHeaders,
+      data: { plan: 'FULL', tier: 'SMALL' },
+    });
+    expect(resetResponse.status()).toBe(200);
+
+    const currentBeforeResponse = await page.request.get('/api/subscription/current', {
+      headers: authHeaders,
+    });
+    expect(currentBeforeResponse.status()).toBe(200);
+    const currentBeforeBody = await readJson(currentBeforeResponse);
+    expect(currentBeforeBody?.data?.plan).toBe('FULL');
+    expect(currentBeforeBody?.data?.tier).toBe('SMALL');
+
+    await page.goto('/subscription');
+    await expect(page.getByRole('heading', { name: '订阅计划' })).toBeVisible();
+    await expect(page.getByTestId('subscription-current-card')).toContainText('全系统会员');
+    await expect(page.getByTestId('subscription-plan-FULL-MEDIUM')).toBeVisible();
+    await page.getByTestId('subscription-change-FULL-MEDIUM').click();
+    await expect(page.getByRole('heading', { name: '确认变更套餐' })).toBeVisible();
+    await page.getByTestId('subscription-confirm-change').click();
+    await expectToast(page, '已切换到「全系统会员 · 中型」套餐');
+
+    const currentAfterResponse = await page.request.get('/api/subscription/current', {
+      headers: authHeaders,
+    });
+    expect(currentAfterResponse.status()).toBe(200);
+    const currentAfterBody = await readJson(currentAfterResponse);
+    expect(currentAfterBody?.data?.plan).toBe('FULL');
+    expect(currentAfterBody?.data?.tier).toBe('MEDIUM');
+    expect(currentAfterBody?.data?.maxUsers).toBe(20);
+    expect(currentAfterBody?.data?.status).toBe('ACTIVE');
+    await expect(page.getByTestId('subscription-current-card')).toContainText('中型');
+    await expect(page.getByTestId('subscription-current-card')).toContainText('15456 元/年');
+
+    const paymentsResponse = await page.request.get('/api/subscription/payments', {
+      headers: authHeaders,
+      params: { page: 1, pageSize: 10 },
+    });
+    expect(paymentsResponse.status()).toBe(200);
+    const paymentsBody = await readJson(paymentsResponse);
+    expect(Array.isArray(paymentsBody?.data)).toBe(true);
+    expect((paymentsBody?.data || []).some((item: any) => item.transactionId === 'DEMO-PAY-20260623')).toBe(true);
+
+    const restoreResponse = await page.request.post('/api/subscription/change-plan', {
+      headers: authHeaders,
+      data: { plan: 'FULL', tier: 'SMALL' },
+    });
+    expect(restoreResponse.status()).toBe(200);
+    const restoreBody = await readJson(restoreResponse);
+    expect(restoreBody?.data?.plan).toBe('FULL');
+    expect(restoreBody?.data?.tier).toBe('SMALL');
+
+    await page.reload();
+    await expect(page.getByTestId('subscription-current-card')).toContainText('小型');
+    await expect(page.getByTestId('subscription-plan-FULL-SMALL')).toContainText('当前套餐');
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/企业订阅计划生命周期CRUD.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can create edit and delete supplier and work team', async ({ page }) => {
     await loginEnterprise(page);
     const stamp = Date.now();

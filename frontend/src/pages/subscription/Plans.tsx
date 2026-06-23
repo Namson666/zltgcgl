@@ -40,7 +40,8 @@ import Modal from '../../components/ui/Modal';
 
 /** 当前订阅信息接口 */
 interface CurrentSubscription {
-  id: number;                     /* 订阅 ID */
+  id: string;                     /* 订阅 ID */
+  plan: string;                   /* 后端计划编码：SINGLE_WMS / SINGLE_LABOR / FULL */
   planName: string;               /* 计划名称 */
   planType: string;               /* 计划类型：single / full */
   tier: string;                   /* 层级：small / medium / large */
@@ -51,9 +52,23 @@ interface CurrentSubscription {
   price: number;                  /* 当前价格 */
 }
 
-/** 套餐计划接口 */
-interface Plan {
-  id: number;                     /* 套餐 ID */
+/** 后端套餐分组接口 */
+interface PlanGroup {
+  key: string;
+  name: string;
+  description: string;
+  tiers: Array<{
+    key: string;
+    maxUsers: number;
+    pricePerMonth: number;
+    pricePerExtraUser: number;
+  }>;
+}
+
+/** 可展示/可切换套餐选项接口 */
+interface PlanOption {
+  id: string;                     /* 套餐选项 ID：plan:tier */
+  plan: string;                   /* 后端计划编码 */
   name: string;                   /* 套餐名称 */
   tier: string;                   /* 层级：small / medium / large */
   description: string;            /* 套餐描述 */
@@ -75,6 +90,15 @@ const tierTextMap: Record<string, string> = {
   small: '小型',
   medium: '中型',
   large: '大型',
+  SMALL: '小型',
+  MEDIUM: '中型',
+  LARGE: '大型',
+};
+
+const planTextMap: Record<string, string> = {
+  SINGLE_WMS: '物资管理版',
+  SINGLE_LABOR: '劳资管理版',
+  FULL: '全系统会员',
 };
 
 /** 层级对应颜色样式 */
@@ -105,11 +129,70 @@ const tierColorMap: Record<string, { border: string; bg: string; text: string; b
 const Plans: React.FC = () => {
   /* ---------- 状态管理 ---------- */
   const [currentSub, setCurrentSub] = useState<CurrentSubscription | null>(null);  /* 当前订阅 */
-  const [plans, setPlans] = useState<Plan[]>([]);          /* 可用套餐列表 */
+  const [plans, setPlans] = useState<PlanOption[]>([]);          /* 可用套餐列表 */
   const [loading, setLoading] = useState(true);            /* 加载状态 */
   const [changingPlan, setChangingPlan] = useState(false); /* 变更套餐中状态 */
   const [showChangeModal, setShowChangeModal] = useState(false);  /* 变更确认弹窗 */
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);  /* 选中的套餐 */
+  const [selectedPlan, setSelectedPlan] = useState<PlanOption | null>(null);  /* 选中的套餐 */
+
+  const normalizeTier = (tier: string): string => tier.toLowerCase();
+
+  const unwrapApiData = (response: any) => response?.data?.data ?? response?.data ?? response;
+
+  const getPlanType = (plan: string): string => (plan === 'FULL' ? 'full' : 'single');
+
+  const normalizeSubscription = (raw: any): CurrentSubscription => {
+    const plan = raw.plan || raw.planType || 'FULL';
+    const tier = normalizeTier(raw.tier || 'SMALL');
+    return {
+      id: raw.id,
+      plan,
+      planName: raw.planName || planTextMap[plan] || plan,
+      planType: raw.planType || getPlanType(plan),
+      tier,
+      userCount: raw.userCount ?? raw.currentUsers ?? 0,
+      maxUsers: raw.maxUsers ?? 0,
+      expiresAt: raw.expiresAt || raw.currentPeriodEnd || raw.trialEndAt,
+      status: String(raw.status || '').toLowerCase(),
+      price: raw.price ?? (Number(raw.pricePerMonth || 0) * 12),
+    };
+  };
+
+  const normalizePlans = (rawPlans: any[]): PlanOption[] => {
+    if (!Array.isArray(rawPlans)) return [];
+
+    // 新契约：后端返回 plan group + tiers。
+    if (rawPlans.some((plan) => Array.isArray(plan.tiers))) {
+      const groups = rawPlans as PlanGroup[];
+      return groups.flatMap((group) => group.tiers.map((tier) => {
+        const normalizedTier = normalizeTier(tier.key);
+        const isFull = group.key === 'FULL';
+        return {
+          id: `${group.key}:${tier.key}`,
+          plan: group.key,
+          name: `${group.name} · ${tierTextMap[tier.key] || tier.key}`,
+          tier: normalizedTier,
+          description: group.description,
+          singlePrice: isFull ? 0 : tier.pricePerMonth * 12,
+          singleMaxUsers: isFull ? 0 : tier.maxUsers,
+          singleExtraUserPrice: isFull ? 0 : tier.pricePerExtraUser * 12,
+          fullPrice: isFull ? tier.pricePerMonth * 12 : 0,
+          fullMaxUsers: isFull ? tier.maxUsers : 0,
+          fullExtraUserPrice: isFull ? tier.pricePerExtraUser * 12 : 0,
+          features: isFull ? ['物资管理', '劳资管理', '财务管理', '合同管理'] : [group.name.replace('版', ''), '合同管理'],
+        };
+      }));
+    }
+
+    // 兼容旧契约：已经是扁平套餐。
+    return rawPlans.map((plan: any) => ({
+      ...plan,
+      id: String(plan.id),
+      plan: plan.plan || plan.key || plan.type || 'FULL',
+      tier: normalizeTier(plan.tier || 'SMALL'),
+      features: Array.isArray(plan.features) ? plan.features : [],
+    }));
+  };
 
   /* ---------- 数据加载 ---------- */
 
@@ -127,14 +210,14 @@ const Plans: React.FC = () => {
 
         /* 处理当前订阅数据 */
         if (subRes.status === 'fulfilled') {
-          const data = subRes.value.data || subRes.value;
-          setCurrentSub(data);
+          const data = unwrapApiData(subRes.value);
+          setCurrentSub(normalizeSubscription(data));
         }
 
         /* 处理套餐列表数据 */
         if (plansRes.status === 'fulfilled') {
-          const data = plansRes.value.data || plansRes.value;
-          setPlans(Array.isArray(data) ? data : data.items || []);
+          const data = unwrapApiData(plansRes.value);
+          setPlans(normalizePlans(Array.isArray(data) ? data : data.items || []));
         }
       } catch (error) {
         console.error('加载订阅数据失败:', error);
@@ -176,7 +259,7 @@ const Plans: React.FC = () => {
    * 打开变更套餐确认弹窗
    * @param plan - 目标套餐
    */
-  const handleChangePlan = (plan: Plan) => {
+  const handleChangePlan = (plan: PlanOption) => {
     setSelectedPlan(plan);
     setShowChangeModal(true);
   };
@@ -188,13 +271,13 @@ const Plans: React.FC = () => {
     if (!selectedPlan) return;
     try {
       setChangingPlan(true);
-      await subscriptionApi.changePlan(selectedPlan.id);
+      await subscriptionApi.changePlan({ plan: selectedPlan.plan, tier: selectedPlan.tier.toUpperCase() });
       toast.success(`已切换到「${selectedPlan.name}」套餐`);
       setShowChangeModal(false);
       /* 刷新当前订阅信息 */
       const res = await subscriptionApi.getCurrent();
-      const data = res.data || res;
-      setCurrentSub(data);
+      const data = unwrapApiData(res);
+      setCurrentSub(normalizeSubscription(data));
     } catch (error: any) {
       toast.error(error.message || '变更套餐失败');
     } finally {
@@ -223,6 +306,9 @@ const Plans: React.FC = () => {
     active: '已激活',
     trial: '试用中',
     expired: '已过期',
+    ACTIVE: '已激活',
+    TRIAL: '试用中',
+    EXPIRED: '已过期',
   };
 
   /* ---------- 加载中骨架屏 ---------- */
@@ -303,7 +389,7 @@ const Plans: React.FC = () => {
        * 当前订阅信息卡片
        * ========================================== */}
       {currentSub && (
-        <div className="card mb-8">
+        <div className="card mb-8" data-testid="subscription-current-card">
           <div className="card-header">
             <h2 className="card-title flex items-center gap-2">
               <Crown size={20} className="text-blue-600" />
@@ -319,7 +405,7 @@ const Plans: React.FC = () => {
               {/* 计划名称 */}
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-xs text-gray-400 mb-1">计划名称</p>
-                <p className="text-sm font-semibold text-gray-800">{currentSub.planName}</p>
+                <p className="text-sm font-semibold text-gray-800" data-testid="subscription-current-plan">{currentSub.planName}</p>
               </div>
               {/* 计划类型 */}
               <div className="p-3 bg-gray-50 rounded-lg">
@@ -370,11 +456,12 @@ const Plans: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {plans.map((plan) => {
             const colors = tierColorMap[plan.tier] || tierColorMap.small;
-            const isCurrentPlan = currentSub?.tier === plan.tier;
+            const isCurrentPlan = currentSub?.plan === plan.plan && currentSub?.tier === plan.tier;
 
             return (
               <div
                 key={plan.id}
+                data-testid={`subscription-plan-${plan.plan}-${plan.tier.toUpperCase()}`}
                 className={`bg-white rounded-xl border-2 ${colors.border} overflow-hidden shadow-sm hover:shadow-md transition-shadow ${
                   isCurrentPlan ? 'ring-2 ring-blue-500 ring-offset-2' : ''
                 }`}
@@ -475,6 +562,7 @@ const Plans: React.FC = () => {
                     <button
                       onClick={() => handleChangePlan(plan)}
                       className="w-full btn-primary"
+                      data-testid={`subscription-change-${plan.plan}-${plan.tier.toUpperCase()}`}
                     >
                       切换到此套餐
                     </button>
@@ -499,7 +587,7 @@ const Plans: React.FC = () => {
             <button onClick={() => setShowChangeModal(false)} className="btn-secondary" disabled={changingPlan}>
               取消
             </button>
-            <button onClick={confirmChangePlan} className="btn-primary" disabled={changingPlan}>
+            <button onClick={confirmChangePlan} className="btn-primary" disabled={changingPlan} data-testid="subscription-confirm-change">
               {changingPlan ? '变更中...' : '确认变更'}
             </button>
           </>

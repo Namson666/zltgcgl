@@ -1,9 +1,9 @@
 {
-  "stage": "S23_developer_payments_invoices_storage_pushed",
+  "stage": "S24_enterprise_subscription_lifecycle_verified_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Developer payments/invoices/storage observability lifecycle now has real Chrome coverage: payment keyword/status filter plus API read-back; invoice create and issue plus API read-back; developer-only API 403 checks; storage summary, tenant list, and file list after a real enterprise upload. Full Chrome smoke is now 21/21. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T07:10:00Z"
+  "notes": "Enterprise subscription plan lifecycle now has real Chrome coverage: page data contract with current backend APIs, plan+tier card rendering, UI switch FULL/SMALL to FULL/MEDIUM, subscription API read-back, payment record read-back, and restore to FULL/SMALL. Full Chrome smoke is now 22/22. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T07:20:00Z"
 }

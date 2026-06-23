@@ -575,10 +575,10 @@ export const subscriptionApi = {
 
   /**
    * 变更订阅套餐
-   * @param planId - 目标套餐 ID
+   * @param params - 目标套餐和层级
    */
-  changePlan: (planId: number) =>
-    http.post('/subscription/change', { planId }),
+  changePlan: (params: { plan: string; tier: string }) =>
+    http.post('/subscription/change-plan', params),
 
   /**
    * 获取支付记录
