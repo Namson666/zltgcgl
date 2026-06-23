@@ -20,7 +20,8 @@ sqlite3 "$DB_PATH" \
 		  ".read $ROOT/backend/prisma/migrations/20260622_add_procurement_contract_flows/migration.sql" \
 		  ".read $ROOT/backend/prisma/migrations/20260622_add_subcontract_work_team_flows/migration.sql" \
 		  ".read $ROOT/backend/prisma/migrations/20260622_add_mobile_check_in_foundation/migration.sql" \
-		  ".read $ROOT/backend/prisma/migrations/20260623_add_labor_payment_bank_account/migration.sql"
+		  ".read $ROOT/backend/prisma/migrations/20260623_add_labor_payment_bank_account/migration.sql" \
+		  ".read $ROOT/backend/prisma/migrations/20260623_add_mini_program_phone_bindings/migration.sql"
 
 cd "$ROOT/backend"
 DATABASE_URL="file:$DB_PATH" npx ts-node prisma/seed.ts >/dev/null

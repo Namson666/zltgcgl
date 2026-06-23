@@ -831,6 +831,91 @@ router.put('/mini-program/default', async (req: AuthenticatedRequest, res: Respo
   }
 });
 
+router.get('/mini-program/default/bindings', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const config = await prisma.miniProgramConfig.findFirst({ where: { developerId: req.user!.id, isDefault: true } });
+    if (!config) {
+      res.json({ success: true, data: [] } as ApiResponse);
+      return;
+    }
+    const phone = (req.query.phone as string | undefined)?.trim();
+    const bindings = await prisma.miniProgramPhoneBinding.findMany({
+      where: { developerId: req.user!.id, miniProgramConfigId: config.id, ...(phone ? { phone } : {}) },
+      include: {
+        tenant: { select: { id: true, name: true, code: true } },
+        personnel: { select: { id: true, name: true, phone: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 100,
+    });
+    res.json({ success: true, data: bindings } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取默认小程序手机号预绑定失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+router.post('/mini-program/default/bindings', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const phone = String(req.body.phone || '').trim();
+    const tenantId = String(req.body.tenantId || '').trim();
+    const personnelId = req.body.personnelId ? String(req.body.personnelId).trim() : '';
+    const isEnabled = req.body.isEnabled !== false;
+    const remark = req.body.remark;
+    if (!phone || !tenantId) {
+      res.status(400).json({ success: false, error: 'MISSING_PARAMS', message: '手机号和企业不能为空' } as ApiResponse);
+      return;
+    }
+    const config = await prisma.miniProgramConfig.findFirst({ where: { developerId: req.user!.id, isDefault: true, isEnabled: true } });
+    if (!config) {
+      res.status(404).json({ success: false, error: 'DEFAULT_MINI_PROGRAM_NOT_FOUND', message: '请先配置并启用开发者默认小程序' } as ApiResponse);
+      return;
+    }
+    const tenant = await prisma.tenant.findFirst({ where: { id: tenantId, isActive: true, deletedAt: null } });
+    if (!tenant) {
+      res.status(404).json({ success: false, error: 'TENANT_NOT_FOUND', message: '企业不存在或已停用' } as ApiResponse);
+      return;
+    }
+    const personnel = personnelId
+      ? await prisma.personnel.findFirst({ where: { id: personnelId, tenantId, phone, status: { not: 'left' } } })
+      : await prisma.personnel.findFirst({ where: { tenantId, phone, status: { not: 'left' } } });
+    if (!personnel) {
+      res.status(404).json({ success: false, error: 'PERSONNEL_NOT_FOUND', message: '该企业未找到匹配手机号的在场人员' } as ApiResponse);
+      return;
+    }
+    const binding = await prisma.miniProgramPhoneBinding.upsert({
+      where: { miniProgramConfigId_phone: { miniProgramConfigId: config.id, phone } },
+      create: { developerId: req.user!.id, miniProgramConfigId: config.id, tenantId, personnelId: personnel.id, phone, isEnabled, remark },
+      update: { tenantId, personnelId: personnel.id, isEnabled, remark },
+      include: {
+        tenant: { select: { id: true, name: true, code: true } },
+        personnel: { select: { id: true, name: true, phone: true } },
+      },
+    });
+    await createLog(req.user!.id, { tenantId, action: 'UPDATE', module: 'mini_program_phone_binding', description: `预绑定默认小程序手机号 ${phone} 到企业「${tenant.name}」` });
+    res.status(201).json({ success: true, data: binding, message: '默认小程序手机号预绑定已保存' } as ApiResponse);
+  } catch (error: any) {
+    console.error('保存默认小程序手机号预绑定失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
+router.delete('/mini-program/default/bindings/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const binding = await prisma.miniProgramPhoneBinding.findFirst({ where: { id: req.params.id, developerId: req.user!.id } });
+    if (!binding) {
+      res.status(404).json({ success: false, error: 'NOT_FOUND', message: '预绑定不存在' } as ApiResponse);
+      return;
+    }
+    await prisma.miniProgramPhoneBinding.delete({ where: { id: binding.id } });
+    await createLog(req.user!.id, { tenantId: binding.tenantId, action: 'DELETE', module: 'mini_program_phone_binding', description: `删除默认小程序手机号预绑定 ${binding.phone}` });
+    res.json({ success: true, message: '默认小程序手机号预绑定已删除' } as ApiResponse);
+  } catch (error: any) {
+    console.error('删除默认小程序手机号预绑定失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
 router.get('/tenants/:tenantId/mini-program', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const config = await prisma.miniProgramConfig.findFirst({ where: { developerId: req.user!.id, tenantId: req.params.tenantId } });

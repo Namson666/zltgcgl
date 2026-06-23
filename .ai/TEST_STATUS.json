@@ -1,13 +1,25 @@
 {
-  "status": "mini_program_selected_tenant_checkin_verified",
+  "status": "mini_program_phone_prebinding_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "mini_program_phone_prebinding_flow",
+      "command": "cd backend && npm run prisma:generate; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"mini-program check-in does not silently route\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623153738-mini-program-prebinding-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
+      "status": "verified_claude_warn_nonblocking",
+      "result": "默认小程序手机号预绑定已通过真实 Chrome：新增 MiniProgramPhoneBinding 表、迁移和 smoke DB 初始化；开发者后台可在第三方集成页点击创建手机号预绑定；默认小程序解析优先使用启用的预绑定，且会重新校验企业启用状态、人员企业/手机号/在场状态，失效绑定不会静默回退；真实 Chrome 创建两个企业同手机号人员，先验证冲突/选择企业/企业自有 appId，再通过开发者 UI 创建预绑定，随后默认 appId 不带 tenantId 打卡直接写入预绑定企业/人员，另一个企业无记录。Focused Chrome 1/1 passed，verify backend 57 + frontend 36 + builds passed，full Chrome 35/35 passed，code-review-graph risk 0.50。Claude audit WARN 无阻塞：建议后续增加启停绑定按钮、限流/通用错误、日志语义细化。库存预警未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/小程序手机号多企业分流.png",
+        ".ai/workers/20260623T153802Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "mini_program_selected_tenant_checkin_flow",
       "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"mini-program check-in does not silently route\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623151940-mini-program-selected-tenant-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
@@ -1282,5 +1294,5 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "WMS transfer create/export/delete-preview now has focused and full real Chrome coverage, including real UI transfer creation, transfer PDF download, transfer ledger export download, cascade preview, and delete verification. Transfer list/export now filters active records only, department-scoped transfer IDs are persisted, and transfer preview/delete rollback supports department-scoped inventory. Enterprise subscription lifecycle, developer payments/invoices/storage, integrations/security/monitoring/logs, AI/OCR, plans, system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T15:22:00Z"
+  "updated_at": "2026-06-23T15:40:34Z"
 }

@@ -243,6 +243,15 @@ export const developerApi = {
   updateDefaultMiniProgram: (data: any) =>
     http.put('/developer/mini-program/default', data),
 
+  getDefaultMiniProgramBindings: (params?: any) =>
+    http.get('/developer/mini-program/default/bindings', params),
+
+  saveDefaultMiniProgramBinding: (data: any) =>
+    http.post('/developer/mini-program/default/bindings', data),
+
+  deleteDefaultMiniProgramBinding: (id: string) =>
+    http.delete(`/developer/mini-program/default/bindings/${id}`),
+
   getTenantMiniProgram: (tenantId: string) =>
     http.get(`/developer/tenants/${tenantId}/mini-program`),
 

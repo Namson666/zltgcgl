@@ -1252,6 +1252,24 @@ export async function resolveTenantByMiniProgram(appId?: string, phone?: string)
     return { tenantId: config.tenantId, personnel: person, matchedBy: 'tenant_app' };
   }
 
+  const binding = await prisma.miniProgramPhoneBinding.findFirst({
+    where: { miniProgramConfigId: config.id, phone, isEnabled: true },
+    include: {
+      tenant: { select: { id: true, isActive: true, deletedAt: true } },
+      personnel: true,
+    },
+  });
+  if (binding) {
+    if (!binding.tenant.isActive || binding.tenant.deletedAt) {
+      throw { status: 404, code: 'TENANT_NOT_FOUND', message: '预绑定企业不存在或已停用' };
+    }
+    if (binding.personnel.tenantId !== binding.tenantId || binding.personnel.phone !== phone || binding.personnel.status === 'left') {
+      throw { status: 404, code: 'PERSONNEL_NOT_FOUND', message: '预绑定人员不存在、手机号不匹配或已离场' };
+    }
+    await assertLaborEnabledForTenant(binding.tenantId);
+    return { tenantId: binding.tenantId, personnel: binding.personnel, matchedBy: 'default_app_prebound' };
+  }
+
   const matches = await prisma.personnel.findMany({
     where: { phone, status: { not: 'left' }, tenant: { isActive: true, deletedAt: null } },
     include: { tenant: { select: { id: true, name: true, code: true } } },

@@ -27,6 +27,7 @@ model Developer {
   operationLogs      OperationLog[]
   integrationConfigs IntegrationConfig[]
   miniProgramConfigs MiniProgramConfig[]
+  miniProgramPhoneBindings MiniProgramPhoneBinding[]
 
   @@map("developers")
 }
@@ -92,6 +93,7 @@ model Tenant {
   subscription     Subscription?
   moduleEntitlements TenantModuleEntitlement[]
   miniProgramConfigs MiniProgramConfig[]
+  miniProgramPhoneBindings MiniProgramPhoneBinding[]
   attendanceSetting AttendanceSetting?
   mobileCheckInRecords MobileCheckInRecord[]
   trustedCheckInLocations TrustedCheckInLocation[]
@@ -868,6 +870,7 @@ model Personnel {
   attachments           Attachment[]
   attendanceRecords     AttendanceRecord[]
   mobileCheckInRecords  MobileCheckInRecord[]
+  miniProgramPhoneBindings MiniProgramPhoneBinding[]
   trustedCheckInLocations TrustedCheckInLocation[]
   paymentRecords        PaymentRecord[]
   subcontractor         Subcontractor?     @relation(fields: [subcontractorId], references: [id])
@@ -912,9 +915,34 @@ model MiniProgramConfig {
   updatedAt   DateTime  @updatedAt
   developer   Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
   tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  phoneBindings MiniProgramPhoneBinding[]
 
   @@index([tenantId])
   @@map("mini_program_configs")
+}
+
+/// 默认小程序手机号预绑定。用于同一手机号存在于多个企业时，由开发者后台预先指定企业/人员。
+model MiniProgramPhoneBinding {
+  id                  String            @id @default(cuid())
+  developerId          String
+  miniProgramConfigId  String
+  tenantId            String
+  personnelId         String
+  phone               String
+  isEnabled           Boolean           @default(true)
+  remark              String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  developer           Developer         @relation(fields: [developerId], references: [id], onDelete: Cascade)
+  miniProgramConfig   MiniProgramConfig @relation(fields: [miniProgramConfigId], references: [id], onDelete: Cascade)
+  tenant              Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  personnel           Personnel         @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+
+  @@unique([miniProgramConfigId, phone])
+  @@index([developerId])
+  @@index([tenantId])
+  @@index([personnelId])
+  @@map("mini_program_phone_bindings")
 }
 
 /// 企业微信打卡规则

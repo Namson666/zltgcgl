@@ -715,6 +715,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
     const sharedPhone = `137${String(stamp).slice(-8)}`;
     const checkDate = '2026-06-24';
     const tenantAppCheckDate = '2026-06-25';
+    const preboundCheckDate = '2026-06-26';
     const facePath = path.resolve(process.cwd(), 'tests/fixtures/checkin-face.svg');
     const faceBuffer = fs.readFileSync(facePath);
 
@@ -867,6 +868,39 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await loginDeveloper(page);
     await page.goto('/dev/integrations');
     await expect(page.getByTestId('default-mini-program-config')).toContainText('开发者默认打卡小程序');
+    await page.getByTestId('mini-program-binding-phone').fill(sharedPhone);
+    await page.getByTestId('mini-program-binding-tenant-id').fill(tenantA.tenantId);
+    await page.getByTestId('mini-program-binding-personnel-id').fill(personA.id);
+    await page.getByTestId('mini-program-binding-remark').fill('真实 Chrome 预绑定验收');
+    await page.getByTestId('mini-program-binding-save').click();
+    await expect(page.getByTestId('default-mini-program-phone-bindings')).toContainText(sharedPhone);
+    await expect(page.getByTestId('default-mini-program-phone-bindings')).toContainText(tenantA.tenantName);
+
+    const preboundCheckInResponse = await page.request.post('/api/mobile/check-in', {
+      multipart: {
+        appId: defaultAppId,
+        phone: sharedPhone,
+        checkDate: preboundCheckDate,
+        latitude: '22.5431',
+        longitude: '114.0579',
+        province: '广东省',
+        city: '深圳市',
+        county: '南山区',
+        address: '广东省深圳市南山区默认小程序预绑定打卡点',
+        photo: { name: 'checkin-face.svg', mimeType: 'image/svg+xml', buffer: faceBuffer },
+      },
+    });
+    expect(preboundCheckInResponse.status()).toBe(201);
+    const preboundCheckInBody = await readJson(preboundCheckInResponse);
+    expect(preboundCheckInBody?.data?.record?.tenantId).toBe(tenantA.tenantId);
+    expect(preboundCheckInBody?.data?.record?.personnelId).toBe(personA.id);
+    expect(preboundCheckInBody?.data?.record?.appId).toBe(defaultAppId);
+
+    tenantACheckIns = await listCheckIns(headersA, personA.id, preboundCheckDate);
+    tenantBCheckIns = await listCheckIns(headersB, personB.id, preboundCheckDate);
+    expect(Number(tenantACheckIns?.data?.total || 0)).toBe(1);
+    expect((tenantACheckIns?.data?.records || [])[0]?.appId).toBe(defaultAppId);
+    expect(Number(tenantBCheckIns?.data?.total || 0)).toBe(0);
     await page.screenshot({
       path: '../docs/smoke-evidence/小程序手机号多企业分流.png',
       fullPage: true,

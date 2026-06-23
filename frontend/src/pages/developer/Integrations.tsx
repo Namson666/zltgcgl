@@ -117,6 +117,14 @@ const Integrations: React.FC = () => {
 	    remark: '',
 	  });
 	  const [savingDefaultMiniProgram, setSavingDefaultMiniProgram] = useState(false);
+	  const [phoneBindingForm, setPhoneBindingForm] = useState({
+	    phone: '',
+	    tenantId: '',
+	    personnelId: '',
+	    remark: '',
+	  });
+	  const [phoneBindings, setPhoneBindings] = useState<any[]>([]);
+	  const [savingPhoneBinding, setSavingPhoneBinding] = useState(false);
 
   /* ---------- 数据加载 ---------- */
 
@@ -128,9 +136,10 @@ const Integrations: React.FC = () => {
     const fetchIntegrations = async () => {
       try {
         setLoading(true);
-	        const [res, miniProgramRes] = await Promise.all([
+	        const [res, miniProgramRes, bindingRes] = await Promise.all([
 	          developerApi.getIntegrations(),
 	          developerApi.getDefaultMiniProgram(),
+	          developerApi.getDefaultMiniProgramBindings(),
 	        ]);
 	        const body = res.data || res;
 	        const rows = body.data || body;
@@ -151,6 +160,8 @@ const Integrations: React.FC = () => {
 	            remark: miniProgramData.remark || '',
 	          });
 	        }
+	        const bindingBody = bindingRes.data || bindingRes;
+	        setPhoneBindings(Array.isArray(bindingBody.data) ? bindingBody.data : []);
 
         /* 初始化各平台状态 */
         const initialStates: Record<string, PlatformState> = {};
@@ -332,6 +343,51 @@ const Integrations: React.FC = () => {
 	    }
 	  };
 
+	  const updatePhoneBindingForm = (field: string, value: string) => {
+	    setPhoneBindingForm((prev) => ({ ...prev, [field]: value }));
+	  };
+
+	  const loadPhoneBindings = async () => {
+	    const res = await developerApi.getDefaultMiniProgramBindings();
+	    const body = res.data || res;
+	    setPhoneBindings(Array.isArray(body.data) ? body.data : []);
+	  };
+
+	  const handleSavePhoneBinding = async () => {
+	    if (!phoneBindingForm.phone.trim() || !phoneBindingForm.tenantId.trim()) {
+	      toast.error('手机号和企业 ID 不能为空');
+	      return;
+	    }
+	    setSavingPhoneBinding(true);
+	    try {
+	      await developerApi.saveDefaultMiniProgramBinding({
+	        phone: phoneBindingForm.phone.trim(),
+	        tenantId: phoneBindingForm.tenantId.trim(),
+	        personnelId: phoneBindingForm.personnelId.trim() || undefined,
+	        remark: phoneBindingForm.remark.trim() || undefined,
+	        isEnabled: true,
+	      });
+	      toast.success('默认小程序手机号预绑定已保存');
+	      setPhoneBindingForm({ phone: '', tenantId: '', personnelId: '', remark: '' });
+	      await loadPhoneBindings();
+	    } catch (error: any) {
+	      toast.error(error.message || '保存手机号预绑定失败');
+	    } finally {
+	      setSavingPhoneBinding(false);
+	    }
+	  };
+
+	  const handleDeletePhoneBinding = async (id: string) => {
+	    if (!window.confirm('确定删除这个手机号预绑定吗？')) return;
+	    try {
+	      await developerApi.deleteDefaultMiniProgramBinding(id);
+	      toast.success('手机号预绑定已删除');
+	      await loadPhoneBindings();
+	    } catch (error: any) {
+	      toast.error(error.message || '删除手机号预绑定失败');
+	    }
+	  };
+
   /* ---------- 加载中骨架屏 ---------- */
   if (loading) {
     return (
@@ -426,6 +482,58 @@ const Integrations: React.FC = () => {
 	          <button className="btn-primary text-sm" onClick={handleSaveDefaultMiniProgram} disabled={savingDefaultMiniProgram}>
 	            {savingDefaultMiniProgram ? '保存中...' : '保存默认小程序配置'}
 	          </button>
+	        </div>
+	        <div className="px-6 py-5 border-t border-green-50" data-testid="default-mini-program-phone-bindings">
+	          <div className="flex items-start justify-between gap-4 mb-4">
+	            <div>
+	              <h4 className="text-sm font-semibold text-gray-700">手机号预绑定</h4>
+	              <p className="text-xs text-gray-400 mt-1">当默认小程序里同一手机号命中多个企业时，可预先指定企业和人员，避免员工每次选择。</p>
+	            </div>
+	            <button className="btn-secondary btn-sm" onClick={loadPhoneBindings} type="button">刷新</button>
+	          </div>
+	          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+	            <input data-testid="mini-program-binding-phone" className="input w-full text-sm" value={phoneBindingForm.phone}
+	              onChange={(e) => updatePhoneBindingForm('phone', e.target.value)} placeholder="手机号" />
+	            <input data-testid="mini-program-binding-tenant-id" className="input w-full text-sm" value={phoneBindingForm.tenantId}
+	              onChange={(e) => updatePhoneBindingForm('tenantId', e.target.value)} placeholder="企业 ID" />
+	            <input data-testid="mini-program-binding-personnel-id" className="input w-full text-sm" value={phoneBindingForm.personnelId}
+	              onChange={(e) => updatePhoneBindingForm('personnelId', e.target.value)} placeholder="人员 ID（可选）" />
+	            <input data-testid="mini-program-binding-remark" className="input w-full text-sm" value={phoneBindingForm.remark}
+	              onChange={(e) => updatePhoneBindingForm('remark', e.target.value)} placeholder="备注" />
+	          </div>
+	          <div className="flex justify-end mb-4">
+	            <button data-testid="mini-program-binding-save" className="btn-primary text-sm" onClick={handleSavePhoneBinding} disabled={savingPhoneBinding}>
+	              {savingPhoneBinding ? '保存中...' : '保存手机号预绑定'}
+	            </button>
+	          </div>
+	          <div className="overflow-x-auto">
+	            <table className="w-full text-sm">
+	              <thead>
+	                <tr className="text-left text-gray-500 border-b">
+	                  <th className="py-2">手机号</th>
+	                  <th className="py-2">企业</th>
+	                  <th className="py-2">人员</th>
+	                  <th className="py-2">状态</th>
+	                  <th className="py-2 text-right">操作</th>
+	                </tr>
+	              </thead>
+	              <tbody>
+	                {phoneBindings.length === 0 ? (
+	                  <tr><td className="py-3 text-gray-400" colSpan={5}>暂无手机号预绑定</td></tr>
+	                ) : phoneBindings.map((binding) => (
+	                  <tr key={binding.id} className="border-b last:border-b-0" data-testid="mini-program-binding-row">
+	                    <td className="py-2">{binding.phone}</td>
+	                    <td className="py-2">{binding.tenant?.name || binding.tenantId}</td>
+	                    <td className="py-2">{binding.personnel?.name || binding.personnelId}</td>
+	                    <td className="py-2">{binding.isEnabled ? <span className="badge-green">启用</span> : <span className="badge-gray">停用</span>}</td>
+	                    <td className="py-2 text-right">
+	                      <button className="text-red-600 hover:text-red-700" onClick={() => handleDeletePhoneBinding(binding.id)}>删除</button>
+	                    </td>
+	                  </tr>
+	                ))}
+	              </tbody>
+	            </table>
+	          </div>
 	        </div>
 	      </div>
 

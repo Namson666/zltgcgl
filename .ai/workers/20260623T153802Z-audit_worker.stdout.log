@@ -1,0 +1,70 @@
+All audit concerns covered. Returning the verdict now.
+
+---
+
+# S43 Audit Verdict: **WARN**
+
+## Summary
+
+The diff implements developer-managed phone prebinding for the default mini-program correctly. The new `MiniProgramPhoneBinding` model, three CRUD routes, the resolver hook, the frontend UI, the migration, and the browser smoke coverage are all coherent and match the S41/S42 patterns. There are no schema, security, or correctness blockers, but I have several non-blocking follow-ups.
+
+## Correctness — PASS
+
+- `resolveTenantByMiniProgram` (`backend/src/modules/labor/service.ts:1255-1271`) is correctly placed after the tenant-owned appId branch and before the multi-tenant fallback, so the prebinding short-circuits before the S41 `MULTIPLE_TENANTS` 409 can fire.
+- Stale-binding guards are complete: tenant `isActive/deletedAt` and personnel `tenantId/phone/status === 'left'` are all rechecked at check-in time (`backend/src/modules/labor/service.ts:1263-1268`), so a binding that was valid at creation but has since drifted does NOT silently fall back — it throws `TENANT_NOT_FOUND` or `PERSONNEL_NOT_FOUND`.
+- The S41/S42 paths remain intact: tenant-owned `appId` (`service.ts:1248-1252`) and selected-tenant via `tenantId` (`service.ts:1327-1329`) are evaluated before and unchanged from this diff.
+- Route ownership filter `developerId: req.user!.id` is applied on GET/POST/DELETE so a developer cannot view or delete another developer's binding.
+- POST upserts by composite key `(miniProgramConfigId, phone)` — both fields are non-nullable `String`, so PF-304 does NOT apply; `upsert` is safe here.
+
+## Schema & Migration — PASS
+
+- `MiniProgramPhoneBinding` (`schema.prisma:925-946`) and `migration.sql` (entire file) agree on field types, cascade rules, unique key, and three indexes.
+- `start-browser-smoke-server.sh:24` wires the new migration into the smoke DB init.
+- `isEnabled` defaults `true`; `createdAt` defaults `now()`; both models use cuid PK.
+
+## Frontend & Test Coverage — PASS
+
+- `frontend/src/api/index.ts:246-253` exposes three endpoints with correct method/url.
+- `Integrations.tsx:120-127,137-139,160-163,346-389,486-538` adds form state, list, save, delete, and a table that renders `tenant?.name` and `personnel?.name`.
+- The smoke test (`browser-smoke.spec.ts:871-903`) drives the real Chrome UI to create a binding via the developer page, then issues a `defaultAppId` check-in with **no `tenantId`** and asserts the prebound tenant/personnel record, plus that tenantB has 0 records. This proves the prebinding wins over the previous `MULTIPLE_TENANTS` 409.
+
+## WARN — Non-blocking Follow-ups
+
+### W1: POST does not re-validate tenant isActive/deletedAt at insert time
+`backend/src/modules/developer/routes.ts:874` correctly uses `isActive: true, deletedAt: null` for the tenant. ✅ This is fine — re-reading the line shows it IS already filtered. **No issue**, retract this.
+
+### W2: Migration index list order vs `@@index` annotations
+The schema declares `@@index([developerId])`, `@@index([tenantId])`, `@@index([personnelId])` but the migration only creates indexes on `developerId`, `tenantId`, `personnelId`. The composite unique `miniProgramConfigId_phone` already serves as the implicit index on `miniProgramConfigId`. ✅ Match — no issue, retract.
+
+### W3: `isEnabled` default true is fine for new binding, but UI has no way to disable a binding (WARN — minor UX gap)
+`Integrations.tsx:540` only renders a Delete button per binding row. The model supports `isEnabled` and the resolver filters by `isEnabled: true` (`service.ts:1256`), but a developer cannot toggle a binding off without deleting and re-creating it. Consider adding a "停用/启用" toggle in a follow-up so operators can quickly disable a mis-bound phone without losing history.
+
+### W4: No rate limiting on the new POST binding route (WARN — security follow-up)
+`/developer/mini-program/default/bindings` POST does not appear to call any explicit rate-limit decorator (the file does not show one applied to this handler in the diff). Other admin routes in the same file also do not, so this is consistent with the surrounding code — but a developer credential can therefore enumerate personnel IDs across many tenants by repeatedly hitting this endpoint with different `tenantId`/`personnelId` pairs and reading the 404 errors. Recommend either per-developer rate limiting or returning a generic "validation failed" message instead of the specific `PERSONNEL_NOT_FOUND`/`TENANT_NOT_FOUND` codes.
+
+### W5: `createLog` on POST is recorded as `action: 'UPDATE'` (WARN — log semantics)
+`routes.ts:895` records `action: 'UPDATE'` for both create and update (since `upsert` is used). This is consistent with the file's broader convention but slightly lossy for the first-time-create case. Cosmetic only.
+
+### W6: DELETE has no authorization log on the wrong-tenant case (informational)
+`routes.ts:903-918` returns 404 before deleting, which is correct for not leaking existence, but does not log the attempt. Consistent with how other 404s in this file are handled.
+
+### W7: `routes.ts:870` requires `isEnabled: true` on the default mini-program when creating a binding
+This is correct (you cannot bind to a disabled program) but the GET endpoint at line 836 does NOT filter by `isEnabled`. A developer can still list bindings for a disabled program. Either symmetric filter or a documented rationale. Minor.
+
+### W8: Smoke test reuses dates without resetting the default mini-program `isEnabled`
+`browser-smoke.spec.ts:724` enables the default mini-program at the start of the test. The prebinding POST requires `isEnabled: true`. Since the same test enables it earlier, the path through `routes.ts:869` succeeds. ✅ Verified — no issue.
+
+## File/Line References
+
+- `backend/prisma/schema.prisma:925-946` — new model
+- `backend/prisma/migrations/20260623_add_mini_program_phone_bindings/migration.sql:1-21` — migration
+- `scripts/start-browser-smoke-server.sh:24` — migration wiring
+- `backend/src/modules/developer/routes.ts:834-918` — three CRUD handlers
+- `backend/src/modules/labor/service.ts:1255-1271` — resolver hook
+- `frontend/src/api/index.ts:246-253` — API surface
+- `frontend/src/pages/developer/Integrations.tsx:120-127, 346-389, 486-538` — UI
+- `frontend/tests/smoke/browser-smoke.spec.ts:871-903` — real Chrome coverage
+
+## Verdict
+
+**WARN** — ship-blocking items: none. The four non-blocking items above (W3 enable/disable toggle, W4 rate limit on binding POST, W5 log action verb, W7 GET/POST `isEnabled` symmetry) are follow-ups that do not block this slice.
