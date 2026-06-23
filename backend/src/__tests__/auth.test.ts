@@ -242,4 +242,35 @@ describe('Auth API (real DB)', () => {
       expect(res.body.success).toBe(false);
     });
   });
+
+  describe('GET /api/developer/readiness', () => {
+    it('returns developer-only production readiness diagnostics without leaking secrets', async () => {
+      const oldEndpoint = process.env.FACE_RECOGNITION_HTTP_ENDPOINT;
+      const oldApiKey = process.env.FACE_RECOGNITION_HTTP_API_KEY;
+      delete process.env.FACE_RECOGNITION_HTTP_ENDPOINT;
+      process.env.FACE_RECOGNITION_HTTP_API_KEY = 'unit-secret-readiness-key';
+      const token = signTestToken(testDevId);
+
+      try {
+        const res = await request(app)
+          .get('/api/developer/readiness')
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.overallStatus).toMatch(/ready|needs_attention/);
+        expect(Array.isArray(res.body.data.checks)).toBe(true);
+        const faceGateway = res.body.data.checks.find((check: any) => check.key === 'face_gateway');
+        expect(faceGateway).toBeTruthy();
+        expect(faceGateway.status).toBe('warning');
+        expect(faceGateway.detail.apiKeyConfigured).toBe(true);
+        expect(JSON.stringify(res.body)).not.toContain('unit-secret-readiness-key');
+      } finally {
+        if (oldEndpoint === undefined) delete process.env.FACE_RECOGNITION_HTTP_ENDPOINT;
+        else process.env.FACE_RECOGNITION_HTTP_ENDPOINT = oldEndpoint;
+        if (oldApiKey === undefined) delete process.env.FACE_RECOGNITION_HTTP_API_KEY;
+        else process.env.FACE_RECOGNITION_HTTP_API_KEY = oldApiKey;
+      }
+    });
+  });
 });

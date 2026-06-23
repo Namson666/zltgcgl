@@ -18,6 +18,7 @@ import {
   TenantPortalInput,
   updateTenantPortalConfig,
 } from '../../common/services/tenant-portal.service';
+import { getFaceProviderDiagnostic } from '../labor/face-provider';
 
 // ============================================
 // 全局数据看板
@@ -911,5 +912,132 @@ export async function getMonitoring() {
     dailyErrors: recentErrors,
     avgResponseTime: Math.round(avgDuration._avg.duration || 0),
     uptime: process.uptime(),
+  };
+}
+
+// ============================================
+// 生产就绪自检
+// ============================================
+
+type ReadinessStatus = 'ready' | 'warning';
+
+interface ReadinessCheck {
+  key: string;
+  label: string;
+  status: ReadinessStatus;
+  message: string;
+  detail?: Record<string, unknown>;
+}
+
+async function readinessQuery<T>(missingTables: string[], query: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await query();
+  } catch (error: any) {
+    if (error?.code === 'P2021') {
+      const table = error?.meta?.table;
+      if (typeof table === 'string' && !missingTables.includes(table)) missingTables.push(table);
+      return fallback;
+    }
+    throw error;
+  }
+}
+
+export async function getProductionReadiness() {
+  const faceDiagnostic = getFaceProviderDiagnostic('http');
+  const missingTables: string[] = [];
+
+  const [
+    activeTenants,
+    enabledModuleEntitlements,
+    portalDomains,
+    defaultMiniPrograms,
+    tenantMiniPrograms,
+    enabledPhoneBindings,
+    attendanceSettings,
+  ] = await Promise.all([
+    readinessQuery(missingTables, () => prisma.tenant.count({ where: { deletedAt: null, isActive: true } }), 0),
+    readinessQuery(missingTables, () => prisma.tenantModuleEntitlement.groupBy({ by: ['moduleKey'], where: { isEnabled: true }, _count: { id: true } }), []),
+    readinessQuery(missingTables, () => prisma.tenantPortalConfig.count({ where: { isEnabled: true, domain: { not: null } } }), 0),
+    readinessQuery(missingTables, () => prisma.miniProgramConfig.count({ where: { isDefault: true, isEnabled: true } }), 0),
+    readinessQuery(missingTables, () => prisma.miniProgramConfig.count({ where: { isDefault: false, tenantId: { not: null }, isEnabled: true } }), 0),
+    readinessQuery(missingTables, () => prisma.miniProgramPhoneBinding.count({ where: { isEnabled: true } }), 0),
+    readinessQuery(missingTables, () => prisma.attendanceSetting.groupBy({ by: ['faceProvider'], _count: { id: true } }), []),
+  ]);
+
+  const moduleCounts = Object.fromEntries(enabledModuleEntitlements.map((item) => [item.moduleKey, item._count.id]));
+  const faceProviderCounts = Object.fromEntries(attendanceSettings.map((item) => [item.faceProvider, item._count.id]));
+  const realFaceProviderTenantCount = attendanceSettings
+    .filter((item) => item.faceProvider !== 'stub')
+    .reduce((sum, item) => sum + item._count.id, 0);
+
+  const checks: ReadinessCheck[] = [
+    {
+      key: 'database_schema',
+      label: '数据库迁移状态',
+      status: missingTables.length === 0 ? 'ready' : 'warning',
+      message: missingTables.length === 0 ? '生产自检所需数据表可用' : '部分生产功能表缺失，请先执行数据库迁移',
+      detail: { missingTables },
+    },
+    {
+      key: 'active_tenants',
+      label: '企业基础数据',
+      status: activeTenants > 0 ? 'ready' : 'warning',
+      message: activeTenants > 0 ? `已有 ${activeTenants} 个启用企业` : '尚无启用企业，无法进行生产业务验收',
+      detail: { activeTenants },
+    },
+    {
+      key: 'module_entitlements',
+      label: '模块开通底座',
+      status: enabledModuleEntitlements.length > 0 ? 'ready' : 'warning',
+      message: enabledModuleEntitlements.length > 0 ? '已有企业模块开通记录' : '尚未发现模块开通记录，请为企业开通物资/劳资/财务模块',
+      detail: { moduleCounts },
+    },
+    {
+      key: 'independent_portal_domains',
+      label: '独立登录域名',
+      status: portalDomains > 0 ? 'ready' : 'warning',
+      message: portalDomains > 0 ? `已有 ${portalDomains} 个启用的企业独立登录域名` : '尚无启用的企业独立登录域名；生产还需 DNS、反代和证书验证',
+      detail: { enabledPortalDomains: portalDomains },
+    },
+    {
+      key: 'mini_program_default',
+      label: '默认小程序接入',
+      status: defaultMiniPrograms > 0 ? 'ready' : 'warning',
+      message: defaultMiniPrograms > 0 ? '开发者默认小程序已启用' : '尚未启用开发者默认小程序，未接入企业将无法走默认打卡入口',
+      detail: { defaultMiniPrograms },
+    },
+    {
+      key: 'mini_program_tenant_routing',
+      label: '企业小程序与手机号分流',
+      status: tenantMiniPrograms > 0 || enabledPhoneBindings > 0 ? 'ready' : 'warning',
+      message: tenantMiniPrograms > 0 || enabledPhoneBindings > 0
+        ? '已有企业自有小程序或默认小程序手机号预绑定'
+        : '尚无企业自有小程序或手机号预绑定；同手机号多企业时仍需人工选择企业',
+      detail: { tenantMiniPrograms, enabledPhoneBindings },
+    },
+    {
+      key: 'face_gateway',
+      label: '人脸识别 HTTP 网关',
+      status: faceDiagnostic.ready ? 'ready' : 'warning',
+      message: faceDiagnostic.ready
+        ? '人脸识别 HTTP 网关环境变量已配置'
+        : 'FACE_RECOGNITION_HTTP_ENDPOINT 未配置；生产人脸识别仍不可用',
+      detail: {
+        provider: faceDiagnostic.provider,
+        endpointConfigured: faceDiagnostic.endpointConfigured,
+        apiKeyConfigured: faceDiagnostic.apiKeyConfigured,
+        threshold: faceDiagnostic.threshold,
+        timeoutMs: faceDiagnostic.timeoutMs,
+        faceProviderCounts,
+        realFaceProviderTenantCount,
+      },
+    },
+  ];
+
+  return {
+    overallStatus: checks.every((check) => check.status === 'ready') ? 'ready' : 'needs_attention',
+    generatedAt: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    checks,
   };
 }

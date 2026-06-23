@@ -1249,4 +1249,18 @@ router.get('/monitoring', async (_req: AuthenticatedRequest, res: Response): Pro
   }
 });
 
+// ============================================
+// 生产就绪自检
+// ============================================
+
+router.get('/readiness', async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const data = await devService.getProductionReadiness();
+    res.json({ success: true, data } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取生产就绪自检失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
 export default router;

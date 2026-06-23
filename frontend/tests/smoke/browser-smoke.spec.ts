@@ -65,6 +65,7 @@ const developerRouteMatrix = [
   ['系统公告', '/dev/announcements'],
   ['安全策略', '/dev/security'],
   ['系统监控', '/dev/monitoring'],
+  ['生产就绪', '/dev/readiness'],
   ['系统配置', '/dev/system-config'],
   ['操作日志', '/dev/logs'],
 ] as const;
@@ -2174,6 +2175,26 @@ test.describe('browser smoke: authenticated core navigation', () => {
       headers: { Authorization: `Bearer ${enterpriseToken}` },
     });
     expect(forbiddenMonitoringRead.status()).toBe(403);
+
+    const readinessResponse = await page.request.get('/api/developer/readiness', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+    });
+    expect(readinessResponse.status()).toBe(200);
+    const readinessBody = await readJson(readinessResponse);
+    expect(readinessBody?.data?.checks?.length).toBeGreaterThanOrEqual(5);
+    expect(readinessBody?.data?.checks?.some((check: any) => check.key === 'face_gateway')).toBe(true);
+    expect(JSON.stringify(readinessBody)).not.toContain(process.env.FACE_RECOGNITION_HTTP_API_KEY || 'secret-token-never-present');
+    const forbiddenReadinessRead = await page.request.get('/api/developer/readiness', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenReadinessRead.status()).toBe(403);
+
+    await page.goto('/dev/readiness');
+    await expect(page.getByRole('heading', { name: '生产就绪自检' })).toBeVisible();
+    await expect(page.getByTestId('readiness-overall')).toContainText(/可上线|需关注/);
+    await expect(page.getByTestId('readiness-check-face_gateway')).toContainText('人脸识别 HTTP 网关');
+    await page.getByTestId('readiness-refresh').click();
+    await expectToast(page, '生产就绪自检已刷新');
 
     const integrationLogsResponse = await page.request.get('/api/logs', {
       headers: { Authorization: `Bearer ${developerToken}` },

@@ -61,6 +61,7 @@ import {
   TrendingUp,
   PieChart,
   FileUp,
+  Rocket,
 } from 'lucide-react';
 import { useAuthStore } from '../../lib/AuthContext';
 
@@ -400,6 +401,12 @@ const developerMenuGroup: MenuGroup = {
       name: '系统监控',
       path: '/dev/monitoring',
       icon: <Activity size={20} />,
+      developerOnly: true,
+    },
+    {
+      name: '生产就绪',
+      path: '/dev/readiness',
+      icon: <Rocket size={20} />,
       developerOnly: true,
     },
     {

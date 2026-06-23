@@ -495,6 +495,9 @@ export const developerApi = {
 
   getMonitoring: () =>
     http.get('/developer/monitoring'),
+
+  getReadiness: () =>
+    http.get('/developer/readiness'),
 };
 
 /* ========================================

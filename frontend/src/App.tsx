@@ -105,6 +105,7 @@ const DevApiKeys = lazy(() => import('./pages/developer/ApiKeys'));
 const DevAnnouncements = lazy(() => import('./pages/developer/Announcements'));
 const DevSecurity = lazy(() => import('./pages/developer/Security'));
 const DevMonitoring = lazy(() => import('./pages/developer/Monitoring'));
+const DevProductionReadiness = lazy(() => import('./pages/developer/ProductionReadiness'));
 
 /* 财务管理页面 */
 const FinanceExpenseEntryDept = lazy(() => import('./pages/finance/ExpenseEntryDept'));
@@ -223,6 +224,7 @@ const App: React.FC = () => {
           <Route path="/dev/announcements" element={<DevAnnouncements />} />
           <Route path="/dev/security" element={<DevSecurity />} />
           <Route path="/dev/monitoring" element={<DevMonitoring />} />
+          <Route path="/dev/readiness" element={<DevProductionReadiness />} />
 
           {/* ---------- 订阅管理 ---------- */}
           <Route path="/subscription" element={<SubscriptionPlans />} />
