@@ -1,5 +1,5 @@
 {
-  "status": "developer_ui_module_portal_browser_verified_pushed",
+  "status": "portal_host_browser_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -8,6 +8,30 @@
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "independent_portal_host_flow",
+      "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_portal_host.db npx playwright test --config playwright.config.ts -g \"module entitlements hide disabled modules\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; claude -p <.ai/workers/20260623T043739Z-portal_host_audit.prompt.md>; code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified",
+      "result": "独立登录页从 127.0.0.1/localhost 验收升级为真实 Host 语义：测试为新企业绑定 portal-<stamp>.localhost，真实 Chrome 访问 http://portal-<stamp>.localhost:5173/login，断言 URL host、独立门户标题、无企业代码输入框、无开发者登录入口，并成功登录。Focused Chrome 1/1 passed；完整真实 Chrome smoke 15/15 passed。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/模块开通独立登录验收.png",
+        ".ai/workers/20260623T043739Z-portal_host_audit.result.md"
+      ]
+    },
+    {
+      "type": "claude_cli_audit",
+      "command": "claude -p <.ai/workers/20260623T043739Z-portal_host_audit.prompt.md>",
+      "status": "verified_with_yellow_notes",
+      "result": "WARN: Claude confirmed this truly covers Host semantics using portal-<stamp>.localhost. Its Vite allowedHosts/CORS concerns are resolved by actual focused/full Chrome passes. Remaining Yellow is production DNS/reverse-proxy/certificate validation outside local smoke."
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 136 files / 1542 nodes / 20169 edges. detect-changes risk score 0.50. configureTenantPortal helper gap is covered by the real Chrome independent portal Host flow."
+    },
     {
       "type": "developer_ui_module_portal_flow",
       "command": "bash scripts/verify.sh; bash scripts/browser-smoke.sh; claude -p <.ai/workers/20260623T042229Z-developer_ui_module_portal_audit.prompt.md>; code-review-graph build --skip-flows && code-review-graph detect-changes",
