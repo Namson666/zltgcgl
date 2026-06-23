@@ -15,8 +15,8 @@
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
     "push_status": "labor_legacy_output_value_api_pushed",
-    "pushed_commit": "e32fef9 test: cover labor legacy output value api chain",
-    "last_pushed_commit": "e32fef9"
+    "pushed_commit": "ad26360 chore: mark labor legacy output value api pushed",
+    "last_pushed_commit": "ad26360"
   },
   "github": {
     "requested_repo_exists": true,
@@ -25,7 +25,7 @@
     "requested_repo_has_refs": false,
     "push_status": "labor_report_all_types_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "e32fef9 test: cover labor legacy output value api chain"
+    "pushed_commit": "ad26360 chore: mark labor legacy output value api pushed"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -35,12 +35,12 @@
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
   "status": "labor_legacy_output_value_api_pushed",
-  "updated_at": "2026-06-23T17:36:20Z",
+  "updated_at": "2026-06-23T17:37:20Z",
   "push_status": "labor_legacy_output_value_api_pushed",
-  "last_pushed_commit": "e32fef9",
-  "current_commit": "e32fef9 test: cover labor legacy output value api chain",
+  "last_pushed_commit": "ad26360",
+  "current_commit": "ad26360 chore: mark labor legacy output value api pushed",
   "notes": [
-    "2026-06-24: S49 labor legacy subcontract output-value/progress-payment API chain verified locally and pushed at e32fef9; frontend wrapper path fixed to /labor/output-value/payments, Vitest API wrapper 1/1, focused real Chrome API chain 1/1, verify backend 57 + frontend 37 + builds, full Chrome 36/36, code-review-graph risk 0.50 / 0 test gaps, Claude audit and re-audit PASS.",
+    "2026-06-24: S49 labor legacy subcontract output-value/progress-payment API chain verified locally and pushed at e32fef9; status marker pushed at ad26360; frontend wrapper path fixed to /labor/output-value/payments, Vitest API wrapper 1/1, focused real Chrome API chain 1/1, verify backend 57 + frontend 37 + builds, full Chrome 36/36, code-review-graph risk 0.50 / 0 test gaps, Claude audit and re-audit PASS.",
     "2026-06-24: S48 labor report all frontend types verified locally and pushed at e0d146c; status marker pushed at 7b8420c; salary/social/payment/attendance each selected in real Chrome, xlsx sheet names parsed, UI downloads checked, focused 1/1, verify, full Chrome 35/35, code-review-graph risk 0.50, Claude audit PASS.",
     "2026-06-24: S47 labor report typed export pushed at eb8ee97; follow-up status marker pushed at e98e23a.",
     "2026-06-24: S47 labor report typed export verified locally; payment/attendance typed xlsx sheets, invalid type 400, and no-type legacy four-sheet compatibility covered by real Chrome + ExcelJS parsing; verify, full Chrome 35/35, code-review-graph risk 0.50, Claude final audit PASS; pushed to public-main and main.",
