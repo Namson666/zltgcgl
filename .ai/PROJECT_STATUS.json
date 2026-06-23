@@ -15,8 +15,8 @@
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
     "push_status": "labor_report_type_export_pushed",
-    "pushed_commit": "eb8ee97 fix: align labor report exports with selected type",
-    "last_pushed_commit": "eb8ee97"
+    "pushed_commit": "e98e23a chore: mark labor report typed export pushed",
+    "last_pushed_commit": "e98e23a"
   },
   "github": {
     "requested_repo_exists": true,
@@ -25,7 +25,7 @@
     "requested_repo_has_refs": false,
     "push_status": "labor_report_type_export_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "eb8ee97 fix: align labor report exports with selected type"
+    "pushed_commit": "e98e23a chore: mark labor report typed export pushed"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -37,10 +37,10 @@
   "status": "labor_report_type_export_pushed",
   "updated_at": "2026-06-23T16:56:42Z",
   "push_status": "labor_report_type_export_pushed",
-  "last_pushed_commit": "eb8ee97",
-  "current_commit": "eb8ee97 fix: align labor report exports with selected type",
+  "last_pushed_commit": "e98e23a",
+  "current_commit": "e98e23a chore: mark labor report typed export pushed",
   "notes": [
-    "2026-06-24: S47 labor report typed export pushed at eb8ee97; status marker pending.",
+    "2026-06-24: S47 labor report typed export pushed at eb8ee97; follow-up status marker pushed at e98e23a.",
     "2026-06-24: S47 labor report typed export verified locally; payment/attendance typed xlsx sheets, invalid type 400, and no-type legacy four-sheet compatibility covered by real Chrome + ExcelJS parsing; verify, full Chrome 35/35, code-review-graph risk 0.50, Claude final audit PASS; pushed to public-main and main.",
     "2026-06-24: S46 tenant independent login Logo upload pushed at 4514894; follow-up status marker pushed.",
     "2026-06-24: S46 tenant independent login Logo upload verified locally; PNG/JPG/WebP only after Claude SVG risk note; focused Chrome 1/1, final verify, full Chrome 35/35, code-review-graph risk 0.50, Claude re-audit PASS; pushed to public-main and main.",
