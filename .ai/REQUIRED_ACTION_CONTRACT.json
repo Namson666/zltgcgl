@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "production_readiness_pushed",
+  "stage": "production_external_smoke_verified_pending_push",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, developer system announcement lifecycle, enterprise announcement dashboard visibility, mini-program same-phone multi-tenant conflict protection, selected-tenant check-in after conflict with appId validation, developer-managed phone prebinding for default mini-program, tenant-owned mini-program direct routing, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, third-party integration/security/monitoring/logs lifecycle, payments/invoices/storage observability, tenant CRUD/users/password/recycle-bin lifecycle, enterprise main dashboard real-summary lifecycle, enterprise subscription plan lifecycle, finance dashboard real-summary data, contract construction progress receipt, contract P&L detail API/UI coverage, WMS material catalog CRUD/export, WMS inbound Excel import/export/delete-preview, WMS delivery order export/OCR upload guard, WMS return Excel import/export/delete-preview, WMS outbound create/export/delete-preview, WMS transfer create/export/delete-preview, WMS inventory/work-team ledger export net-quantity coverage, public registration tenant-code login, labor payment lifecycle, labor legacy output-value API chain, and S50 face provider diagnostic readiness check are covered by real Chrome. Per the user confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered are complete. S50 adds an operator-visible diagnostic for HTTP/cloud face gateway readiness without exposing endpoint or API key.",
+  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, developer system announcement lifecycle, enterprise announcement dashboard visibility, mini-program same-phone multi-tenant conflict protection, selected-tenant check-in after conflict with appId validation, developer-managed phone prebinding for default mini-program, tenant-owned mini-program direct routing, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, third-party integration/security/monitoring/logs lifecycle, payments/invoices/storage observability, tenant CRUD/users/password/recycle-bin lifecycle, enterprise main dashboard real-summary lifecycle, enterprise subscription plan lifecycle, finance dashboard real-summary data, contract construction progress receipt, contract P&L detail API/UI coverage, WMS material catalog CRUD/export, WMS inbound Excel import/export/delete-preview, WMS delivery order export/OCR upload guard, WMS return Excel import/export/delete-preview, WMS outbound create/export/delete-preview, WMS transfer create/export/delete-preview, WMS inventory/work-team ledger export net-quantity coverage, public registration tenant-code login, labor payment lifecycle, labor legacy output-value API chain, S50 face provider diagnostic readiness check, and S51 developer production readiness page are covered by real Chrome. S52 is adding a non-mutating production external smoke script requiring real production URL/TLS and optional portal/developer/face-gateway inputs. Per the user confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered are complete.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,9 +52,9 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-23T21:54:30Z",
-  "current_phase": "S51_production_readiness_pushed",
-  "current_task": "Continue real production DNS/cert validation and third-party face gateway credential validation, or next historical deep CRUD/upload/download slice.",
+  "updated_at": "2026-06-23T22:06:30Z",
+  "current_phase": "S52_production_external_smoke_verified_pending_push",
+  "current_task": "Commit and push the verified non-mutating production external smoke script.",
   "last_completed": "S51 production readiness self-check verified and pushed at 24db3cc: developer-only readiness API/UI, missing migration table warning, portal/mini-program/module/face gateway checks, verify.sh, full Chrome 36/36, code-review-graph, and Claude audit passed.",
-  "next_action": "Validate real production DNS/certs and third-party face gateway credentials, or choose the next historical deep CRUD/upload/download slice."
+  "next_action": "Commit/push S52. Product Green still requires running the script against real production URL/DNS/cert and third-party face gateway credentials."
 }

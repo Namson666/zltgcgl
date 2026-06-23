@@ -1,0 +1,85 @@
+{
+  "status": "yellow",
+  "generatedAt": "2026-06-23T22:01:33.300Z",
+  "frontendBaseUrl": "http://127.0.0.1:5273",
+  "apiBaseUrl": "http://127.0.0.1:4301",
+  "results": [
+    {
+      "name": "frontend_login_page",
+      "status": "pass",
+      "message": "GET http://127.0.0.1:5273/login returned 200"
+    },
+    {
+      "name": "api_health",
+      "status": "pass",
+      "message": "GET http://127.0.0.1:4301/api/health returned healthy payload"
+    },
+    {
+      "name": "api_v1_health",
+      "status": "pass",
+      "message": "GET http://127.0.0.1:4301/api/v1/health returned healthy payload"
+    },
+    {
+      "name": "tenant_portal_domain",
+      "status": "pass",
+      "message": "portal host prod-smoke.localhost resolved to enabled tenant portal",
+      "detail": {
+        "domain": "prod-smoke.localhost"
+      }
+    },
+    {
+      "name": "developer_readiness.face_gateway",
+      "status": "warn",
+      "message": "face gateway is not production-ready in this environment",
+      "detail": {
+        "provider": "http",
+        "endpointConfigured": false,
+        "apiKeyConfigured": false,
+        "threshold": 0.8,
+        "timeoutMs": 8000,
+        "faceProviderCounts": {
+          "stub": 1
+        },
+        "realFaceProviderTenantCount": 0
+      }
+    },
+    {
+      "name": "developer_readiness",
+      "status": "pass",
+      "message": "protected readiness returned needs_attention",
+      "detail": {
+        "overallStatus": "needs_attention",
+        "checks": [
+          {
+            "key": "database_schema",
+            "status": "ready"
+          },
+          {
+            "key": "active_tenants",
+            "status": "ready"
+          },
+          {
+            "key": "module_entitlements",
+            "status": "warning"
+          },
+          {
+            "key": "independent_portal_domains",
+            "status": "ready"
+          },
+          {
+            "key": "mini_program_default",
+            "status": "ready"
+          },
+          {
+            "key": "mini_program_tenant_routing",
+            "status": "warning"
+          },
+          {
+            "key": "face_gateway",
+            "status": "warning"
+          }
+        ]
+      }
+    }
+  ]
+}

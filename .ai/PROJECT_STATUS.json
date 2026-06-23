@@ -7,7 +7,7 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_production_readiness_push",
+    "working_tree": "dirty_s52_production_external_smoke",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
@@ -34,12 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "production_readiness_pushed",
-  "updated_at": "2026-06-23T21:54:30Z",
-  "push_status": "production_readiness_pushed",
+  "status": "production_external_smoke_verified_pending_push",
+  "updated_at": "2026-06-23T22:06:30Z",
+  "push_status": "pending_s52_production_external_smoke_push",
   "last_pushed_commit": "24db3cc",
   "current_commit": "24db3cc feat: add developer production readiness check",
   "notes": [
+    "2026-06-24: S52 production external smoke gate verified locally and pending push: added scripts/production-smoke.mjs for non-mutating production checks. It requires PRODUCTION_BASE_URL, enforces https by default, checks frontend /login, /api/health, /api/v1/health, optional PRODUCTION_PORTAL_HOST portal config, and optional PRODUCTION_DEVELOPER_TOKEN developer readiness without leaking secrets. Missing external portal/token/face gateway configuration remains Yellow and does not claim Product Green. node --check passed; missing URL exits 2; local true frontend/backend dry-run with portal+developer token exits 3/yellow due local face gateway not production-ready; verify.sh passed backend 61 + frontend 38 + builds; full real Chrome 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS.",
     "2026-06-24: S51 production readiness self-check pushed at 24db3cc: added developer-only /api/developer/readiness and /dev/readiness page surfacing database migration table availability, active tenants, module entitlements, independent portal domains, mini-program routing, and HTTP face gateway readiness without leaking secrets or claiming external DNS/cert/third-party credentials are complete. Focused backend auth/readiness 13/13, focused real Chrome developer readiness path 1/1, verify backend 61 + frontend 38 + builds, full Chrome 36/36, code-review-graph risk 0.60 with integration coverage noted, Claude audit PASS.",
     "2026-06-24: S50 face provider diagnostic pushed at f0fc53d: backend diagnostic helper and authenticated attendance route added; labor attendance UI can detect HTTP/cloud gateway readiness without exposing endpoint or API key; real Chrome checks HTTP not_configured and stub ready states. Focused backend face-provider tests 12/12, frontend API tests 2/2, focused Chrome labor attendance diagnostic 1/1, verify backend 60 + frontend 38 + builds, full Chrome 36/36, code-review-graph risk 0.50 with integration coverage noted, Claude audit and final re-audit PASS.",
     "2026-06-24: S49 labor legacy subcontract output-value/progress-payment API chain verified locally and pushed at e32fef9; status marker pushed at ad26360; frontend wrapper path fixed to /labor/output-value/payments, Vitest API wrapper 1/1, focused real Chrome API chain 1/1, verify backend 57 + frontend 37 + builds, full Chrome 36/36, code-review-graph risk 0.50 / 0 test gaps, Claude audit and re-audit PASS.",
@@ -82,10 +83,10 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S51_production_readiness_pushed",
-  "current_task": "Continue real production DNS/cert validation and third-party face gateway credential validation, or next historical deep CRUD/upload/download slice; Product Green remains Yellow until external gates are proven.",
-  "last_verified_at": "2026-06-23T21:50:30Z",
-  "last_verified_command": "backend auth/readiness focused 13/13; focused Chrome developer readiness path 1/1; bash scripts/verify.sh backend 61 frontend 38 build; bash scripts/browser-smoke.sh 36/36; code-review-graph risk 0.60 with readiness helper/App gaps covered by backend/API/Chrome evidence; Claude CLI audit PASS",
+  "current_phase": "S52_production_external_smoke_verified_pending_push",
+  "current_task": "Commit and push non-mutating production external smoke gate; Product Green remains Yellow until external gates are run against real production DNS/certs and third-party face gateway credentials.",
+  "last_verified_at": "2026-06-23T22:06:30Z",
+  "last_verified_command": "node --check scripts/production-smoke.mjs; no PRODUCTION_BASE_URL exits 2; local frontend/backend dry-run with portal host + developer token exits 3/yellow due local face gateway not production-ready; bash scripts/verify.sh backend 61 frontend 38 builds; bash scripts/browser-smoke.sh 36/36; code-review-graph risk 0.00 / 0 gaps; Claude CLI audit PASS at .ai/workers/20260623T220545Z-audit_worker.result.md",
   "history": [
     {
       "date": "2026-06-23T15:59:33Z",
