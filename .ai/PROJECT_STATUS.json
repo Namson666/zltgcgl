@@ -15,8 +15,8 @@
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
     "push_status": "labor_report_all_types_pushed",
-    "pushed_commit": "e0d146c test: cover all labor report export types",
-    "last_pushed_commit": "e0d146c"
+    "pushed_commit": "7b8420c chore: mark labor report all types pushed",
+    "last_pushed_commit": "7b8420c"
   },
   "github": {
     "requested_repo_exists": true,
@@ -25,7 +25,7 @@
     "requested_repo_has_refs": false,
     "push_status": "labor_report_all_types_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "e0d146c test: cover all labor report export types"
+    "pushed_commit": "7b8420c chore: mark labor report all types pushed"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -35,12 +35,12 @@
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
   "status": "labor_report_all_types_pushed",
-  "updated_at": "2026-06-23T17:15:20Z",
+  "updated_at": "2026-06-23T17:16:20Z",
   "push_status": "labor_report_all_types_pushed",
-  "last_pushed_commit": "e0d146c",
-  "current_commit": "e0d146c test: cover all labor report export types",
+  "last_pushed_commit": "7b8420c",
+  "current_commit": "7b8420c chore: mark labor report all types pushed",
   "notes": [
-    "2026-06-24: S48 labor report all frontend types verified locally and pushed at e0d146c; salary/social/payment/attendance each selected in real Chrome, xlsx sheet names parsed, UI downloads checked, focused 1/1, verify, full Chrome 35/35, code-review-graph risk 0.50, Claude audit PASS.",
+    "2026-06-24: S48 labor report all frontend types verified locally and pushed at e0d146c; status marker pushed at 7b8420c; salary/social/payment/attendance each selected in real Chrome, xlsx sheet names parsed, UI downloads checked, focused 1/1, verify, full Chrome 35/35, code-review-graph risk 0.50, Claude audit PASS.",
     "2026-06-24: S47 labor report typed export pushed at eb8ee97; follow-up status marker pushed at e98e23a.",
     "2026-06-24: S47 labor report typed export verified locally; payment/attendance typed xlsx sheets, invalid type 400, and no-type legacy four-sheet compatibility covered by real Chrome + ExcelJS parsing; verify, full Chrome 35/35, code-review-graph risk 0.50, Claude final audit PASS; pushed to public-main and main.",
     "2026-06-24: S46 tenant independent login Logo upload pushed at 4514894; follow-up status marker pushed.",
