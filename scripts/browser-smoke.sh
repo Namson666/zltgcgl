@@ -4,5 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 mkdir -p "$ROOT/docs/smoke-evidence"
 
+cd "$ROOT/backend"
+npm run prisma:generate
+
 cd "$ROOT/frontend"
 npx playwright test --config playwright.config.ts

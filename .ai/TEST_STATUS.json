@@ -593,7 +593,7 @@
       "type": "inventory_alert_removal",
       "command": "implementation + residual rg scan",
       "status": "verified",
-      "result": "库存预警 removed from frontend route/menu/API client/dashboard/materials UI, backend /api/wms/alerts router/service, browser route matrix, and public docs. Historical Prisma alertThreshold column/migration intentionally retained for compatibility but no longer used by product code."
+      "result": "库存预警 removed from frontend route/menu/API client/dashboard/materials UI, backend /api/wms/alerts router/service, browser route matrix, public docs, and historical Prisma Material.alertThreshold schema/init SQL column."
     },
     {
       "type": "labor_export_fix",
@@ -707,6 +707,49 @@
       "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
       "status": "verified_with_yellow_notes",
       "result": "Graph built 135 files / 1487 nodes / 17074 edges; risk score 0.55. Tool reports function-level gaps, while the changed product journey is covered by real Chrome and Claude audit found no blockers."
+    },
+    {
+      "type": "inventory_alert_schema_cleanup",
+      "command": "schema/migration cleanup + residual rg scan",
+      "status": "verified",
+      "result": "Deleted historical Prisma Material.alertThreshold and the initial migration materials.alertThreshold column. Product code, Prisma schema, frontend tests, backend source, and active docs have no inventory alert route/API/page/field residue; remaining hits are status text documenting deletion only."
+    },
+    {
+      "type": "verification",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "verify now runs backend npm run prisma:generate before tests/build. Prisma Client generated, backend tests 5 files / 33 tests passed, backend build passed, frontend tests 2 files / 36 tests passed, frontend build passed."
+    },
+    {
+      "type": "browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "Real system Google Chrome passed 12/12 after adding prisma:generate to the smoke entrypoint. An initial run exposed a real 500 on WMS manual inbound because stale Prisma Client still selected materials.alertThreshold; script-level Prisma generation fixed it and WMS inbound/outbound/return/transfer passed.",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/物资主链路CRUD.png"
+      ]
+    },
+    {
+      "type": "claude_worker",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/inventory-alert-schema-cleanup-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "Claude audit PASS; no blockers. Confirmed schema cleanup scope is limited to inventory alert historical field/column and does not remove labor risk warnings, face-recognition thresholds, or system warning UI.",
+      "evidence_file": ".ai/workers/20260623T025250Z-audit_worker.result.md"
+    },
+    {
+      "type": "claude_worker",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/inventory-alert-schema-cleanup-final-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "Claude final audit PASS; no blockers. Confirmed no inventory alert product/field residue, no accidental removal of labor risk warnings/face thresholds/system warning UI, and verify/browser-smoke Prisma generation is a reasonable stale-client guard.",
+      "evidence_file": ".ai/workers/20260623T030102Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 135 files / 1529 nodes / 19024 edges; risk score 0.50. Only SQL materials table change is reported as an untested function-level gap, covered by verify plus real Chrome WMS main chain."
     }
   ],
   "known_yellow_items": [
@@ -722,11 +765,11 @@
     "Backend and frontend npm audit are clear at moderate threshold after xlsx removal and uuid override.",
     "Full route matrix is now covered in real Chrome, but deep CRUD/upload/download regression for every page is still incomplete.",
     "Supplier/work-team CRUD has real Chrome create/edit/delete/search coverage; basic admin roles/users/departments now also have real Chrome deep CRUD/state-change coverage. Remaining historical business pages still need equivalent deep CRUD/upload/download where business rules support it.",
-    "Inventory alert product feature has been removed per user request; historical Prisma alertThreshold column remains only for compatibility.",
+    "Inventory alert product feature has been removed per user request; historical Prisma Material.alertThreshold schema/init SQL column is now removed too. Verification and browser smoke now force Prisma Client generation to prevent stale generated clients from re-querying deleted fields.",
     "Labor report export still writes the existing fixed workbook sheets; attendance/social preview is supported but adding those sheets to workbook export remains a non-blocking follow-up.",
     "Finance invoice/receipt/P&L/import/export has real Chrome CRUD/upload/download coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow evidence.",
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
-  "notes": "Inventory alert remains removed from active WMS product requirements. Finance invoice/receipt/P&L/import/export and labor personnel/attendance/salary/risk are now included in real Chrome CRUD/upload/download/state-change coverage. Real Chrome now passes 12 tests. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T02:48:08Z"
+  "notes": "Inventory alert remains removed from active WMS product requirements and the historical Prisma Material.alertThreshold schema/init SQL column has now also been deleted. verify and browser-smoke force Prisma Client generation; real Chrome passed 12/12 after proving WMS inbound/outbound/return/transfer still works without the deleted field. Finance invoice/receipt/P&L/import/export and labor personnel/attendance/salary/risk are included in real Chrome CRUD/upload/download/state-change coverage. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
+  "updated_at": "2026-06-23T02:58:00Z"
 }

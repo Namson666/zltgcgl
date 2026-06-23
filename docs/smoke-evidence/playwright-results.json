@@ -5,9 +5,7 @@
       "/Users/Namson/.config/superpowers/worktrees/资料通工程管理系统/public-clean-baseline/frontend/node_modules/.bin/playwright",
       "test",
       "--config",
-      "playwright.config.ts",
-      "-g",
-      "labor personnel attendance salary and risk CRUD"
+      "playwright.config.ts"
     ],
     "configFile": "/Users/Namson/.config/superpowers/worktrees/资料通工程管理系统/public-clean-baseline/frontend/playwright.config.ts",
     "rootDir": "/Users/Namson/.config/superpowers/worktrees/资料通工程管理系统/public-clean-baseline/frontend/tests/smoke",
@@ -95,6 +93,210 @@
           "column": 6,
           "specs": [
             {
+              "title": "enterprise user can login and open core enabled modules",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 18520,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:56:37.040Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-37e25edcb70b2214e5ba",
+              "file": "browser-smoke.spec.ts",
+              "line": 211,
+              "column": 3
+            },
+            {
+              "title": "developer can login and open tenant management",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2323,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:56:55.978Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-e42aafba7f0f51619208",
+              "file": "browser-smoke.spec.ts",
+              "line": 456,
+              "column": 3
+            },
+            {
+              "title": "enterprise user can create edit and delete supplier and work team",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2804,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:56:58.308Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-5d839cbb55ba837504d8",
+              "file": "browser-smoke.spec.ts",
+              "line": 486,
+              "column": 3
+            },
+            {
+              "title": "enterprise user can complete wms inbound outbound return transfer chain",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 150000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5037,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:57:01.118Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-ec204f12fdc0b0354c07",
+              "file": "browser-smoke.spec.ts",
+              "line": 554,
+              "column": 3
+            },
+            {
+              "title": "enterprise user can manage roles users and departments",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12096,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:57:06.161Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-a708450707c59ead7775",
+              "file": "browser-smoke.spec.ts",
+              "line": 650,
+              "column": 3
+            },
+            {
+              "title": "enterprise user can download labor salary payment and report exports",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2811,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:57:18.263Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-5e144c39020d35cac64c",
+              "file": "browser-smoke.spec.ts",
+              "line": 787,
+              "column": 3
+            },
+            {
               "title": "enterprise user can complete labor personnel attendance salary and risk CRUD",
               "ok": true,
               "tags": [],
@@ -110,12 +312,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5115,
+                      "duration": 5021,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T02:44:14.132Z",
+                      "startTime": "2026-06-23T02:57:21.079Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -127,6 +329,176 @@
               "file": "browser-smoke.spec.ts",
               "line": 842,
               "column": 3
+            },
+            {
+              "title": "enterprise user can complete finance petty cash and expense voucher CRUD",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3511,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:57:26.106Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-35cab1c74bf8c9d124c2",
+              "file": "browser-smoke.spec.ts",
+              "line": 987,
+              "column": 3
+            },
+            {
+              "title": "enterprise user can complete finance invoice receipt pnl import export CRUD",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6870,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:57:29.622Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-2cc91b6665f8e431bd97",
+              "file": "browser-smoke.spec.ts",
+              "line": 1082,
+              "column": 3
+            },
+            {
+              "title": "enterprise user can open every enabled business route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 32404,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:57:36.498Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-e982e543af9213ddde17",
+              "file": "browser-smoke.spec.ts",
+              "line": 1240,
+              "column": 3
+            },
+            {
+              "title": "developer can open every developer route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 16039,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:58:08.907Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-d05a0faf5f199fe198ee",
+              "file": "browser-smoke.spec.ts",
+              "line": 1247,
+              "column": 3
+            },
+            {
+              "title": "module entitlements hide disabled modules and portal login works without tenant code",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3017,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T02:58:24.953Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-ebfd38f616fe9a7384f8",
+              "file": "browser-smoke.spec.ts",
+              "line": 1254,
+              "column": 3
             }
           ]
         }
@@ -135,9 +507,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-06-23T02:44:10.890Z",
-    "duration": 8835.669,
-    "expected": 1,
+    "startTime": "2026-06-23T02:56:33.790Z",
+    "duration": 114437.201,
+    "expected": 12,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

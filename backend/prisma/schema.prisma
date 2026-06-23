@@ -478,7 +478,6 @@ model Material {
   unit               String
   unitPrice          Float?
   category           String?
-  alertThreshold     Int?
   remark             String?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt

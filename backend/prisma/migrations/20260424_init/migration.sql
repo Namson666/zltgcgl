@@ -291,7 +291,6 @@ CREATE TABLE "materials" (
     "unit" TEXT NOT NULL,
     "unitPrice" REAL,
     "category" TEXT,
-    "alertThreshold" INTEGER,
     "remark" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
@@ -1092,4 +1091,3 @@ CREATE UNIQUE INDEX "fin_categories_tenantId_name_key" ON "fin_categories"("tena
 
 -- CreateIndex
 CREATE UNIQUE INDEX "fin_monthly_summaries_tenantId_contractId_departmentId_year_month_categoryId_key" ON "fin_monthly_summaries"("tenantId", "contractId", "departmentId", "year", "month", "categoryId");
-

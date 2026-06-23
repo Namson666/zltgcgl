@@ -3,6 +3,12 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+echo "== Backend Prisma generate =="
+(
+  cd "$ROOT_DIR/backend"
+  npm run prisma:generate
+)
+
 echo "== Backend tests =="
 (
   cd "$ROOT_DIR/backend"

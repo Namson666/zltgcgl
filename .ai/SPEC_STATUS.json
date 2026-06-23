@@ -1,9 +1,9 @@
 {
-  "stage": "S12_labor_personnel_attendance_salary_risk_pushed",
+  "stage": "S13_inventory_alert_schema_cleanup_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Inventory alert / 库存预警 remains removed from active WMS product requirements and docs. Labor personnel/attendance/salary/risk slice is now verified in real Chrome: personnel create/edit/attachment upload-download-delete/leave/rejoin, attendance batch and patch with backend monthly evidence, salary calculate/manual edit/export, and risk anomaly creation/resolve. Fixed leave payload compatibility, rejoin status, attendance DateTime persistence, batch attendance fake-success behavior, salary manual adjustment UI, and risk field/API mapping. Deep CRUD/upload/download for every remaining historical page, production DNS/logo polish, and real third-party face gateway credentials remain Yellow.",
-  "updated_at": "2026-06-23T02:48:08Z"
+  "notes": "Inventory alert / 库存预警 remains removed from active WMS product requirements, docs, routes, menus, API client, backend API surface, browser matrix, and the historical Prisma Material.alertThreshold field / initialization SQL column are now removed. verify/browser-smoke force Prisma Client generation after Chrome exposed a stale-client 500; real Chrome now passes 12/12 including WMS inbound/outbound/return/transfer. Labor personnel/attendance/salary/risk slice is verified in real Chrome: personnel create/edit/attachment upload-download-delete/leave/rejoin, attendance batch and patch with backend monthly evidence, salary calculate/manual edit/export, and risk anomaly creation/resolve. Deep CRUD/upload/download for every remaining historical page, production DNS/logo polish, and real third-party face gateway credentials remain Yellow.",
+  "updated_at": "2026-06-23T02:58:00Z"
 }
