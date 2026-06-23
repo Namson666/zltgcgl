@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "contract_progress_receipt_pushed",
+  "stage": "contract_pnl_detail_verified_pending_push",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, system announcement lifecycle, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, third-party integration/security/monitoring/logs lifecycle, payments/invoices/storage observability, enterprise subscription plan lifecycle, finance dashboard real-summary data, and now contract construction progress receipt coverage are covered by real Chrome. S26 covers creating a construction contract progress receipt on the same contract detail page and confirming amount/description read-back while preserving attachment/procurement/subcontract upload-download-delete coverage. Per the user's latest confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices; labor risk warnings, system announcement warning type, and face-recognition thresholds remain unrelated and intact. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download coverage are complete.",
+  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, system announcement lifecycle, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, third-party integration/security/monitoring/logs lifecycle, payments/invoices/storage observability, enterprise subscription plan lifecycle, finance dashboard real-summary data, contract construction progress receipt, and now contract P&L detail API/UI coverage are covered by real Chrome. S27 covers verifying contract P&L list and detail UI against backend P&L API totals after creating invoice and linked receipt while preserving invoice/receipt/import/export cleanup. Per the user's latest confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices; labor risk warnings, system announcement warning type, and face-recognition thresholds remain unrelated and intact. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download coverage are complete.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-23T09:05:00Z"
+  "updated_at": "2026-06-23T09:20:00Z"
 }

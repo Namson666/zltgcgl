@@ -2517,9 +2517,18 @@ test.describe('browser smoke: authenticated core navigation', () => {
     const pnlBody = await readJson(pnlResponse);
     expect(Number(pnlBody?.data?.invoiceTotal || 0)).toBeGreaterThanOrEqual(888.88);
     expect(Number(pnlBody?.data?.receiptTotal || 0)).toBeGreaterThanOrEqual(388.88);
+    const pnlReceiptMoney = `¥${Number(pnlBody.data.receiptTotal).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const pnlInvoiceMoney = `¥${Number(pnlBody.data.invoiceTotal).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     await page.goto('/finance/contract-pnl');
     await expect(page.getByRole('heading', { name: '合同盈利分析' })).toBeVisible();
-    await expect(page.getByText('XX市政道路改造工程')).toBeVisible();
+    const pnlRow = page.locator('tr', { hasText: 'XX市政道路改造工程' });
+    await expect(pnlRow).toBeVisible();
+    await expect(pnlRow).toContainText(pnlReceiptMoney);
+    await pnlRow.getByRole('button', { name: '查看详情' }).click();
+    await expect(page).toHaveURL(new RegExp(`/finance/contract-pnl/${createdInvoice.contractId}`));
+    await expect(page.getByRole('heading', { name: 'XX市政道路改造工程' })).toBeVisible();
+    await expect(page.getByText(pnlReceiptMoney).first()).toBeVisible();
+    await expect(page.getByText(pnlInvoiceMoney).first()).toBeVisible();
 
     await page.goto('/finance/import');
     await expect(page.getByRole('heading', { name: '费用导入', exact: true })).toBeVisible();
