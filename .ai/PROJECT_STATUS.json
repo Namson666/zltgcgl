@@ -7,7 +7,7 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_developer_ai_ocr_config_lifecycle_verification",
+    "working_tree": "dirty_after_developer_ai_ocr_config_lifecycle_push_marker",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
@@ -20,9 +20,9 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "developer_ai_ocr_config_lifecycle_pending_push",
+    "push_status": "developer_ai_ocr_config_lifecycle_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "68e2874 test: cover developer plan lifecycle"
+    "pushed_commit": "1fb9b96 test: cover developer AI OCR config lifecycle"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -31,11 +31,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_developer_ai_ocr_config_lifecycle_verified_pending_push",
-  "updated_at": "2026-06-23T06:16:00Z",
-  "push_status": "developer_ai_ocr_config_lifecycle_pending_push",
-  "last_pushed_commit": "d3af1c0",
-  "current_commit": "developer_ai_ocr_config_lifecycle_verified_pending_push",
+  "status": "yellow_developer_ai_ocr_config_lifecycle_pushed",
+  "updated_at": "2026-06-23T06:20:00Z",
+  "push_status": "developer_ai_ocr_config_lifecycle_pushed",
+  "last_pushed_commit": "1fb9b96",
+  "current_commit": "developer_ai_ocr_config_lifecycle_pushed",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -63,6 +63,6 @@
     "2026-06-23: Developer system announcement lifecycle verified locally in real Chrome: create publishes with publishedAt, edit title/content/type, unpublish clears publishedAt, republish refreshes publishedAt, delete removes the record, and enterprise user GET/POST/PUT/PUBLISH/DELETE developer announcement APIs return 403. verify passed, focused Chrome 1/1 passed, full real Chrome 16/16 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at de4b48e.",
     "2026-06-23: Developer system config + API Key lifecycle verified locally in real Chrome. Fixed SystemConfig API response unwrap and API Key status/isActive contract. System config create/edit/delete and API Key create/disable/enable/delete have UI+API read-back, enterprise 403 coverage, rawKey state cleanup, and screenshots. verify passed, focused Chrome 1/1 passed, full real Chrome 17/17 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 3dd1dd6.",
     "2026-06-23: Developer platform plan lifecycle verified locally in real Chrome. Plans now cover UI create/edit/delete, API read-back for tier/type/price/maxUsers/extraUser/description, invalid tier 400, subscribed combination delete 409, cleanup delete after changing to an unreferenced combination, and enterprise GET/POST/PUT/DELETE developer plan API 403. User reconfirmed WMS inventory alert / 库存预警 is not needed; current product code, schema, route/API/menu, and browser matrix remain free of inventory-alert residue. verify passed, focused Chrome 1/1 passed, full real Chrome 18/18 passed, Claude audit PASS, code-review-graph risk 0.60; pushed at 68e2874.",
-    "2026-06-23: Developer AI/OCR configuration lifecycle verified locally in real Chrome. AI covers create, API masked read-back, enable, credential edit reset to disabled, sensitive input clearing, delete, and enterprise GET/PUT/PATCH/DELETE 403. OCR covers create, API masked read-back, tencent test-enable path, credential edit reset to disabled, no-refresh re-enable after useConfigList state refresh fix, sensitive input clearing, delete, and enterprise GET/PUT/PATCH/DELETE 403. Claude first WARN found missing OCR sensitiveFields; fixed and final Claude PASS. verify passed, focused Chrome 1/1 passed, full real Chrome 19/19 passed, code-review-graph risk 0.50; pending push."
+    "2026-06-23: Developer AI/OCR configuration lifecycle verified locally in real Chrome. AI covers create, API masked read-back, enable, credential edit reset to disabled, sensitive input clearing, delete, and enterprise GET/PUT/PATCH/DELETE 403. OCR covers create, API masked read-back, tencent test-enable path, credential edit reset to disabled, no-refresh re-enable after useConfigList state refresh fix, sensitive input clearing, delete, and enterprise GET/PUT/PATCH/DELETE 403. Claude first WARN found missing OCR sensitiveFields; fixed and final Claude PASS. verify passed, focused Chrome 1/1 passed, full real Chrome 19/19 passed, code-review-graph risk 0.50; pushed at 1fb9b96."
   ]
 }

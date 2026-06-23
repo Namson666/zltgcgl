@@ -1,5 +1,5 @@
 {
-  "status": "developer_ai_ocr_config_lifecycle_browser_verified_pending_push",
+  "status": "developer_ai_ocr_config_lifecycle_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -1024,5 +1024,5 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "Developer AI/OCR configuration lifecycle now has focused and full real Chrome coverage, including create/edit/delete, API read-back with sensitive masking, enable/disable/state-reset behavior, OCR connectivity enablement without real external network dependency, enterprise 403 checks, and sensitive-field clearing after save. Developer plans, system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T06:16:00Z"
+  "updated_at": "2026-06-23T06:20:00Z"
 }
