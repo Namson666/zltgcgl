@@ -7,7 +7,7 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_developer_ui_module_portal_verification",
+    "working_tree": "dirty_after_developer_ui_module_portal_push_marker",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
@@ -20,7 +20,7 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "pending_developer_ui_module_portal_push",
+    "push_status": "developer_ui_module_portal_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
     "pushed_commit": "c085a94 test: add full route browser matrix smoke"
   },
@@ -31,11 +31,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_developer_ui_module_portal_verified_not_pushed",
-  "updated_at": "2026-06-23T04:26:16Z",
-  "push_status": "pending_developer_ui_module_portal_push",
-  "last_pushed_commit": "dc676cb",
-  "current_commit": "finance_department_reimbursement_review_pushed",
+  "status": "yellow_developer_ui_module_portal_pushed",
+  "updated_at": "2026-06-23T04:35:00Z",
+  "push_status": "developer_ui_module_portal_pushed",
+  "last_pushed_commit": "7e58b7d",
+  "current_commit": "developer_ui_module_portal_pushed",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -57,6 +57,7 @@
     "2026-06-23: Labor personnel/attendance/salary/risk deep slice verified locally in real Chrome: personnel create/edit/attachment upload-download-delete/leave/rejoin, attendance batch/patch with backend monthly evidence, salary calculate/manual edit/export, anomaly create/resolve. verify passed, Chrome 12 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 02d3ffa.",
     "2026-06-23: User requested deleting inventory alert. Historical Prisma Material.alertThreshold schema field and init SQL column removed; verify/browser-smoke now force Prisma Client generation after Chrome caught stale-client WMS inbound 500. verify passed, real Chrome 12/12 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 75b2668 and status marker pushed at f0cfb7f.",
     "2026-06-23: Finance category settings and recycle-bin lifecycle verified locally in real Chrome: main/sub category create-edit-delete, category API read-back, contract soft-delete, recycle-bin keyword/search, restore, re-delete, and permanent delete. verify passed, real Chrome 13/13 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 16b26c0 and status marker pushed at a08b726.",
-    "2026-06-23: Finance project department reimbursement review verified locally in real Chrome: project department submit with receipt upload, API pending/source/payer/receiptPath, UI approve, API approved status, approved-delete guard, UI reject, rejected delete, final API absence. Backend now tenant-scopes approve/reject and defaults payer to handler only for project_department. verify passed, real Chrome 14/14 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at dc676cb. Yellow follow-ups: optional reject confirmation and idempotent review policy."
+    "2026-06-23: Finance project department reimbursement review verified locally in real Chrome: project department submit with receipt upload, API pending/source/payer/receiptPath, UI approve, API approved status, approved-delete guard, UI reject, rejected delete, final API absence. Backend now tenant-scopes approve/reject and defaults payer to handler only for project_department. verify passed, real Chrome 14/14 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at dc676cb. Yellow follow-ups: optional reject confirmation and idempotent review policy.",
+    "2026-06-23: Developer UI module entitlement + independent portal configuration verified locally in real Chrome: developer tenant view toggles labor/finance off and keeps WMS on, API verifies module state, UI configures localhost portal, original tenant-code login remains usable, disabled module menus/routes/APIs are blocked, WMS remains accessible, independent portal login works without tenant code. Added semantic portal field testids after Claude Yellow note. verify passed, focused Chrome 1/1 passed, real Chrome 15/15 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 7e58b7d."
   ]
 }

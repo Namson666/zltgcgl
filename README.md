@@ -4,10 +4,10 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S16 developer UI module entitlement + portal verified
+- Current phase: S16 developer UI module entitlement + portal pushed
 - Current task: 开发者后台 UI 模块开通和独立登录配置已完成真实 Chrome 验证：开发者企业视角关闭劳资/财务并保留物资、保存后 API 验证、配置独立登录页、原企业代码登录继续可用、未开通模块菜单/路由/API 拦截、独立登录页无需企业代码登录
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、库存预警产品功能移除且历史 alertThreshold 字段已删除、Prisma Client 同步生成护栏、劳资导出修复、劳资人员/考勤/工资/风控深测、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回均已通过真实 Chrome
-- In progress: 准备提交并推送 S16 开发者 UI 模块开通/独立登录验收切片，然后进入下一轮剩余历史业务页面深度 CRUD/上传下载验收
+- In progress: 准备进入下一轮剩余历史业务页面深度 CRUD/上传下载验收
 - Next action: 继续补齐剩余历史业务页面深度 CRUD/上传下载验收，并配置真实第三方人脸识别网关/密钥
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
 - Do not repeat: 不要在未确认重构设计前修改业务代码；不要把 Build Green 当 Product Green
@@ -49,8 +49,8 @@
 - Latest pushed implementation commit before S14: `75b2668 chore: remove inventory alert schema residue`; latest pushed status marker before S14: `f0cfb7f chore: mark inventory alert cleanup pushed`
 - Latest pushed implementation commit: `16b26c0 test: cover finance category recycle lifecycle`
 - Latest pushed implementation commit: `dc676cb test: cover department reimbursement review`
-- Current implementation pending commit: developer UI module entitlement + independent portal login flow
-- Updated at: 2026-06-23T04:26:16Z
+- Latest pushed implementation commit: `7e58b7d test: cover developer UI module portal flow`
+- Updated at: 2026-06-23T04:35:00Z
 
 ## 项目概览
 

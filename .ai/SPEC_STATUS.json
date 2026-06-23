@@ -1,9 +1,9 @@
 {
-  "stage": "S16_developer_ui_module_portal_verified",
+  "stage": "S16_developer_ui_module_portal_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "Developer backend UI module entitlement and independent login configuration are verified in real Chrome: developer enters tenant view, toggles labor/finance off while WMS remains enabled, saves through UI, verifies API state, configures portal branding/domain through UI, verifies original tenant-code login still works, checks disabled module route/API guards, and logs in through the independent localhost portal without tenant code. Full Chrome smoke now passes 15/15. Product Green remains Yellow for true production Host/DNS portal validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T04:26:16Z"
+  "updated_at": "2026-06-23T04:35:00Z"
 }
