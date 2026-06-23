@@ -20,7 +20,7 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "finance_category_recycle_verified_pending_push",
+    "push_status": "finance_category_recycle_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
     "pushed_commit": "c085a94 test: add full route browser matrix smoke"
   },
@@ -31,11 +31,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_finance_category_recycle_verified_pending_push",
-  "updated_at": "2026-06-23T03:24:19Z",
-  "push_status": "finance_category_recycle_verified_pending_push",
-  "last_pushed_commit": "f0cfb7f",
-  "current_commit": "finance_category_recycle_lifecycle_pending_commit",
+  "status": "yellow_finance_category_recycle_pushed",
+  "updated_at": "2026-06-23T03:31:00Z",
+  "push_status": "finance_category_recycle_pushed",
+  "last_pushed_commit": "16b26c0",
+  "current_commit": "finance_category_recycle_lifecycle_pushed",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -56,6 +56,6 @@
     "2026-06-22: Finance invoice/receipt/P&L/import/export slice verified locally in real Chrome: invoice create/edit/delete, receipt create/filter/edit/delete, invoice expansion, P&L API/route, template download, import upload, ledger export, summary export. verify passed, Chrome 11 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed at dad2f12.",
     "2026-06-23: Labor personnel/attendance/salary/risk deep slice verified locally in real Chrome: personnel create/edit/attachment upload-download-delete/leave/rejoin, attendance batch/patch with backend monthly evidence, salary calculate/manual edit/export, anomaly create/resolve. verify passed, Chrome 12 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 02d3ffa.",
     "2026-06-23: User requested deleting inventory alert. Historical Prisma Material.alertThreshold schema field and init SQL column removed; verify/browser-smoke now force Prisma Client generation after Chrome caught stale-client WMS inbound 500. verify passed, real Chrome 12/12 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 75b2668 and status marker pushed at f0cfb7f.",
-    "2026-06-23: Finance category settings and recycle-bin lifecycle verified locally in real Chrome: main/sub category create-edit-delete, category API read-back, contract soft-delete, recycle-bin keyword/search, restore, re-delete, and permanent delete. verify passed, real Chrome 13/13 passed, Claude audit PASS, code-review-graph risk 0.50; pending commit/push."
+    "2026-06-23: Finance category settings and recycle-bin lifecycle verified locally in real Chrome: main/sub category create-edit-delete, category API read-back, contract soft-delete, recycle-bin keyword/search, restore, re-delete, and permanent delete. verify passed, real Chrome 13/13 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 16b26c0."
   ]
 }
