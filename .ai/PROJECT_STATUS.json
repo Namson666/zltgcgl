@@ -20,7 +20,7 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "inventory_alert_schema_cleanup_committed_pending_push",
+    "push_status": "inventory_alert_schema_cleanup_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
     "pushed_commit": "c085a94 test: add full route browser matrix smoke"
   },
@@ -31,10 +31,10 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_inventory_alert_schema_cleanup_committed_pending_push",
-  "updated_at": "2026-06-23T02:58:00Z",
-  "push_status": "inventory_alert_schema_cleanup_committed_pending_push",
-  "last_pushed_commit": "02d3ffa",
+  "status": "yellow_inventory_alert_schema_cleanup_pushed",
+  "updated_at": "2026-06-23T03:08:00Z",
+  "push_status": "inventory_alert_schema_cleanup_pushed",
+  "last_pushed_commit": "75b2668",
   "current_commit": "inventory_alert_schema_cleanup_commit",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
@@ -55,6 +55,6 @@
     "2026-06-22: Finance petty-cash/voucher slice verified locally in real Chrome: petty cash account, advance record, finance voucher upload, receiptPath assertion, expense detail/edit/delete. Backend added multipart voucher upload, receiptPath safety, contract/department hydration, expense write permission, and tenant-scoped update/delete. verify passed, Chrome 10 tests passed, Claude audit PASS, code-review-graph risk 0.55; pushed at 692025b.",
     "2026-06-22: Finance invoice/receipt/P&L/import/export slice verified locally in real Chrome: invoice create/edit/delete, receipt create/filter/edit/delete, invoice expansion, P&L API/route, template download, import upload, ledger export, summary export. verify passed, Chrome 11 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed at dad2f12.",
     "2026-06-23: Labor personnel/attendance/salary/risk deep slice verified locally in real Chrome: personnel create/edit/attachment upload-download-delete/leave/rejoin, attendance batch/patch with backend monthly evidence, salary calculate/manual edit/export, anomaly create/resolve. verify passed, Chrome 12 tests passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 02d3ffa.",
-    "2026-06-23: User requested deleting inventory alert. Historical Prisma Material.alertThreshold schema field and init SQL column removed; verify/browser-smoke now force Prisma Client generation after Chrome caught stale-client WMS inbound 500. verify passed, real Chrome 12/12 passed, Claude audit PASS, code-review-graph risk 0.50; committed in chore: remove inventory alert schema residue, pending push."
+    "2026-06-23: User requested deleting inventory alert. Historical Prisma Material.alertThreshold schema field and init SQL column removed; verify/browser-smoke now force Prisma Client generation after Chrome caught stale-client WMS inbound 500. verify passed, real Chrome 12/12 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 75b2668."
   ]
 }
