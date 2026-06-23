@@ -1,9 +1,9 @@
 {
-  "stage": "S19_developer_system_config_api_keys_pushed",
+  "stage": "S20_developer_plans_lifecycle_verified_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Developer SystemConfig and API Key lifecycle now have real Chrome coverage: system config create/edit/delete plus API read-back and enterprise 403; API Key create rawKey modal, keyPrefix/isActive read-back, disable/enable, enterprise 403 for read/write/delete, and delete. Full Chrome smoke is now 17/17. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T05:28:00Z"
+  "notes": "Developer platform plan lifecycle now has real Chrome coverage: create/edit/delete through UI, API read-back for all core fields, invalid tier 400, subscribed-plan delete 409, developer-only API enforcement with enterprise 403, and screenshot evidence. Full Chrome smoke is now 18/18. Inventory alert / 库存预警 is explicitly out of scope and must not be restored; remaining warning concepts are labor risk/system announcement/face threshold only. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T05:47:00Z"
 }

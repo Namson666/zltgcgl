@@ -883,6 +883,165 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('developer can manage platform plan lifecycle', async ({ page }) => {
+    test.setTimeout(90_000);
+    const stamp = Date.now();
+    const initialName = `验收套餐${stamp}`;
+    const editedName = `验收套餐已编辑${stamp}`;
+    const initialDescription = `套餐生命周期${stamp}`;
+    const editedDescription = `套餐生命周期已编辑${stamp}`;
+
+    await loginDeveloper(page);
+    const developerToken = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(developerToken).toBeTruthy();
+
+    const enterpriseLogin = await page.request.post('/api/auth/user/login', {
+      data: enterpriseAccount,
+    });
+    expect(enterpriseLogin.status()).toBe(200);
+    const enterpriseLoginBody = await readJson(enterpriseLogin);
+    const enterpriseToken = enterpriseLoginBody?.data?.token;
+    expect(enterpriseToken).toBeTruthy();
+
+    const listPlans = async () => {
+      const response = await page.request.get('/api/developer/plans', {
+        headers: { Authorization: `Bearer ${developerToken}` },
+      });
+      expect(response.status()).toBe(200);
+      return readJson(response);
+    };
+
+    await page.goto('/dev/plans');
+    await expect(page.getByRole('heading', { name: '套餐管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增套餐' }).click();
+    await page.getByTestId('plan-name').fill(initialName);
+    await page.getByTestId('plan-tier').selectOption('MEDIUM');
+    await page.getByTestId('plan-type').selectOption('MODULE');
+    await page.getByTestId('plan-price').fill('388.5');
+    await page.getByTestId('plan-max-users').fill('18');
+    await page.getByTestId('plan-extra-user-price').fill('22.5');
+    await page.getByTestId('plan-description').fill(initialDescription);
+    await page.getByRole('button', { name: '创建套餐' }).click();
+    await expect(page.getByText('套餐已创建')).toBeVisible();
+
+    let plansBody = await listPlans();
+    let plan = (plansBody?.data || []).find((item: any) => item.name === initialName);
+    expect(plan?.id).toBeTruthy();
+    expect(plan?.tier).toBe('MEDIUM');
+    expect(plan?.type).toBe('MODULE');
+    expect(Number(plan?.pricePerMonth)).toBe(388.5);
+    expect(plan?.maxUsers).toBe(18);
+    expect(Number(plan?.pricePerExtraUser)).toBe(22.5);
+    expect(plan?.description).toBe(initialDescription);
+
+    let planRow = page.getByTestId(`plan-row-${plan.id}`);
+    await expect(planRow).toBeVisible();
+    await expect(planRow).toContainText(initialName);
+    await expect(planRow).toContainText('中型');
+    await expect(planRow).toContainText('模块化');
+    await expect(planRow).toContainText('¥388.5');
+
+    const forbiddenPlanRead = await page.request.get('/api/developer/plans', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenPlanRead.status()).toBe(403);
+    const forbiddenPlanCreate = await page.request.post('/api/developer/plans', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { name: `非法套餐${stamp}`, pricePerMonth: 1 },
+    });
+    expect(forbiddenPlanCreate.status()).toBe(403);
+    const forbiddenPlanUpdate = await page.request.put(`/api/developer/plans/${plan.id}`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { name: `非法编辑${stamp}` },
+    });
+    expect(forbiddenPlanUpdate.status()).toBe(403);
+    const forbiddenPlanDelete = await page.request.delete(`/api/developer/plans/${plan.id}`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenPlanDelete.status()).toBe(403);
+
+    const invalidPlanResponse = await page.request.post('/api/developer/plans', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+      data: { name: `非法等级套餐${stamp}`, tier: 'INVALID', type: 'FULL', pricePerMonth: 1 },
+    });
+    expect(invalidPlanResponse.status()).toBe(400);
+    const invalidPlanBody = await readJson(invalidPlanResponse);
+    expect(invalidPlanBody?.error).toBe('INVALID_TIER');
+
+    const protectedPlanResponse = await page.request.post('/api/developer/plans', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+      data: {
+        name: `受保护套餐${stamp}`,
+        tier: 'MEDIUM',
+        type: 'FULL',
+        pricePerMonth: 1288,
+        maxUsers: 20,
+        pricePerExtraUser: 80,
+        description: '与演示企业订阅组合一致，删除应被拒绝',
+      },
+    });
+    expect(protectedPlanResponse.status()).toBe(201);
+    const protectedPlanBody = await readJson(protectedPlanResponse);
+    const protectedPlan = protectedPlanBody?.data;
+    expect(protectedPlan?.id).toBeTruthy();
+    const protectedDeleteResponse = await page.request.delete(`/api/developer/plans/${protectedPlan.id}`, {
+      headers: { Authorization: `Bearer ${developerToken}` },
+    });
+    expect(protectedDeleteResponse.status()).toBe(409);
+    const protectedDeleteBody = await readJson(protectedDeleteResponse);
+    expect(protectedDeleteBody?.error).toBe('PLAN_HAS_SUBSCRIPTIONS');
+    const unprotectResponse = await page.request.put(`/api/developer/plans/${protectedPlan.id}`, {
+      headers: { Authorization: `Bearer ${developerToken}` },
+      data: { tier: 'LARGE', type: 'MODULE' },
+    });
+    expect(unprotectResponse.status()).toBe(200);
+    const cleanupProtectedResponse = await page.request.delete(`/api/developer/plans/${protectedPlan.id}`, {
+      headers: { Authorization: `Bearer ${developerToken}` },
+    });
+    expect(cleanupProtectedResponse.status()).toBe(200);
+
+    await planRow.getByTitle('编辑').click();
+    await page.getByTestId('plan-name').fill(editedName);
+    await page.getByTestId('plan-tier').selectOption('LARGE');
+    await page.getByTestId('plan-type').selectOption('FULL');
+    await page.getByTestId('plan-price').fill('688');
+    await page.getByTestId('plan-max-users').fill('36');
+    await page.getByTestId('plan-extra-user-price').fill('0');
+    await page.getByTestId('plan-description').fill(editedDescription);
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('套餐已更新')).toBeVisible();
+
+    plansBody = await listPlans();
+    plan = (plansBody?.data || []).find((item: any) => item.id === plan.id);
+    expect(plan?.name).toBe(editedName);
+    expect(plan?.tier).toBe('LARGE');
+    expect(plan?.type).toBe('FULL');
+    expect(Number(plan?.pricePerMonth)).toBe(688);
+    expect(plan?.maxUsers).toBe(36);
+    expect(Number(plan?.pricePerExtraUser)).toBe(0);
+    expect(plan?.description).toBe(editedDescription);
+
+    planRow = page.getByTestId(`plan-row-${plan.id}`);
+    await expect(planRow).toBeVisible();
+    await expect(planRow).toContainText(editedName);
+    await expect(planRow).toContainText('大型');
+    await expect(planRow).toContainText('全功能');
+
+    await planRow.getByTitle('删除').click();
+    await expect(page.getByText('确定要删除此套餐吗？删除后不可恢复，且已订阅此套餐的企业将受到影响。')).toBeVisible();
+    await page.getByRole('button', { name: '删除' }).last().click();
+    await expect(page.getByText('套餐已删除')).toBeVisible();
+    await expect(page.getByTestId(`plan-row-${plan.id}`)).toHaveCount(0);
+    plansBody = await listPlans();
+    plan = (plansBody?.data || []).find((item: any) => item.name === editedName);
+    expect(plan).toBeUndefined();
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/开发者套餐生命周期CRUD.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can create edit and delete supplier and work team', async ({ page }) => {
     await loginEnterprise(page);
     const stamp = Date.now();

@@ -620,7 +620,8 @@ router.post('/plans', async (req: AuthenticatedRequest, res: Response): Promise<
     res.status(201).json({ success: true, data: plan, message: '套餐创建成功' } as ApiResponse);
   } catch (error: any) {
     console.error('创建套餐失败:', error);
-    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
   }
 });
 
@@ -633,7 +634,8 @@ router.put('/plans/:id', async (req: AuthenticatedRequest, res: Response): Promi
     res.json({ success: true, data: plan, message: '套餐更新成功' } as ApiResponse);
   } catch (error: any) {
     console.error('更新套餐失败:', error);
-    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
   }
 });
 

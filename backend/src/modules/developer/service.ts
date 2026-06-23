@@ -486,10 +486,35 @@ export interface CreatePlanInput {
   pricePerMonth: number; maxUsers?: number; pricePerExtraUser?: number;
   description?: string; sortOrder?: number;
 }
-export const createPlan = (data: CreatePlanInput) =>
-  prisma.platformPlan.create({ data: { name: data.name, tier: data.tier || 'SMALL', type: data.type || 'FULL', modules: data.modules ? JSON.stringify(data.modules) : data.modules, pricePerMonth: data.pricePerMonth, maxUsers: data.maxUsers || 5, pricePerExtraUser: data.pricePerExtraUser || 0, description: data.description, sortOrder: data.sortOrder || 0 } });
+
+const PLAN_TIERS = ['SMALL', 'MEDIUM', 'LARGE'];
+const PLAN_TYPES = ['FULL', 'MODULE'];
+
+function validatePlatformPlanInput(data: Partial<CreatePlanInput>) {
+  if (data.tier !== undefined && !PLAN_TIERS.includes(String(data.tier))) {
+    throw { status: 400, code: 'INVALID_TIER', message: '套餐等级无效' };
+  }
+  if (data.type !== undefined && !PLAN_TYPES.includes(String(data.type))) {
+    throw { status: 400, code: 'INVALID_TYPE', message: '套餐类型无效' };
+  }
+  if (data.pricePerMonth !== undefined && Number(data.pricePerMonth) < 0) {
+    throw { status: 400, code: 'INVALID_PRICE', message: '月费不能为负数' };
+  }
+  if (data.maxUsers !== undefined && Number(data.maxUsers) < 1) {
+    throw { status: 400, code: 'INVALID_MAX_USERS', message: '最大用户数至少为 1' };
+  }
+  if (data.pricePerExtraUser !== undefined && Number(data.pricePerExtraUser) < 0) {
+    throw { status: 400, code: 'INVALID_EXTRA_USER_PRICE', message: '额外用户费用不能为负数' };
+  }
+}
+
+export const createPlan = (data: CreatePlanInput) => {
+  validatePlatformPlanInput(data);
+  return prisma.platformPlan.create({ data: { name: data.name, tier: data.tier || 'SMALL', type: data.type || 'FULL', modules: data.modules ? JSON.stringify(data.modules) : data.modules, pricePerMonth: data.pricePerMonth, maxUsers: data.maxUsers || 5, pricePerExtraUser: data.pricePerExtraUser || 0, description: data.description, sortOrder: data.sortOrder || 0 } });
+};
 
 export const updatePlan = (id: string, data: any) => {
+  validatePlatformPlanInput(data);
   const updateData: any = {};
   if (data.name !== undefined) updateData.name = data.name;
   if (data.tier !== undefined) updateData.tier = data.tier;
@@ -507,6 +532,13 @@ export const updatePlan = (id: string, data: any) => {
 export const deletePlan = async (id: string) => {
   const existing = await prisma.platformPlan.findUnique({ where: { id } });
   if (!existing) throw { status: 404, code: 'NOT_FOUND', message: '套餐不存在' };
+  const activeSubscription = await prisma.subscription.findFirst({
+    where: { plan: existing.type, tier: existing.tier },
+    select: { id: true },
+  });
+  if (activeSubscription) {
+    throw { status: 409, code: 'PLAN_HAS_SUBSCRIPTIONS', message: '该套餐已有企业订阅，请先迁移订阅后再删除' };
+  }
   await prisma.platformPlan.delete({ where: { id } });
   return { planName: existing.name };
 };

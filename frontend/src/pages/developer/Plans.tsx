@@ -276,6 +276,7 @@ const Plans: React.FC = () => {
               </label>
               <input
                 type="text"
+                data-testid="plan-name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="input w-full text-sm"
@@ -289,6 +290,7 @@ const Plans: React.FC = () => {
                 套餐等级 <span className="text-red-500">*</span>
               </label>
               <select
+                data-testid="plan-tier"
                 value={formData.tier}
                 onChange={(e) => setFormData({ ...formData, tier: e.target.value as Plan['tier'] })}
                 className="input w-full text-sm"
@@ -305,6 +307,7 @@ const Plans: React.FC = () => {
                 套餐类型 <span className="text-red-500">*</span>
               </label>
               <select
+                data-testid="plan-type"
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as Plan['type'] })}
                 className="input w-full text-sm"
@@ -320,6 +323,7 @@ const Plans: React.FC = () => {
               <label className="block text-xs text-gray-500 mb-1">月费（元）</label>
               <input
                 type="number"
+                data-testid="plan-price"
                 value={formData.pricePerMonth}
                 onChange={(e) => setFormData({ ...formData, pricePerMonth: parseFloat(e.target.value) || 0 })}
                 className="input w-full text-sm"
@@ -334,6 +338,7 @@ const Plans: React.FC = () => {
               <label className="block text-xs text-gray-500 mb-1">最大用户数</label>
               <input
                 type="number"
+                data-testid="plan-max-users"
                 value={formData.maxUsers}
                 onChange={(e) => setFormData({ ...formData, maxUsers: parseInt(e.target.value) || 0 })}
                 className="input w-full text-sm"
@@ -347,6 +352,7 @@ const Plans: React.FC = () => {
               <label className="block text-xs text-gray-500 mb-1">额外用户费用（元/人）</label>
               <input
                 type="number"
+                data-testid="plan-extra-user-price"
                 value={formData.pricePerExtraUser}
                 onChange={(e) => setFormData({ ...formData, pricePerExtraUser: parseFloat(e.target.value) || 0 })}
                 className="input w-full text-sm"
@@ -360,6 +366,7 @@ const Plans: React.FC = () => {
             <div className="sm:col-span-2 lg:col-span-3">
               <label className="block text-xs text-gray-500 mb-1">描述</label>
               <textarea
+                data-testid="plan-description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="input w-full text-sm resize-none"
@@ -418,7 +425,7 @@ const Plans: React.FC = () => {
           /* 套餐列表 */
           <div className="divide-y divide-gray-50">
             {plans.map((plan) => (
-              <div key={plan.id} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
+              <div key={plan.id} data-testid={`plan-row-${plan.id}`} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
                 {/* 套餐信息 */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
