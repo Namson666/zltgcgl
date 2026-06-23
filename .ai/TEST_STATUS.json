@@ -1,18 +1,18 @@
 {
-  "status": "developer_payments_invoices_storage_browser_verified_pending_push",
+  "status": "developer_payments_invoices_storage_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_pending_push",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_pushed",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
     {
       "type": "developer_payments_invoices_storage_flow",
       "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_dev_payments_invoices_storage.db npx playwright test --config playwright.config.ts -g \"payments invoices and storage observability\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T070004Z-dev-payments-invoices-storage-audit-short.prompt.md --model sonnet --effort low --max-budget-usd 1.00",
-      "status": "verified_pending_push",
-      "result": "开发者支付记录、发票管理、存储管理切片已通过真实 Chrome：支付记录按企业关键词和 completed 状态筛选并 API 回读 seed 交易 DEMO-PAY-20260623；企业账号访问 developer payments/invoices/storage API 均 403；发票 UI 新增、API 回读 tenantId/tenantName/taxId/pending、UI 开具后 API 验证 issued/issuedAt；企业账号 POST/issue 返回 403；企业端真实上传附件后开发者存储页统计总文件、租户列表、文件列表均可见并 API 回读 tenantName/summary。Focused Chrome 1/1 passed，完整真实 Chrome smoke 21/21 passed。库存预警仍未恢复。",
+      "status": "verified_pushed",
+      "result": "开发者支付记录、发票管理、存储管理切片已通过真实 Chrome：支付记录按企业关键词和 completed 状态筛选并 API 回读 seed 交易 DEMO-PAY-20260623；企业账号访问 developer payments/invoices/storage API 均 403；发票 UI 新增、API 回读 tenantId/tenantName/taxId/pending、UI 开具后 API 验证 issued/issuedAt；企业账号 POST/issue 返回 403；企业端真实上传附件后开发者存储页统计总文件、租户列表、文件列表均可见并 API 回读 tenantName/summary。Focused Chrome 1/1 passed，完整真实 Chrome smoke 21/21 passed。库存预警仍未恢复。 Implementation pushed at c7ae6b5 to origin public-main and main.",
       "evidence_files": [
         "docs/smoke-evidence/playwright-results.json",
         "docs/smoke-evidence/playwright-report/index.html",
