@@ -1,13 +1,25 @@
 {
-  "status": "developer_main_dashboard_real_summary_verified",
+  "status": "public_register_tenant_code_login_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "public_register_tenant_code_login_flow",
+      "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"public register\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/public-register-login-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
+      "status": "verified_claude_timeout_yellow",
+      "result": "公开注册企业与统一企业代码登录闭环已通过真实 Chrome：修复 Register 注册成功后只写 Zustand 内存而未持久化 token/user 的问题，现在保存 zlt_token 和 zlt_user，并写入 tenantId、tenantCode、tenantName、enabledModules、isDeveloper=false。浏览器测试真实填写 /register 创建新企业，自动进入数据看板，验证 localStorage token/user、/api/auth/me、刷新后保持登录、默认物资/劳资/财务模块可见、退出后使用生成的企业代码+手机号+密码走原统一登录成功，并用开发者 API 清理测试企业。Focused Chrome 1/1 passed，verify backend 53 + frontend 36 + builds passed，full Chrome 34/34 passed，code-review-graph risk 0.50。Claude CLI invoked but produced no output for more than two minutes and was interrupted; recorded Yellow external-tool evidence, not PASS。库存预警未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/公开注册企业登录闭环.png",
+        ".ai/workers/20260623T124409Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "developer_main_dashboard_real_summary_flow",
       "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"developer can verify dashboard real summary\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/developer-dashboard-real-summary-audit.prompt.md --model sonnet --effort low --max-budget-usd 1.00/3.00",

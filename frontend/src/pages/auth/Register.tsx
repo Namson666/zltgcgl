@@ -64,14 +64,20 @@ export default function Register() {
       if (res.data?.success) {
         // 注册成功，直接设置登录状态
         const { token, user, tenant } = res.data.data;
+        const registeredUser = {
+          ...user,
+          tenantId: tenant.id,
+          tenantCode: tenant.code,
+          tenantName: tenant.name,
+          permissions: user.permissions || [],
+          isDeveloper: false,
+        };
+        localStorage.setItem('zlt_token', token);
+        localStorage.setItem('zlt_user', JSON.stringify(registeredUser));
         useAuthStore.setState({
           token,
-          user: {
-            ...user,
-            tenantCode: tenant.code,
-            tenantName: tenant.name,
-            permissions: [],
-          },
+          refreshToken: null,
+          user: registeredUser,
           isAuthenticated: true,
           isDeveloper: false,
           isDevView: false,

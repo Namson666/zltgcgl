@@ -482,6 +482,79 @@ test.describe('browser smoke: authenticated core navigation', () => {
     }
   });
 
+  test('public register creates tenant persists login and supports tenant-code login', async ({ page }) => {
+    test.setTimeout(90_000);
+    const stamp = Date.now();
+    const companyName = `SMOKE注册企业${stamp}`;
+    const contactName = `注册联系人${String(stamp).slice(-4)}`;
+    const phone = `139${String(stamp).slice(-8)}`;
+    const password = 'Admin@2024';
+    let tenantId = '';
+    let tenantCode = '';
+
+    try {
+      await page.goto('/register');
+      await expect(page.getByRole('heading', { name: '创建企业账号' })).toBeVisible();
+      await page.getByPlaceholder('请输入企业全称').fill(companyName);
+      await page.getByPlaceholder('请输入您的姓名').fill(contactName);
+      await page.getByPlaceholder('请输入手机号（同时作为登录用户名）').fill(phone);
+      await page.getByPlaceholder('请设置登录密码（至少6位）').fill(password);
+      await page.getByPlaceholder('请再次输入密码').fill(password);
+      await page.getByRole('button', { name: '立即注册' }).click();
+      await expect(page).toHaveURL(/\/dashboard/);
+      await expect(page.getByRole('heading', { name: '数据看板' })).toBeVisible();
+      await expect(page.getByText(companyName).first()).toBeVisible();
+
+      const registeredToken = await page.evaluate(() => localStorage.getItem('zlt_token'));
+      const registeredUser = await page.evaluate(() => JSON.parse(localStorage.getItem('zlt_user') || '{}'));
+      expect(registeredToken).toBeTruthy();
+      expect(registeredUser.tenantCode).toBeTruthy();
+      expect(registeredUser.tenantName).toBe(companyName);
+      expect(registeredUser.tenantId).toBeTruthy();
+      expect(registeredUser.enabledModules).toEqual(expect.arrayContaining(['wms', 'labor', 'finance']));
+      tenantCode = registeredUser.tenantCode;
+      tenantId = registeredUser.tenantId;
+
+      const meResponse = await page.request.get('/api/auth/me', {
+        headers: { Authorization: `Bearer ${registeredToken}` },
+      });
+      expect(meResponse.status()).toBe(200);
+      const meBody = await readJson(meResponse);
+      expect(meBody?.data?.tenant?.code).toBe(tenantCode);
+      expect(meBody?.data?.tenantId).toBe(tenantId);
+
+      await page.reload();
+      await expect(page.getByRole('heading', { name: '数据看板' })).toBeVisible();
+      await expect(page.getByText('物资管理', { exact: true })).toBeVisible();
+      await expect(page.getByText('劳资管理', { exact: true })).toBeVisible();
+      await expect(page.getByText('财务管理', { exact: true })).toBeVisible();
+
+      await page.getByRole('button', { name: '退出登录' }).click();
+      await expect(page).toHaveURL(/\/login/);
+      await page.getByPlaceholder('请输入企业代码').fill(tenantCode);
+      await page.getByPlaceholder('请输入用户名').fill(phone);
+      await page.getByPlaceholder('请输入密码').fill(password);
+      await page.getByRole('button', { name: '登 录' }).click();
+      await expect(page).toHaveURL(/\/dashboard/);
+      await expect(page.getByRole('heading', { name: '数据看板' })).toBeVisible();
+
+      await page.screenshot({
+        path: '../docs/smoke-evidence/公开注册企业登录闭环.png',
+        fullPage: true,
+      });
+    } finally {
+      if (tenantId) {
+        const developerToken = await getDeveloperToken(page);
+        await page.request.delete(`/api/developer/tenants/${tenantId}`, {
+          headers: { Authorization: `Bearer ${developerToken}` },
+        });
+        await page.request.delete(`/api/developer/tenants/${tenantId}/permanent`, {
+          headers: { Authorization: `Bearer ${developerToken}` },
+        });
+      }
+    }
+  });
+
   test('enterprise user can verify main dashboard real summary data', async ({ page }) => {
     await loginEnterprise(page);
     const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
