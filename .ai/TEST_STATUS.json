@@ -1,5 +1,5 @@
 {
-  "status": "production_external_smoke_pushed",
+  "status": "github_actions_ci_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -8,6 +8,18 @@
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "github_actions_ci_gate",
+      "command": "ruby -e 'require \"yaml\"; YAML.load_file(\".github/workflows/ci.yml\")'; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S53-github-actions-ci-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00; after push inspect GitHub Actions run",
+      "status": "verified_claude_pass_pending_remote_ci",
+      "result": "S53 adds .github/workflows/ci.yml with verify and browser-smoke jobs. Local YAML parse passed; verify.sh passed backend 61 + frontend 38 + builds; real Chrome browser-smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. CI Green remains not_verified until the pushed workflow runs successfully on GitHub.",
+      "evidence_files": [
+        ".github/workflows/ci.yml",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        ".ai/workers/20260623T221751Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "production_external_smoke_gate",
       "command": "node --check scripts/production-smoke.mjs; node scripts/production-smoke.mjs without PRODUCTION_BASE_URL exits 2; ALLOW_INSECURE_PRODUCTION_HTTP=1 PRODUCTION_BASE_URL=http://127.0.0.1:5273 PRODUCTION_API_BASE_URL=http://127.0.0.1:4301 PRODUCTION_PORTAL_HOST=prod-smoke.localhost PRODUCTION_DEVELOPER_TOKEN=<local-dev-token> node scripts/production-smoke.mjs exits 3/yellow; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S52-production-external-smoke-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",

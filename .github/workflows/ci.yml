@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - public-main
+  pull_request:
+    branches:
+      - main
+      - public-main
+
+jobs:
+  verify:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Production smoke script syntax check
+        run: node --check scripts/production-smoke.mjs
+
+      - name: Production smoke refuses missing target
+        run: |
+          set +e
+          node scripts/production-smoke.mjs >/tmp/production-smoke-no-env.out 2>/tmp/production-smoke-no-env.err
+          code=$?
+          set -e
+          cat /tmp/production-smoke-no-env.err
+          test "$code" -eq 2
+
+      - name: Verify backend and frontend
+        run: bash scripts/verify.sh
+
+  browser-smoke:
+    name: Real browser smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: verify
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Chrome for Playwright channel
+        working-directory: frontend
+        run: npx playwright install chrome
+
+      - name: Run real browser smoke
+        run: bash scripts/browser-smoke.sh
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-evidence
+          path: |
+            docs/smoke-evidence/playwright-results.json
+            docs/smoke-evidence/playwright-report/
+            docs/smoke-evidence/*.png
+          if-no-files-found: warn
