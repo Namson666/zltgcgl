@@ -114,8 +114,20 @@ export function useConfigList<T extends { id: string }>(
       const list: T[] = Array.isArray(items) ? items : [];
       setConfigs(list);
 
-      if (preserveSelection && prevSelected && list.some((c) => c.id === prevSelected)) {
-        // keep current selection if it still exists
+      const selected = preserveSelection && prevSelected
+        ? list.find((c) => c.id === prevSelected)
+        : null;
+      if (selected) {
+        setSelectedId(selected.id);
+        const { createdAt: _, ...rest } = selected as any;
+        // 保存后刷新为服务端真实状态（例如凭据变化后后端会重置 isEnabled）
+        const cleanRest = { ...rest };
+        if (sensitiveFields) {
+          for (const field of sensitiveFields) {
+            (cleanRest as any)[field] = '';
+          }
+        }
+        setForm({ id: selected.id, ...cleanRest });
       } else if (list.length > 0) {
         setSelectedId(list[0].id);
         const { createdAt: _, ...rest } = list[0] as any;

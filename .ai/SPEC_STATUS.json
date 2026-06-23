@@ -1,9 +1,9 @@
 {
-  "stage": "S20_developer_plans_lifecycle_pushed",
+  "stage": "S21_developer_ai_ocr_config_lifecycle_verified_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Developer platform plan lifecycle now has real Chrome coverage: create/edit/delete through UI, API read-back for all core fields, invalid tier 400, subscribed-plan delete 409, developer-only API enforcement with enterprise 403, and screenshot evidence. Full Chrome smoke is now 18/18. Inventory alert / 库存预警 is explicitly out of scope and must not be restored; remaining warning concepts are labor risk/system announcement/face threshold only. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T05:55:00Z"
+  "notes": "Developer AI/OCR configuration lifecycle now has real Chrome coverage: AI create/read masked/toggle/edit reset/delete plus enterprise 403; OCR create/read masked/test-enable/edit reset/re-enable/delete plus enterprise 403. useConfigList now refreshes the selected form from server state after save while clearing sensitive fields; OcrConfig now clears secretId/secretKey/apiKey like AiConfig clears apiKey. Full Chrome smoke is now 19/19. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T06:16:00Z"
 }

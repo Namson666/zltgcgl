@@ -53,6 +53,7 @@ const OcrConfig: React.FC = () => {
       return `${label} - ${hint}`;
     },
     saveLabel: 'OCR 配置',
+    sensitiveFields: ['secretId', 'secretKey', 'apiKey'],
   });
 
   const [showSecretKey, setShowSecretKey] = React.useState(false);
@@ -119,6 +120,7 @@ const OcrConfig: React.FC = () => {
                   {list.configs.map((item) => (
                     <button
                       key={item.id}
+                      data-testid={`ocr-config-row-${item.id}`}
                       onClick={() => list.selectConfig(item.id)}
                       className={`w-full text-left px-4 py-3 transition-colors flex items-center gap-3 ${
                         list.selectedId === item.id
@@ -136,6 +138,7 @@ const OcrConfig: React.FC = () => {
                       </div>
                       {/* 列表内启用/停用开关 */}
                       <button
+                        data-testid={`ocr-config-row-toggle-${item.id}`}
                         onClick={(e) => { e.stopPropagation(); list.toggleConfig(item.id, !item.isEnabled); }}
                         className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${
                           item.isEnabled ? 'bg-green-500' : 'bg-gray-300'
@@ -153,6 +156,7 @@ const OcrConfig: React.FC = () => {
               {/* 新增配置按钮 */}
               <div className="p-3 border-t border-gray-100">
                 <button
+                  data-testid="ocr-config-new"
                   onClick={list.newConfig}
                   className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border-2 border-dashed text-sm font-medium transition-colors ${
                     list.isNew
@@ -178,6 +182,7 @@ const OcrConfig: React.FC = () => {
               </h2>
               {!list.isNew && (
                 <button
+                  data-testid="ocr-config-enabled-toggle"
                   onClick={() => list.handleToggle(!list.form.isEnabled)}
                   className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                     list.form.isEnabled
@@ -198,6 +203,7 @@ const OcrConfig: React.FC = () => {
                     OCR 提供商 <span className="text-red-500">*</span>
                   </label>
                   <select
+                    data-testid="ocr-provider"
                     value={list.form.provider || ''}
                     onChange={(e) => list.updateField('provider' as any, e.target.value)}
                     className="input"
@@ -217,6 +223,7 @@ const OcrConfig: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    data-testid="ocr-secret-id"
                     value={list.form.secretId || ''}
                     onChange={(e) => list.updateField('secretId' as any, e.target.value)}
                     className="input"
@@ -237,6 +244,7 @@ const OcrConfig: React.FC = () => {
                   <div className="relative">
                     <input
                       type={showSecretKey ? 'text' : 'password'}
+                      data-testid="ocr-secret-key"
                       value={list.form.secretKey || ''}
                       onChange={(e) => list.updateField('secretKey' as any, e.target.value)}
                       className="input pr-10"
@@ -266,6 +274,7 @@ const OcrConfig: React.FC = () => {
                     <div className="relative">
                       <input
                         type={showApiKey ? 'text' : 'password'}
+                        data-testid="ocr-api-key"
                         value={list.form.apiKey || ''}
                         onChange={(e) => list.updateField('apiKey' as any, e.target.value)}
                         className="input pr-10"
@@ -293,6 +302,7 @@ const OcrConfig: React.FC = () => {
                 <div className="flex items-center gap-4 flex-wrap">
                   {/* 保存按钮 */}
                   <button
+                    data-testid="ocr-save"
                     onClick={list.handleSave}
                     disabled={list.saving}
                     className="btn-primary flex items-center gap-2"
@@ -307,6 +317,7 @@ const OcrConfig: React.FC = () => {
 
                   {/* 测试连通性按钮 */}
                   <button
+                    data-testid="ocr-test"
                     onClick={list.handleTest}
                     disabled={list.testStatus === 'testing'}
                     className="btn-secondary flex items-center gap-2"
@@ -322,6 +333,7 @@ const OcrConfig: React.FC = () => {
                   {/* 删除按钮 */}
                   {!list.isNew && (
                     <button
+                      data-testid="ocr-delete"
                       onClick={list.handleDelete}
                       className="btn-danger flex items-center gap-2"
                     >

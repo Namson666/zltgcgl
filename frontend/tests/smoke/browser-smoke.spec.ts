@@ -92,6 +92,10 @@ async function readJson(response: any) {
   }
 }
 
+async function expectToast(page: any, text: string | RegExp) {
+  await expect(page.locator('[role="status"]').filter({ hasText: text }).first()).toBeVisible();
+}
+
 function generateValidIdCard(stamp: number, birthDate = '19900301') {
   const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
   const checks = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
@@ -1038,6 +1042,180 @@ test.describe('browser smoke: authenticated core navigation', () => {
 
     await page.screenshot({
       path: '../docs/smoke-evidence/开发者套餐生命周期CRUD.png',
+      fullPage: true,
+    });
+  });
+
+  test('developer can manage AI and OCR config lifecycle', async ({ page }) => {
+    test.setTimeout(90_000);
+    const stamp = Date.now();
+    const aiModel = `smoke-ai-${stamp}`;
+    const aiModelEdited = `${aiModel}-edited`;
+    const aiApiKey = `sk-smoke-${stamp}-abcd`;
+    const aiApiKeyEdited = `sk-smoke-edited-${stamp}-wxyz`;
+    const ocrSecretId = `ocr-secret-${stamp}`;
+    const ocrSecretIdEdited = `ocr-secret-edited-${stamp}`;
+
+    await loginDeveloper(page);
+    const developerToken = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(developerToken).toBeTruthy();
+
+    const enterpriseLogin = await page.request.post('/api/auth/user/login', {
+      data: enterpriseAccount,
+    });
+    expect(enterpriseLogin.status()).toBe(200);
+    const enterpriseLoginBody = await readJson(enterpriseLogin);
+    const enterpriseToken = enterpriseLoginBody?.data?.token;
+    expect(enterpriseToken).toBeTruthy();
+
+    const listAiConfigs = async () => {
+      const response = await page.request.get('/api/developer/ai-config', {
+        headers: { Authorization: `Bearer ${developerToken}` },
+      });
+      expect(response.status()).toBe(200);
+      return readJson(response);
+    };
+    const listOcrConfigs = async () => {
+      const response = await page.request.get('/api/developer/ocr-config', {
+        headers: { Authorization: `Bearer ${developerToken}` },
+      });
+      expect(response.status()).toBe(200);
+      return readJson(response);
+    };
+
+    await page.goto('/dev/ai-config');
+    await expect(page.getByRole('heading', { name: 'AI 模型配置' })).toBeVisible();
+    await page.getByTestId('ai-config-new').click();
+    await page.getByTestId('ai-provider').selectOption('openai');
+    await page.getByTestId('ai-model').fill(aiModel);
+    await page.getByTestId('ai-api-key').fill(aiApiKey);
+    await page.getByTestId('ai-base-url').fill('http://127.0.0.1:9/smoke-ai');
+    await page.getByTestId('ai-save').click();
+    await expectToast(page, 'AI 配置保存成功');
+
+    let aiBody = await listAiConfigs();
+    let aiConfig = (aiBody?.data || []).find((item: any) => item.model === aiModel);
+    expect(aiConfig?.id).toBeTruthy();
+    expect(aiConfig?.provider).toBe('openai');
+    expect(aiConfig?.baseUrl).toBe('http://127.0.0.1:9/smoke-ai');
+    expect(aiConfig?.apiKey).toBe('sk-s****abcd');
+    expect(aiConfig?.isEnabled).toBe(false);
+    await expect(page.getByTestId('ai-api-key')).toHaveValue('');
+    await expect(page.getByTestId(`ai-config-row-${aiConfig.id}`)).toContainText(aiModel);
+
+    const forbiddenAiRead = await page.request.get('/api/developer/ai-config', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenAiRead.status()).toBe(403);
+    const forbiddenAiCreate = await page.request.put('/api/developer/ai-config', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { provider: 'openai', model: `illegal-ai-${stamp}`, apiKey: 'sk-illegal' },
+    });
+    expect(forbiddenAiCreate.status()).toBe(403);
+    const forbiddenAiToggle = await page.request.patch(`/api/developer/ai-config/${aiConfig.id}/toggle`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { enabled: true },
+    });
+    expect(forbiddenAiToggle.status()).toBe(403);
+    const forbiddenAiDelete = await page.request.delete(`/api/developer/ai-config/${aiConfig.id}`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenAiDelete.status()).toBe(403);
+
+    await page.getByTestId('ai-config-enabled-toggle').click();
+    await expectToast(page, '配置已启用');
+    aiBody = await listAiConfigs();
+    aiConfig = (aiBody?.data || []).find((item: any) => item.id === aiConfig.id);
+    expect(aiConfig?.isEnabled).toBe(true);
+
+    await page.getByTestId('ai-model').fill(aiModelEdited);
+    await page.getByTestId('ai-api-key').fill(aiApiKeyEdited);
+    await page.getByTestId('ai-save').click();
+    await expectToast(page, 'AI 配置保存成功');
+    aiBody = await listAiConfigs();
+    aiConfig = (aiBody?.data || []).find((item: any) => item.id === aiConfig.id);
+    expect(aiConfig?.model).toBe(aiModelEdited);
+    expect(aiConfig?.apiKey).toBe('sk-s****wxyz');
+    expect(aiConfig?.isEnabled).toBe(false);
+    await expect(page.getByTestId('ai-api-key')).toHaveValue('');
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByTestId('ai-delete').click();
+    await expectToast(page, '配置已删除');
+    aiBody = await listAiConfigs();
+    expect((aiBody?.data || []).find((item: any) => item.id === aiConfig.id)).toBeUndefined();
+
+    await page.goto('/dev/ocr-config');
+    await expect(page.getByRole('heading', { name: 'OCR 配置' })).toBeVisible();
+    await page.getByTestId('ocr-config-new').click();
+    await page.getByTestId('ocr-provider').selectOption('tencent');
+    await page.getByTestId('ocr-secret-id').fill(ocrSecretId);
+    await page.getByTestId('ocr-secret-key').fill(`ocr-secret-key-${stamp}`);
+    await page.getByTestId('ocr-save').click();
+    await expectToast(page, 'OCR 配置保存成功');
+
+    let ocrBody = await listOcrConfigs();
+    let ocrConfig = (ocrBody?.data || []).find((item: any) => item.secretId === ocrSecretId);
+    expect(ocrConfig?.id).toBeTruthy();
+    expect(ocrConfig?.provider).toBe('tencent');
+    expect(ocrConfig?.secretKey).toBe('ocr-****');
+    expect(ocrConfig?.isEnabled).toBe(false);
+    await expect(page.getByTestId('ocr-secret-id')).toHaveValue('');
+    await expect(page.getByTestId('ocr-secret-key')).toHaveValue('');
+    await expect(page.getByTestId(`ocr-config-row-${ocrConfig.id}`)).toContainText('腾讯 OCR');
+
+    const forbiddenOcrRead = await page.request.get('/api/developer/ocr-config', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenOcrRead.status()).toBe(403);
+    const forbiddenOcrCreate = await page.request.put('/api/developer/ocr-config', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { provider: 'tencent', secretId: `illegal-ocr-${stamp}`, secretKey: 'illegal-key' },
+    });
+    expect(forbiddenOcrCreate.status()).toBe(403);
+    const forbiddenOcrToggle = await page.request.patch(`/api/developer/ocr-config/${ocrConfig.id}/toggle`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { enabled: true },
+    });
+    expect(forbiddenOcrToggle.status()).toBe(403);
+    const forbiddenOcrDelete = await page.request.delete(`/api/developer/ocr-config/${ocrConfig.id}`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenOcrDelete.status()).toBe(403);
+
+    await page.getByTestId('ocr-test').click();
+    await expectToast(page, '连通性测试通过');
+    ocrBody = await listOcrConfigs();
+    ocrConfig = (ocrBody?.data || []).find((item: any) => item.id === ocrConfig.id);
+    expect(ocrConfig?.isEnabled).toBe(true);
+
+    await page.reload();
+    await page.getByTestId(`ocr-config-row-${ocrConfig.id}`).click();
+    await page.getByTestId('ocr-secret-id').fill(ocrSecretIdEdited);
+    await page.getByTestId('ocr-secret-key').fill(`ocr-secret-key-edited-${stamp}`);
+    await page.getByTestId('ocr-save').click();
+    await expectToast(page, 'OCR 配置保存成功');
+    ocrBody = await listOcrConfigs();
+    ocrConfig = (ocrBody?.data || []).find((item: any) => item.id === ocrConfig.id);
+    expect(ocrConfig?.secretId).toBe(ocrSecretIdEdited);
+    expect(ocrConfig?.isEnabled).toBe(false);
+    await expect(page.getByTestId('ocr-secret-id')).toHaveValue('');
+    await expect(page.getByTestId('ocr-secret-key')).toHaveValue('');
+
+    await page.getByTestId('ocr-config-enabled-toggle').click();
+    await expectToast(page, '配置已启用');
+    ocrBody = await listOcrConfigs();
+    ocrConfig = (ocrBody?.data || []).find((item: any) => item.id === ocrConfig.id);
+    expect(ocrConfig?.isEnabled).toBe(true);
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByTestId('ocr-delete').click();
+    await expectToast(page, '配置已删除');
+    ocrBody = await listOcrConfigs();
+    expect((ocrBody?.data || []).find((item: any) => item.id === ocrConfig.id)).toBeUndefined();
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/开发者AIOCR配置生命周期CRUD.png',
       fullPage: true,
     });
   });

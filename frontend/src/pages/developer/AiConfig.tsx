@@ -116,6 +116,7 @@ const AiConfig: React.FC = () => {
                   {list.configs.map((item) => (
                     <button
                       key={item.id}
+                      data-testid={`ai-config-row-${item.id}`}
                       onClick={() => list.selectConfig(item.id)}
                       className={`w-full text-left px-4 py-3 transition-colors flex items-center gap-3 ${
                         list.selectedId === item.id
@@ -133,6 +134,7 @@ const AiConfig: React.FC = () => {
                       </div>
                       {/* 列表内启用/停用开关 */}
                       <button
+                        data-testid={`ai-config-row-toggle-${item.id}`}
                         onClick={(e) => { e.stopPropagation(); list.toggleConfig(item.id, !item.isEnabled); }}
                         className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${
                           item.isEnabled ? 'bg-green-500' : 'bg-gray-300'
@@ -150,6 +152,7 @@ const AiConfig: React.FC = () => {
               {/* 新增配置按钮 */}
               <div className="p-3 border-t border-gray-100">
                 <button
+                  data-testid="ai-config-new"
                   onClick={list.newConfig}
                   className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border-2 border-dashed text-sm font-medium transition-colors ${
                     list.isNew
@@ -175,6 +178,7 @@ const AiConfig: React.FC = () => {
               </h2>
               {!list.isNew && (
                 <button
+                  data-testid="ai-config-enabled-toggle"
                   onClick={() => list.handleToggle(!list.form.isEnabled)}
                   className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                     list.form.isEnabled
@@ -195,6 +199,7 @@ const AiConfig: React.FC = () => {
                     AI 提供商 <span className="text-red-500">*</span>
                   </label>
                   <select
+                    data-testid="ai-provider"
                     value={list.form.provider}
                     onChange={(e) => list.updateField('provider' as any, e.target.value)}
                     className="input"
@@ -214,6 +219,7 @@ const AiConfig: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    data-testid="ai-model"
                     value={list.form.model || ''}
                     onChange={(e) => list.updateField('model' as any, e.target.value)}
                     className="input"
@@ -232,6 +238,7 @@ const AiConfig: React.FC = () => {
                   <div className="relative">
                     <input
                       type={showApiKey ? 'text' : 'password'}
+                      data-testid="ai-api-key"
                       value={list.form.apiKey || ''}
                       onChange={(e) => list.updateField('apiKey' as any, e.target.value)}
                       className="input pr-10"
@@ -255,9 +262,10 @@ const AiConfig: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Base URL
                   </label>
-                  <input
-                    type="text"
-                    value={list.form.baseUrl || ''}
+                    <input
+                      type="text"
+                      data-testid="ai-base-url"
+                      value={list.form.baseUrl || ''}
                     onChange={(e) => list.updateField('baseUrl' as any, e.target.value)}
                     className="input"
                     placeholder="例如：https://api.minimax.chat/v1"
@@ -275,6 +283,7 @@ const AiConfig: React.FC = () => {
                 <div className="flex items-center gap-4 flex-wrap">
                   {/* 保存按钮 */}
                   <button
+                    data-testid="ai-save"
                     onClick={list.handleSave}
                     disabled={list.saving}
                     className="btn-primary flex items-center gap-2"
@@ -289,6 +298,7 @@ const AiConfig: React.FC = () => {
 
                   {/* 测试连通性按钮 */}
                   <button
+                    data-testid="ai-test"
                     onClick={list.handleTest}
                     disabled={list.testStatus === 'testing'}
                     className="btn-secondary flex items-center gap-2"
@@ -304,6 +314,7 @@ const AiConfig: React.FC = () => {
                   {/* 删除按钮 */}
                   {!list.isNew && (
                     <button
+                      data-testid="ai-delete"
                       onClick={list.handleDelete}
                       className="btn-danger flex items-center gap-2"
                     >
