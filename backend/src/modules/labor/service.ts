@@ -1270,6 +1270,28 @@ export async function resolveTenantByMiniProgram(appId?: string, phone?: string)
   return { tenantId: tenantIds[0], personnel: matches[0], matchedBy: config?.isDefault ? 'default_app' : 'phone' };
 }
 
+export async function resolveSelectedTenantByMiniProgram(appId: string | undefined, tenantId: string, phone: string) {
+  if (!tenantId) throw { status: 400, code: 'MISSING_PARAMS', message: '企业不能为空' };
+  if (!phone) throw { status: 400, code: 'MISSING_PARAMS', message: '手机号不能为空' };
+  if (!appId) throw { status: 400, code: 'MISSING_PARAMS', message: '小程序 appId 不能为空' };
+
+  const config = await prisma.miniProgramConfig.findUnique({ where: { appId }, include: { tenant: true } });
+  if (!config) throw { status: 404, code: 'MINI_PROGRAM_NOT_FOUND', message: '未找到该小程序接入配置' };
+  if (!config.isEnabled) throw { status: 403, code: 'MINI_PROGRAM_DISABLED', message: '该小程序接入已停用' };
+  if (config.tenantId && config.tenantId !== tenantId) {
+    throw { status: 403, code: 'MINI_PROGRAM_TENANT_MISMATCH', message: '该小程序不属于所选企业' };
+  }
+
+  const tenant = await prisma.tenant.findFirst({ where: { id: tenantId, isActive: true, deletedAt: null } });
+  if (!tenant) throw { status: 404, code: 'TENANT_NOT_FOUND', message: '所选企业不存在或已停用' };
+
+  const personnel = await prisma.personnel.findFirst({ where: { tenantId, phone, status: { not: 'left' } } });
+  if (!personnel) throw { status: 404, code: 'PERSONNEL_NOT_FOUND', message: '所选企业未找到匹配手机号的人员' };
+  await assertLaborEnabledForTenant(tenantId);
+
+  return { tenantId, personnel, matchedBy: config.tenantId ? 'tenant_app_selected' : 'default_app_selected' };
+}
+
 export async function createMobileCheckIn(data: {
   appId?: string;
   tenantId?: string;
@@ -1285,10 +1307,7 @@ export async function createMobileCheckIn(data: {
   photoUrl?: string;
 }) {
   const resolved = data.tenantId
-    ? {
-        tenantId: data.tenantId,
-        personnel: await prisma.personnel.findFirst({ where: { tenantId: data.tenantId, phone: data.phone, status: { not: 'left' } } }),
-      }
+    ? await resolveSelectedTenantByMiniProgram(data.appId, data.tenantId, data.phone)
     : await resolveTenantByMiniProgram(data.appId, data.phone);
 
   if ((resolved as any).multiple) return resolved;

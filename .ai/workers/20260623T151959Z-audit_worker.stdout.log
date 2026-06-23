@@ -1,0 +1,59 @@
+Now I have sufficient context to give an independent audit verdict. Let me trace through the test cases against expected behavior one more time.
+
+**Trace 1: `tenantId` provided but `appId` missing** — `resolveSelectedTenantByMiniProgram` checks `if (!appId) throw 400 MISSING_PARAMS` ✅
+
+**Trace 2: Unknown `appId` + `tenantId`** — `config = null` → throws 404 `MINI_PROGRAM_NOT_FOUND` (matches test line ~798-805) ✅
+
+**Trace 3: Disabled `appId`** — `config` exists, `isEnabled = false` → throws 403 `MINI_PROGRAM_DISABLED` ✅
+
+**Trace 4: Tenant-owned `appId` mismatched `tenantId`** — `config.tenantId` is set, `config.tenantId !== tenantId` → throws 403 `MINI_PROGRAM_TENANT_MISMATCH` ✅
+
+**Trace 5: Default `appId` + selected `tenantId`** — `config.tenantId` is null (default), skips mismatch check, looks up personnel in `tenantId` scope → writes correct tenant's check-in (matches test line ~807-833) ✅
+
+**Trace 6: Tenant-owned `appId` no `tenantId`** — falls into `resolveTenantByMiniProgram` (the previous slice) → routes directly to its tenant (matches test line ~836-855, uses `tenantAppId` for `tenantA`) ✅
+
+**Trace 7: Per-day check-in limit + attendance sync** — `getAttendanceSetting`, `existingCount >= setting.checkInsPerDay` block (service.ts:1319-1326), and `attendanceRecord.upsert` (service.ts:1372-1376) are both unchanged ✅
+
+Now let me also verify a subtle issue. In `createMobileCheckIn`, the call to `resolveSelectedTenantByMiniProgram` is now inside a ternary that decides based on `data.tenantId`. But `assertLaborEnabledForTenant` is also called inside `createMobileCheckIn` at line 1317 — it's redundant with the one inside `resolveSelectedTenantByMiniProgram` (line 1290) but not harmful.
+
+One thing to flag: the test uses a single `sharedPhone` across two tenants and validates that `personA.id` only gets the tenantAppId's check-in (date 2026-06-25) and `personB.id` only gets the default appId's check-in (date 2026-06-24). This is a tight, correct test of isolation.
+
+**Verdict: PASS**
+
+The implementation correctly closes both gaps:
+- The previous slice's "selected-tenant" handling (the resolver `resolveSelectedTenantByMiniProgram` returns `multiple: false` with a single tenant resolution path, properly routing to the selected tenant).
+- The bypass where `tenantId` skipped app config — now all `appId`/tenantId combos go through app config checks.
+
+The smoke test coverage hits the key paths: unknown appId with selected tenant → `MINI_PROGRAM_NOT_FOUND`; default appId + selected tenant writes to correct tenant; tenant-owned appId + no tenantId routes to its own tenant. The new test addition separates dates (`checkDate` vs `tenantAppCheckDate`) so the two check-ins land on different days and don't conflict on the per-day limit — this is a clean test design.
+
+# Audit Verdict: **PASS**
+
+## Scope reviewed
+- `backend/src/modules/labor/service.ts:1273-1292` — new `resolveSelectedTenantByMiniProgram`
+- `backend/src/modules/labor/service.ts:1310` — `createMobileCheckIn` dispatch
+- `frontend/tests/smoke/browser-smoke.spec.ts:717-864` — extended test case
+
+## Behavior trace
+
+| Expected | Where covered | Result |
+|---|---|---|
+| `tenantId` provided still requires `appId` | `service.ts:1277` `if (!appId) throw 400 MISSING_PARAMS` | ✅ |
+| Unknown `appId` + `tenantId` does not bypass app config | `service.ts:1279` `if (!config) throw 404 MINI_PROGRAM_NOT_FOUND` | ✅ — test asserts this at `browser-smoke.spec.ts:797-805` |
+| Disabled `appId` fails | `service.ts:1280` `if (!config.isEnabled) throw 403 MINI_PROGRAM_DISABLED` | ✅ |
+| Tenant-owned `appId` with mismatched `tenantId` fails | `service.ts:1281-1283` `if (config.tenantId && config.tenantId !== tenantId) throw 403 MINI_PROGRAM_TENANT_MISMATCH` | ✅ |
+| Default `appId` + selected `tenantId` writes to that tenant | `service.ts:1285-1287` personnel lookup scoped by `tenantId` | ✅ — test asserts at `browser-smoke.spec.ts:822-830` |
+| Tenant-owned `appId` no `tenantId` keeps direct routing | previous-slice `resolveTenantByMiniProgram` path at `service.ts:1311` | ✅ — test asserts at `browser-smoke.spec.ts:838-846` |
+| Per-day check-in limit intact | `service.ts:1319-1326` `existingCount >= setting.checkInsPerDay` unchanged | ✅ |
+| Attendance sync intact | `service.ts:1372-1376` `attendanceRecord.upsert` unchanged | ✅ |
+
+## Test quality notes
+- Test uses **two distinct dates** (`2026-06-24` vs `2026-06-25`) so the two check-ins don't compete on the per-day limit — good isolation, keeps the test from being order-dependent.
+- Tenant-owned appId (configured on `tenantA`) is exercised with **no `tenantId` in the request body** at `browser-smoke.spec.ts:837` — confirms the no-tenant direct-routing path still works.
+- Cross-tenant isolation asserted via `personA.id` and `personB.id` counts in each tenant's `/api/labor/attendance/mobile/check-ins` — verifies records are not bleeding between tenants.
+- The test does **not** explicitly cover the disabled-appId or tenant-mismatch branches, but the bypass-closure is the specific risk this slice targets and that is covered.
+
+## Minor observations (non-blocking)
+1. `assertLaborEnabledForTenant` is called both inside `resolveSelectedTenantByMiniProgram` (line 1290) and again in `createMobileCheckIn` (line 1317). Redundant but harmless — a follow-up could drop one. Not worth blocking.
+2. `MINI_PROGRAM_TENANT_MISMATCH` is a new error code — frontend error display should be reviewed separately to make sure this user-facing message reads well. Out of scope for this backend/test diff.
+
+No correctness or security issues found. Ship it.

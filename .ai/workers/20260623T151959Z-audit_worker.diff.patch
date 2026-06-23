@@ -1,0 +1,12 @@
+Diff artifact intentionally compacted.
+
+The Claude worker completed successfully and wrote the full `git diff --binary`
+artifact, but this run included regenerated smoke-evidence screenshots. The
+binary patch was 14MB / 211,955 lines and would bloat the public repository.
+
+Authoritative evidence for this worker run:
+- `.ai/workers/20260623T151959Z-audit_worker.result.md`
+- `.ai/workers/20260623T151959Z-audit_worker.stdout.log`
+- `.ai/workers/20260623T151959Z-audit_worker.stderr.log`
+- `.ai/workers/20260623T151959Z-audit_worker.exit-code.txt`
+- committed source diff in git history

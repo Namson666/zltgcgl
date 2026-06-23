@@ -714,6 +714,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
     const tenantAppId = `wx_smoke_tenant_direct_${stamp}`;
     const sharedPhone = `137${String(stamp).slice(-8)}`;
     const checkDate = '2026-06-24';
+    const tenantAppCheckDate = '2026-06-25';
     const facePath = path.resolve(process.cwd(), 'tests/fixtures/checkin-face.svg');
     const faceBuffer = fs.readFileSync(facePath);
 
@@ -783,8 +784,8 @@ test.describe('browser smoke: authenticated core navigation', () => {
     expect(candidateTenantIds).toContain(tenantA.tenantId);
     expect(candidateTenantIds).toContain(tenantB.tenantId);
 
-    const listCheckIns = async (headers: Record<string, string>, personnelId: string) => {
-      const response = await page.request.get(`/api/labor/attendance/mobile/check-ins?personnelId=${personnelId}&date=${checkDate}`, { headers });
+    const listCheckIns = async (headers: Record<string, string>, personnelId: string, date = checkDate) => {
+      const response = await page.request.get(`/api/labor/attendance/mobile/check-ins?personnelId=${personnelId}&date=${date}`, { headers });
       expect(response.status()).toBe(200);
       return readJson(response);
     };
@@ -793,11 +794,54 @@ test.describe('browser smoke: authenticated core navigation', () => {
     expect(Number(tenantACheckIns?.data?.total || 0)).toBe(0);
     expect(Number(tenantBCheckIns?.data?.total || 0)).toBe(0);
 
+    const invalidSelectedTenantResponse = await page.request.post('/api/mobile/check-in', {
+      data: {
+        appId: `wx_missing_${stamp}`,
+        tenantId: tenantA.tenantId,
+        phone: sharedPhone,
+        checkDate,
+        latitude: 22.5431,
+        longitude: 114.0579,
+        county: '南山区',
+      },
+    });
+    expect(invalidSelectedTenantResponse.status()).toBe(404);
+    const invalidSelectedTenantBody = await readJson(invalidSelectedTenantResponse);
+    expect(invalidSelectedTenantBody?.error).toBe('MINI_PROGRAM_NOT_FOUND');
+
+    const selectedTenantCheckInResponse = await page.request.post('/api/mobile/check-in', {
+      multipart: {
+        appId: defaultAppId,
+        tenantId: tenantB.tenantId,
+        phone: sharedPhone,
+        checkDate,
+        latitude: '22.5431',
+        longitude: '114.0579',
+        province: '广东省',
+        city: '深圳市',
+        county: '南山区',
+        address: '广东省深圳市南山区默认小程序选择企业打卡点',
+        photo: { name: 'checkin-face.svg', mimeType: 'image/svg+xml', buffer: faceBuffer },
+      },
+    });
+    expect(selectedTenantCheckInResponse.status()).toBe(201);
+    const selectedTenantCheckInBody = await readJson(selectedTenantCheckInResponse);
+    expect(selectedTenantCheckInBody?.data?.record?.tenantId).toBe(tenantB.tenantId);
+    expect(selectedTenantCheckInBody?.data?.record?.personnelId).toBe(personB.id);
+    expect(selectedTenantCheckInBody?.data?.record?.appId).toBe(defaultAppId);
+    expect(selectedTenantCheckInBody?.data?.record?.photoUrl).toContain('/uploads/');
+
+    tenantACheckIns = await listCheckIns(headersA, personA.id);
+    tenantBCheckIns = await listCheckIns(headersB, personB.id);
+    expect(Number(tenantACheckIns?.data?.total || 0)).toBe(0);
+    expect(Number(tenantBCheckIns?.data?.total || 0)).toBe(1);
+    expect((tenantBCheckIns?.data?.records || [])[0]?.appId).toBe(defaultAppId);
+
     const tenantAppCheckInResponse = await page.request.post('/api/mobile/check-in', {
       multipart: {
         appId: tenantAppId,
         phone: sharedPhone,
-        checkDate,
+        checkDate: tenantAppCheckDate,
         latitude: '22.5431',
         longitude: '114.0579',
         province: '广东省',
@@ -814,8 +858,8 @@ test.describe('browser smoke: authenticated core navigation', () => {
     expect(tenantAppCheckInBody?.data?.record?.appId).toBe(tenantAppId);
     expect(tenantAppCheckInBody?.data?.record?.photoUrl).toContain('/uploads/');
 
-    tenantACheckIns = await listCheckIns(headersA, personA.id);
-    tenantBCheckIns = await listCheckIns(headersB, personB.id);
+    tenantACheckIns = await listCheckIns(headersA, personA.id, tenantAppCheckDate);
+    tenantBCheckIns = await listCheckIns(headersB, personB.id, tenantAppCheckDate);
     expect(Number(tenantACheckIns?.data?.total || 0)).toBe(1);
     expect((tenantACheckIns?.data?.records || [])[0]?.appId).toBe(tenantAppId);
     expect(Number(tenantBCheckIns?.data?.total || 0)).toBe(0);

@@ -1,9 +1,9 @@
 {
-  "stage": "S41_mini_program_routing_conflict_verified",
+  "stage": "S42_mini_program_selected_tenant_checkin_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Mini-program routing conflict closure is verified in real Chrome: two tenants with the same personnel phone now have browser/API coverage proving developer default mini-program check-in returns 409 MULTIPLE_TENANTS and writes no check-in record to either tenant, while a tenant-owned mini-program appId routes directly to the target tenant/personnel and stores the photo-backed check-in. Focused Chrome 1/1 passed, verify passed with backend 57 tests and frontend 36 tests/build, full Chrome smoke passed 35/35, code-review-graph risk 0.60. Claude CLI audit attempt produced no output and is recorded as Yellow external-tool evidence; no Claude PASS is claimed. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered.",
-  "updated_at": "2026-06-23T15:10:00Z"
+  "notes": "Mini-program selected-tenant check-in closure is verified in real Chrome: the selected tenantId path now still requires a valid enabled mini-program appId, so tenantId cannot bypass app configuration. Unknown appId + tenantId returns MINI_PROGRAM_NOT_FOUND; default developer mini-program + selected tenant writes a photo-backed check-in only to the selected tenant/personnel; tenant-owned appId without tenantId still routes directly to its configured tenant. Focused Chrome 1/1 passed, verify passed with backend 57 tests and frontend 36 tests/build, full Chrome smoke passed 35/35, code-review-graph risk 0.50, Claude audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered.",
+  "updated_at": "2026-06-23T15:22:00Z"
 }
