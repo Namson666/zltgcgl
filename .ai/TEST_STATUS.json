@@ -1,13 +1,49 @@
 {
-  "status": "finance_department_reimbursement_review_browser_verified_pushed",
+  "status": "developer_ui_module_portal_browser_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "developer_ui_module_portal_flow",
+      "command": "bash scripts/verify.sh; bash scripts/browser-smoke.sh; claude -p <.ai/workers/20260623T042229Z-developer_ui_module_portal_audit.prompt.md>; code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified",
+      "result": "开发者后台 UI 模块开通和独立登录配置切片已通过真实 Chrome：开发者进入企业视角，UI 关闭劳资/财务并保留物资，保存后 API 验证模块状态；UI 配置 localhost 独立登录页并 API 验证；普通企业代码登录仍可用，未开通模块菜单隐藏、直达路由回 dashboard、API 返回 403，WMS API 返回 200；独立登录页无企业代码字段并可登录。补齐 portal 字段语义化 testid 后，focused Chrome 1/1 passed，完整 browser smoke 15/15 passed。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/开发者UI模块开通独立登录.png",
+        ".ai/workers/20260623T042229Z-developer_ui_module_portal_audit.result.md"
+      ]
+    },
+    {
+      "type": "unified_verify",
+      "command": "bash scripts/verify.sh",
+      "status": "verified",
+      "result": "Backend Prisma generate passed; backend tests 6 files / 36 tests passed; backend TypeScript build passed; frontend tests 2 files / 36 tests passed; frontend production build passed after developer UI module/portal smoke changes."
+    },
+    {
+      "type": "real_chrome_browser_smoke",
+      "command": "bash scripts/browser-smoke.sh",
+      "status": "verified",
+      "result": "15 Playwright smoke tests passed in system Google Chrome, including the new developer UI module entitlement + independent portal configuration flow plus existing route matrix, WMS, finance, labor, admin, module entitlement, and independent portal coverage."
+    },
+    {
+      "type": "claude_cli_audit",
+      "command": "claude -p <.ai/workers/20260623T042229Z-developer_ui_module_portal_audit.prompt.md>",
+      "status": "verified_with_yellow_notes",
+      "result": "PASS with no blockers. Yellow risks: true independent-domain Host/DNS semantics, logo load/style effect assertions, semantic input test ids, portal disable/boundary cases, and cookie-clearing isolation can be strengthened in later iterations."
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 136 files / 1542 nodes / 20165 edges. detect-changes risk score 0.50. TenantView function gap is covered by the real Chrome product UI flow."
+    },
     {
       "type": "finance_department_reimbursement_review_flow",
       "command": "cd backend && npm test -- --run src/modules/finance/service.test.ts; bash scripts/verify.sh; BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_dept_approval.db npx playwright test --config playwright.config.ts -g \"department reimbursement\"; bash scripts/browser-smoke.sh; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/dept-reimbursement-approval-audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00; code-review-graph build --skip-flows && code-review-graph detect-changes",

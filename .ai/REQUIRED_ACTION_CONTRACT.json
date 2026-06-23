@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "finance_department_reimbursement_review_pushed",
+  "stage": "developer_ui_module_portal_verified",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Project department reimbursement review is now covered by real Chrome: project department submits reimbursements with receipt upload, expense list approves one record, API verifies approved status and approved-delete guard, expense list rejects a second record, rejected record is deleted, and API verifies it is gone. Backend tests guard project-department payer fallback and tenant-scoped approve/reject lookups. Finance category settings and recycle-bin lifecycle are covered by real Chrome. Inventory alert / 库存预警 remains removed per user request from product routes, menus, backend APIs, browser route matrix, active docs, and historical Prisma schema/init SQL. Basic admin, WMS main chain, finance voucher/invoice/receipt/import/export/category/recycle, and labor personnel/attendance/salary/risk slices have real Chrome CRUD/upload/download/state-change evidence. Deep CRUD/upload/download across every remaining historical page and real third-party face gateway credentials remain Yellow before Product Green.",
+  "notes": "Developer backend UI module entitlement and independent login configuration are now covered by real Chrome: developer tenant view toggles modules, saves settings, API verifies entitlement state, UI configures independent portal, original tenant-code login remains usable, disabled modules are hidden and API/route-guarded, and localhost independent portal logs in without tenant code. Project department reimbursement review, finance category/recycle lifecycle, inventory alert removal, basic admin, WMS main chain, finance voucher/invoice/receipt/import/export/category/recycle, and labor personnel/attendance/salary/risk slices have real Chrome CRUD/upload/download/state-change evidence. Product Green remains Yellow until true production Host/DNS portal validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download coverage are complete.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-23T03:47:00Z"
+  "updated_at": "2026-06-23T04:26:16Z"
 }

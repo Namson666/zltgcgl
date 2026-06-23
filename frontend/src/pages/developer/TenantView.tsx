@@ -442,6 +442,7 @@ const TenantView: React.FC = () => {
                 <button
                   key={mod.key}
                   type="button"
+                  data-testid={mod.configurable ? `tenant-module-toggle-${mod.key}` : undefined}
                   disabled={!mod.configurable}
                   onClick={() => mod.configurable && handleToggleModule(mod.key as TenantModuleState['moduleKey'])}
                   className="flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors disabled:cursor-default"
@@ -478,7 +479,7 @@ const TenantView: React.FC = () => {
           {/* ==========================================
            * 独立登录页配置
            * ========================================== */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-6" data-testid="tenant-portal-config">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-base font-semibold" style={{ color: '#1A2B3C' }}>
@@ -507,6 +508,7 @@ const TenantView: React.FC = () => {
                   <Globe2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
+                    data-testid="tenant-portal-domain"
                     value={portalConfig.domain || ''}
                     onChange={(e) => handlePortalChange('domain', e.target.value)}
                     placeholder="login.example.com"
@@ -520,6 +522,7 @@ const TenantView: React.FC = () => {
                   <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
+                    data-testid="tenant-portal-company-name"
                     value={portalConfig.companyName || ''}
                     onChange={(e) => handlePortalChange('companyName', e.target.value)}
                     placeholder={tenant?.name || '企业名称'}
@@ -533,6 +536,7 @@ const TenantView: React.FC = () => {
                   <Key size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
+                    data-testid="tenant-portal-login-title"
                     value={portalConfig.loginTitle || ''}
                     onChange={(e) => handlePortalChange('loginTitle', e.target.value)}
                     placeholder="企业工程管理系统"
@@ -546,6 +550,7 @@ const TenantView: React.FC = () => {
                   <ImageIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
+                    data-testid="tenant-portal-logo-url"
                     value={portalConfig.logoUrl || ''}
                     onChange={(e) => handlePortalChange('logoUrl', e.target.value)}
                     placeholder="/uploads/logo.png 或 https://..."
@@ -559,6 +564,7 @@ const TenantView: React.FC = () => {
                   <Palette size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
+                    data-testid="tenant-portal-theme-color"
                     value={portalConfig.themeColor || ''}
                     onChange={(e) => handlePortalChange('themeColor', e.target.value)}
                     placeholder="#2563EB"
