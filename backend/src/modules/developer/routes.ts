@@ -900,6 +900,50 @@ router.post('/mini-program/default/bindings', async (req: AuthenticatedRequest, 
   }
 });
 
+router.patch('/mini-program/default/bindings/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { isEnabled, remark } = req.body || {};
+    if (typeof isEnabled !== 'boolean') {
+      res.status(400).json({ success: false, error: 'INVALID_PARAMS', message: '启用状态必须是布尔值' } as ApiResponse);
+      return;
+    }
+    const existing = await prisma.miniProgramPhoneBinding.findFirst({
+      where: { id: req.params.id, developerId: req.user!.id },
+      include: {
+        tenant: { select: { id: true, name: true, code: true } },
+        personnel: { select: { id: true, name: true, phone: true } },
+      },
+    });
+    if (!existing) {
+      res.status(404).json({ success: false, error: 'NOT_FOUND', message: '预绑定不存在' } as ApiResponse);
+      return;
+    }
+
+    const binding = await prisma.miniProgramPhoneBinding.update({
+      where: { id: existing.id },
+      data: {
+        isEnabled,
+        ...(typeof remark === 'string' ? { remark: remark.trim() || null } : {}),
+      },
+      include: {
+        tenant: { select: { id: true, name: true, code: true } },
+        personnel: { select: { id: true, name: true, phone: true } },
+      },
+    });
+
+    await createLog(req.user!.id, {
+      tenantId: binding.tenantId,
+      action: 'UPDATE',
+      module: 'mini_program_phone_binding',
+      description: `${isEnabled ? '启用' : '停用'}默认小程序手机号预绑定 ${binding.phone}`,
+    });
+    res.json({ success: true, data: binding, message: `默认小程序手机号预绑定已${isEnabled ? '启用' : '停用'}` } as ApiResponse);
+  } catch (error: any) {
+    console.error('更新默认小程序手机号预绑定失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+  }
+});
+
 router.delete('/mini-program/default/bindings/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const binding = await prisma.miniProgramPhoneBinding.findFirst({ where: { id: req.params.id, developerId: req.user!.id } });

@@ -1,0 +1,10 @@
+Diff artifact intentionally compacted after Claude audit.
+
+Reason: the raw `git diff --binary` captured Playwright screenshot/video/trace
+artifacts under `docs/smoke-evidence/test-results/`, producing a multi-megabyte
+patch not suitable for repository history.
+
+Review source of truth:
+
+- `git diff -- backend/src/modules/developer/routes.ts frontend/src/api/index.ts frontend/src/pages/developer/Integrations.tsx frontend/tests/smoke/browser-smoke.spec.ts`
+- `.ai/workers/20260623T155647Z-audit_worker_S44_mini_program_prebinding_toggle.result.md`

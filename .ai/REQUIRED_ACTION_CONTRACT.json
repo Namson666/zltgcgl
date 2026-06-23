@@ -52,5 +52,9 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-23T15:40:34Z"
+  "updated_at": "2026-06-23T15:59:33Z",
+  "current_phase": "S44_mini_program_phone_prebinding_toggle_verified",
+  "current_task": "Commit and push default mini-program phone prebinding enable/disable lifecycle after verified Chrome/Claude evidence.",
+  "last_completed": "Default mini-program phone prebinding enable/disable lifecycle verified: developer can toggle binding in UI; disabled binding returns MULTIPLE_TENANTS/no writes; re-enabled binding restores default-app auto-routing.",
+  "next_action": "Commit and push S44, then continue remaining deep CRUD/upload/download browser regression or production face gateway/DNS validation."
 }

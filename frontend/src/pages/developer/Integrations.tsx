@@ -388,6 +388,17 @@ const Integrations: React.FC = () => {
 	    }
 	  };
 
+	  const handleTogglePhoneBinding = async (binding: any) => {
+	    try {
+	      const nextEnabled = !binding.isEnabled;
+	      await developerApi.updateDefaultMiniProgramBinding(binding.id, { isEnabled: nextEnabled });
+	      toast.success(`手机号预绑定已${nextEnabled ? '启用' : '停用'}`);
+	      await loadPhoneBindings();
+	    } catch (error: any) {
+	      toast.error(error.message || '更新手机号预绑定状态失败');
+	    }
+	  };
+
   /* ---------- 加载中骨架屏 ---------- */
   if (loading) {
     return (
@@ -526,7 +537,14 @@ const Integrations: React.FC = () => {
 	                    <td className="py-2">{binding.tenant?.name || binding.tenantId}</td>
 	                    <td className="py-2">{binding.personnel?.name || binding.personnelId}</td>
 	                    <td className="py-2">{binding.isEnabled ? <span className="badge-green">启用</span> : <span className="badge-gray">停用</span>}</td>
-	                    <td className="py-2 text-right">
+	                    <td className="py-2 text-right space-x-3">
+	                      <button
+	                        type="button"
+	                        className="text-indigo-600 hover:text-indigo-700"
+	                        onClick={() => handleTogglePhoneBinding(binding)}
+	                      >
+	                        {binding.isEnabled ? '停用' : '启用'}
+	                      </button>
 	                      <button className="text-red-600 hover:text-red-700" onClick={() => handleDeletePhoneBinding(binding.id)}>删除</button>
 	                    </td>
 	                  </tr>

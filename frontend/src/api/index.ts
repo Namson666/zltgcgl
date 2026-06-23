@@ -249,6 +249,9 @@ export const developerApi = {
   saveDefaultMiniProgramBinding: (data: any) =>
     http.post('/developer/mini-program/default/bindings', data),
 
+  updateDefaultMiniProgramBinding: (id: string, data: any) =>
+    http.patch(`/developer/mini-program/default/bindings/${id}`, data),
+
   deleteDefaultMiniProgramBinding: (id: string) =>
     http.delete(`/developer/mini-program/default/bindings/${id}`),
 
