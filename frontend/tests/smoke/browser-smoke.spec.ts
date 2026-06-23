@@ -727,6 +727,162 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('developer can manage system config and api key lifecycle', async ({ page }) => {
+    test.setTimeout(90_000);
+    const stamp = Date.now();
+    const configKey = `smoke_config_${stamp}`;
+    const configValue = `value_${stamp}`;
+    const editedConfigValue = `value_edited_${stamp}`;
+    const configDescription = `系统配置验收${stamp}`;
+    const apiKeyName = `验收密钥${stamp}`;
+    const smokeTenant = await createSmokeTenant(page, stamp);
+
+    await loginDeveloper(page);
+    const developerToken = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(developerToken).toBeTruthy();
+
+    const enterpriseLogin = await page.request.post('/api/auth/user/login', {
+      data: {
+        tenantCode: smokeTenant.tenantCode,
+        username: smokeTenant.username,
+        password: smokeTenant.password,
+      },
+    });
+    expect(enterpriseLogin.status()).toBe(200);
+    const enterpriseLoginBody = await readJson(enterpriseLogin);
+    const enterpriseToken = enterpriseLoginBody?.data?.token;
+    expect(enterpriseToken).toBeTruthy();
+
+    const getSystemConfigs = async () => {
+      const response = await page.request.get('/api/developer/system-config', {
+        headers: { Authorization: `Bearer ${developerToken}` },
+      });
+      expect(response.status()).toBe(200);
+      return readJson(response);
+    };
+
+    await page.goto('/dev/system-config');
+    await expect(page.getByRole('heading', { name: '系统配置' })).toBeVisible();
+    await page.getByRole('button', { name: '新增配置' }).click();
+    await page.getByTestId('system-config-new-key').fill(configKey);
+    await page.getByTestId('system-config-new-value').fill(configValue);
+    await page.getByTestId('system-config-new-description').fill(configDescription);
+    await page.getByRole('button', { name: '添加' }).click();
+    await expect(page.getByText('配置已添加')).toBeVisible();
+    const configRow = page.getByTestId(`system-config-row-${configKey}`);
+    await expect(configRow).toBeVisible();
+    await expect(configRow).toContainText(configDescription);
+
+    let systemConfigs = await getSystemConfigs();
+    let configRecord = (systemConfigs?.data || []).find((item: any) => item.key === configKey);
+    expect(configRecord?.value).toBe(configValue);
+    expect(configRecord?.description).toBe(configDescription);
+
+    await page.getByTestId(`system-config-value-${configKey}`).fill(editedConfigValue);
+    await configRow.getByTitle('保存').click();
+    await expect(page.getByText('配置已保存')).toBeVisible();
+    systemConfigs = await getSystemConfigs();
+    configRecord = (systemConfigs?.data || []).find((item: any) => item.key === configKey);
+    expect(configRecord?.value).toBe(editedConfigValue);
+
+    const forbiddenSystemConfigRead = await page.request.get('/api/developer/system-config', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenSystemConfigRead.status()).toBe(403);
+    const forbiddenSystemConfigWrite = await page.request.put('/api/developer/system-config', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { key: `illegal_${stamp}`, value: 'nope' },
+    });
+    expect(forbiddenSystemConfigWrite.status()).toBe(403);
+
+    await configRow.getByTitle('删除').click();
+    await expect(page.getByText(`确定要删除配置项 "${configKey}" 吗？此操作不可撤销。`)).toBeVisible();
+    await page.getByRole('button', { name: '删除' }).last().click();
+    await expect(page.getByText('配置已删除')).toBeVisible();
+    await expect(page.getByTestId(`system-config-row-${configKey}`)).toHaveCount(0);
+    systemConfigs = await getSystemConfigs();
+    configRecord = (systemConfigs?.data || []).find((item: any) => item.key === configKey);
+    expect(configRecord).toBeUndefined();
+
+    const getApiKeys = async () => {
+      const response = await page.request.get('/api/developer/api-keys', {
+        headers: { Authorization: `Bearer ${developerToken}` },
+      });
+      expect(response.status()).toBe(200);
+      return readJson(response);
+    };
+
+    await page.goto('/dev/api-keys');
+    await expect(page.getByRole('heading', { name: 'API 密钥管理' })).toBeVisible();
+    await page.getByRole('button', { name: '生成密钥' }).click();
+    await page.getByTestId('api-key-tenant-id').fill(smokeTenant.tenantId);
+    await page.getByTestId('api-key-name').fill(apiKeyName);
+    await page.getByRole('button', { name: '确认生成' }).click();
+    await expect(page.getByText('API 密钥生成成功')).toBeVisible();
+    await expect(page.getByRole('heading', { name: '密钥已生成' })).toBeVisible();
+    const rawKey = await page.getByTestId('api-key-raw-key').inputValue();
+    expect(rawKey).toMatch(/^zlt_/);
+    await page.getByRole('button', { name: '我已保存' }).click();
+
+    let apiKeysBody = await getApiKeys();
+    let apiKey = (apiKeysBody?.data || []).find((item: any) => item.name === apiKeyName);
+    expect(apiKey?.id).toBeTruthy();
+    expect(apiKey?.tenantId).toBe(smokeTenant.tenantId);
+    expect(apiKey?.keyPrefix).toBe(rawKey.slice(0, 8));
+    expect(apiKey?.isActive).toBe(true);
+    let apiKeyRow = page.locator('tr', { hasText: apiKeyName });
+    await expect(apiKeyRow).toBeVisible();
+    await expect(apiKeyRow).toContainText('启用');
+
+    await apiKeyRow.getByTitle('停用').click();
+    await expect(page.getByText('密钥已停用')).toBeVisible();
+    apiKeysBody = await getApiKeys();
+    apiKey = (apiKeysBody?.data || []).find((item: any) => item.id === apiKey.id);
+    expect(apiKey?.isActive).toBe(false);
+    apiKeyRow = page.locator('tr', { hasText: apiKeyName });
+    await expect(apiKeyRow).toContainText('停用');
+
+    await apiKeyRow.getByTitle('启用').click();
+    await expect(page.getByText('密钥已启用')).toBeVisible();
+    apiKeysBody = await getApiKeys();
+    apiKey = (apiKeysBody?.data || []).find((item: any) => item.id === apiKey.id);
+    expect(apiKey?.isActive).toBe(true);
+
+    const forbiddenApiKeyRead = await page.request.get('/api/developer/api-keys', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenApiKeyRead.status()).toBe(403);
+    const forbiddenApiKeyCreate = await page.request.post('/api/developer/api-keys', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { tenantId: smokeTenant.tenantId, name: `非法密钥${stamp}` },
+    });
+    expect(forbiddenApiKeyCreate.status()).toBe(403);
+    const forbiddenApiKeyUpdate = await page.request.put(`/api/developer/api-keys/${apiKey.id}`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { isActive: false },
+    });
+    expect(forbiddenApiKeyUpdate.status()).toBe(403);
+    const forbiddenApiKeyDelete = await page.request.delete(`/api/developer/api-keys/${apiKey.id}`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenApiKeyDelete.status()).toBe(403);
+
+    apiKeyRow = page.locator('tr', { hasText: apiKeyName });
+    await apiKeyRow.getByTitle('删除').click();
+    await expect(page.getByText('确定要删除此 API 密钥吗？使用该密钥的应用将立即无法访问。此操作不可撤销。')).toBeVisible();
+    await page.getByRole('button', { name: '删除' }).last().click();
+    await expect(page.getByText('密钥已删除')).toBeVisible();
+    await expect(page.locator('tr', { hasText: apiKeyName })).toHaveCount(0);
+    apiKeysBody = await getApiKeys();
+    apiKey = (apiKeysBody?.data || []).find((item: any) => item.name === apiKeyName);
+    expect(apiKey).toBeUndefined();
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/开发者系统配置API密钥CRUD.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can create edit and delete supplier and work team', async ({ page }) => {
     await loginEnterprise(page);
     const stamp = Date.now();

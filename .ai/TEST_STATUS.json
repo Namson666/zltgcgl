@@ -1,13 +1,38 @@
 {
-  "status": "developer_announcements_lifecycle_browser_verified_pushed",
+  "status": "developer_system_config_api_keys_browser_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal_developer_announcements_lifecycle",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "developer_system_config_api_keys_lifecycle_flow",
+      "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_dev_config_api_keys.db npx playwright test --config playwright.config.ts -g \"system config and api key lifecycle\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T051100Z-dev_config_api_keys_audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00; code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified",
+      "result": "开发者系统配置和 API 密钥生命周期已通过真实 Chrome：系统配置 UI 新增/编辑/删除并用 API 回读验证，企业用户 GET/PUT developer system-config 返回 403；API Key UI 生成后弹窗展示 rawKey，API 回读 keyPrefix/isActive/tenantId，UI 停用/启用并 API 验证 isActive 变化，企业用户 GET/POST/PUT/DELETE developer api-keys 返回 403，UI 删除后 API 验证记录消失。修复 SystemConfig API 解包导致保存后列表为空，以及 API Key 前端 status/isActive 字段错配导致启停不生效；Claude Yellow 中 rawKey state 清理和 isActive 优先级已收口。Focused Chrome 1/1 passed，完整真实 Chrome smoke 17/17 passed。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/开发者系统配置API密钥CRUD.png",
+        ".ai/workers/20260623T051829Z-audit_worker.result.md"
+      ]
+    },
+    {
+      "type": "claude_cli_worker_audit",
+      "command": "python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T051100Z-dev_config_api_keys_audit.prompt.md --model sonnet --effort medium --max-budget-usd 5.00",
+      "status": "verified",
+      "result": "PASS; Claude confirmed SystemConfig data unwrap, API Key isActive contract, real Chrome UI+API lifecycle coverage, developer-only 403 enforcement, and no rawKey leakage to the list. Its two Yellow notes, rawKey in-memory retention and isActive precedence, were fixed before final verification.",
+      "evidence_file": ".ai/workers/20260623T051829Z-audit_worker.result.md"
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 136 files / 1549 nodes / 20852 edges. detect-changes risk score 0.50. Function-level gaps for ApiKeys/SystemConfig helpers are covered by focused and full real Chrome UI/API assertions."
+    },
     {
       "type": "developer_announcements_lifecycle_flow",
       "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_dev_announcements.db npx playwright test --config playwright.config.ts -g \"announcement lifecycle\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; claude -p <.ai/workers/20260623T045726Z-developer_announcements_final2_audit.prompt.md>; code-review-graph build --skip-flows && code-review-graph detect-changes",
@@ -938,6 +963,6 @@
     "Finance invoice/receipt/P&L/import/export has real Chrome CRUD/upload/download coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow evidence.",
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
-  "notes": "Developer system announcement lifecycle now has focused and full real Chrome coverage for create/edit/unpublish/republish/delete plus developer-only API permission checks. Inventory alert remains removed from active WMS product requirements and historical Prisma Material.alertThreshold schema/init SQL. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T05:02:00Z"
+  "notes": "Developer system config and API Key lifecycle now have focused and full real Chrome coverage, including UI create/edit/delete/state-change, API read-back, and enterprise 403 checks. Developer announcements, module/portal, WMS, finance, labor, admin, and inventory-alert-removal evidence remain green. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
+  "updated_at": "2026-06-23T05:24:00Z"
 }

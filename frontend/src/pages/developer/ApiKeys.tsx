@@ -43,7 +43,8 @@ interface ApiKey {
   name: string;                     /* 密钥名称 */
   keyPrefix: string;                /* 密钥前缀（用于展示） */
   tenantId: string;                 /* 所属租户 ID */
-  status: string;                   /* 状态：active / inactive */
+  status?: string;                  /* 兼容旧状态字段：active / inactive */
+  isActive?: boolean;               /* 后端真实字段 */
   lastUsedAt?: string;              /* 最后使用时间 */
   expiresAt?: string;               /* 过期时间 */
   createdAt: string;                /* 创建时间 */
@@ -153,7 +154,8 @@ const ApiKeys: React.FC = () => {
         name: formData.name.trim(),
         expiresAt: formData.expiresAt || undefined,
       });
-      const data = res.data || res;
+      const body = res.data || res;
+      const data = body.data || body;
       /* 展示完整密钥（仅此一次） */
       if (data.rawKey) {
         setRawKey(data.rawKey);
@@ -193,10 +195,10 @@ const ApiKeys: React.FC = () => {
    * @param key - 目标密钥
    */
   const handleToggleStatus = async (key: ApiKey) => {
-    const newStatus = key.status === 'active' ? 'inactive' : 'active';
+    const nextIsActive = !isApiKeyActive(key);
     try {
-      await developerApi.updateApiKey(key.id, { status: newStatus });
-      toast.success(newStatus === 'active' ? '密钥已启用' : '密钥已停用');
+      await developerApi.updateApiKey(key.id, { isActive: nextIsActive });
+      toast.success(nextIsActive ? '密钥已启用' : '密钥已停用');
       fetchKeys();
     } catch (error: any) {
       toast.error(error.message || '操作失败');
@@ -237,6 +239,9 @@ const ApiKeys: React.FC = () => {
       return next;
     });
   };
+
+  const isApiKeyActive = (key: ApiKey) =>
+    key.isActive !== undefined ? key.isActive : key.status === 'active';
 
   return (
     <div>
@@ -282,6 +287,7 @@ const ApiKeys: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                  data-testid="api-key-tenant-id"
                   value={formData.tenantId}
                   onChange={(e) => setFormData({ ...formData, tenantId: e.target.value })}
                   className="input w-full text-sm"
@@ -295,6 +301,7 @@ const ApiKeys: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                  data-testid="api-key-name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="input w-full text-sm"
@@ -306,6 +313,7 @@ const ApiKeys: React.FC = () => {
                 <label className="block text-xs text-gray-500 mb-1">过期时间</label>
                 <input
                   type="date"
+                  data-testid="api-key-expires-at"
                   value={formData.expiresAt}
                   onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
                   className="input w-full text-sm"
@@ -376,7 +384,7 @@ const ApiKeys: React.FC = () => {
               ) : (
                 /* 密钥数据行 */
                 keys.map((key) => (
-                  <tr key={key.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={key.id} data-testid={`api-key-row-${key.id}`} className="hover:bg-gray-50 transition-colors">
                     {/* 名称 */}
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
@@ -406,8 +414,8 @@ const ApiKeys: React.FC = () => {
                     {/* 状态 */}
                     <td className="px-5 py-3">
                       <StatusBadge
-                        status={key.status === 'active' ? '启用' : '停用'}
-                        type={key.status === 'active' ? 'success' : 'default'}
+                        status={isApiKeyActive(key) ? '启用' : '停用'}
+                        type={isApiKeyActive(key) ? 'success' : 'default'}
                       />
                     </td>
                     {/* 最后使用 */}
@@ -429,11 +437,11 @@ const ApiKeys: React.FC = () => {
                         <button
                           onClick={() => handleToggleStatus(key)}
                           className={`p-1.5 rounded-lg transition-colors ${
-                            key.status === 'active'
+                            isApiKeyActive(key)
                               ? 'text-gray-400 hover:text-red-600 hover:bg-red-50'
                               : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
                           }`}
-                          title={key.status === 'active' ? '停用' : '启用'}
+                          title={isApiKeyActive(key) ? '停用' : '启用'}
                         >
                           <RefreshCw size={15} />
                         </button>
@@ -476,7 +484,7 @@ const ApiKeys: React.FC = () => {
        * ========================================== */}
       <Modal
         isOpen={showKeyModal}
-        onClose={() => setShowKeyModal(false)}
+        onClose={() => { setShowKeyModal(false); setRawKey(''); }}
         title="密钥已生成"
         size="md"
         footer={
@@ -489,7 +497,7 @@ const ApiKeys: React.FC = () => {
               {copied ? '已复制' : '复制密钥'}
             </button>
             <button
-              onClick={() => setShowKeyModal(false)}
+              onClick={() => { setShowKeyModal(false); setRawKey(''); }}
               className="btn-secondary"
             >
               我已保存
@@ -516,6 +524,7 @@ const ApiKeys: React.FC = () => {
             <div className="relative">
               <textarea
                 readOnly
+                data-testid="api-key-raw-key"
                 value={rawKey}
                 rows={3}
                 className="input w-full text-sm font-mono bg-gray-50 pr-10"

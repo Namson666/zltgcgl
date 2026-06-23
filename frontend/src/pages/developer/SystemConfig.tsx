@@ -37,7 +37,8 @@ const SystemConfig: React.FC = () => {
     setLoading(true);
     try {
       const res = await developerApi.getSystemConfigs();
-      const data = res.data || res;
+      const body = res.data || res;
+      const data = body.data || body;
       const list = Array.isArray(data) ? data : [];
       setConfigs(list);
       const values: Record<string, string> = {};
@@ -172,6 +173,7 @@ const SystemConfig: React.FC = () => {
               <label className="block text-xs text-gray-500 mb-1">键 (Key) *</label>
               <input
                 type="text"
+                data-testid="system-config-new-key"
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
                 className="input w-full text-sm"
@@ -182,6 +184,7 @@ const SystemConfig: React.FC = () => {
               <label className="block text-xs text-gray-500 mb-1">值 (Value)</label>
               <input
                 type="text"
+                data-testid="system-config-new-value"
                 value={newValue}
                 onChange={(e) => setNewValue(e.target.value)}
                 className="input w-full text-sm"
@@ -192,6 +195,7 @@ const SystemConfig: React.FC = () => {
               <label className="block text-xs text-gray-500 mb-1">描述</label>
               <input
                 type="text"
+                data-testid="system-config-new-description"
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
                 className="input w-full text-sm"
@@ -228,7 +232,7 @@ const SystemConfig: React.FC = () => {
         ) : configs.length > 0 ? (
           <div className="divide-y divide-gray-50">
             {configs.map((config) => (
-              <div key={config.id} className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
+              <div key={config.id} data-testid={`system-config-row-${config.key}`} className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5">
                     <code className="text-xs font-mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">
@@ -240,6 +244,7 @@ const SystemConfig: React.FC = () => {
                   </div>
                   <input
                     type="text"
+                    data-testid={`system-config-value-${config.key}`}
                     value={editingValues[config.key] || ''}
                     onChange={(e) => setEditingValues((prev) => ({ ...prev, [config.key]: e.target.value }))}
                     className="input w-full text-sm py-1.5"
