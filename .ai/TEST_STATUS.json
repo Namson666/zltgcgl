@@ -1,13 +1,25 @@
 {
-  "status": "finance_dashboard_real_summary_browser_verified_pushed",
+  "status": "contract_progress_receipt_browser_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_pushed",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_contract_progress_receipt_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_pending_push",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "contract_progress_receipt_flow",
+      "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_contract_progress.db npx playwright test --config playwright.config.ts -g \"enterprise user can login and open core enabled modules\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T085200Z-contract-progress-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
+      "status": "verified_pending_push",
+      "result": "合同管理承包合同进度款收款切片已通过真实 Chrome：在同一个合同详情页创建承包合同进度款收款，填写期次、金额、占比、日期和描述，断言成功提示、¥2,100.00 金额和描述回显；原有合同附件上传/下载/删除、采购付款/发票/凭证、分包付款/付款凭证/结算凭证、三类合同删除链路继续通过。Focused Chrome 输出 1 passed（测试主体通过后手动结束挂住的 teardown），verify passed，完整真实 Chrome smoke 23/23 passed。Claude audit PASS。库存预警仍未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/合同管理.png",
+        ".ai/workers/20260623T085253Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "finance_dashboard_real_summary_flow",
       "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_finance_dashboard.db npx playwright test --config playwright.config.ts -g \"finance dashboard real summary data\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T083500Z-finance-dashboard-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
@@ -1072,5 +1084,5 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "Finance dashboard real-summary data now has focused and full real Chrome coverage, including current dashboard API response normalization, real approved current-month expense setup, API summary/trend/category/ranking read-back, and dashboard UI cards/charts/ranking consistency. Enterprise subscription lifecycle, developer payments/invoices/storage, integrations/security/monitoring/logs, AI/OCR, plans, system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T08:55:00Z"
+  "updated_at": "2026-06-23T09:00:00Z"
 }

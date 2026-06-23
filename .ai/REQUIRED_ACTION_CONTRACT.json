@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "finance_dashboard_real_summary_pushed",
+  "stage": "contract_progress_receipt_verified_pending_push",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, system announcement lifecycle, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, third-party integration/security/monitoring/logs lifecycle, payments/invoices/storage observability, enterprise subscription plan lifecycle, and now finance dashboard real-summary data are covered by real Chrome. S25 covers current finance dashboard API contracts, a real approved current-month expense, API summary/trend/category/ranking read-back, and dashboard UI cards/charts/ranking consistency. Per the user's latest confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices; labor risk warnings, system announcement warning type, and face-recognition thresholds remain unrelated and intact. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download coverage are complete.",
+  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, system announcement lifecycle, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, third-party integration/security/monitoring/logs lifecycle, payments/invoices/storage observability, enterprise subscription plan lifecycle, finance dashboard real-summary data, and now contract construction progress receipt coverage are covered by real Chrome. S26 covers creating a construction contract progress receipt on the same contract detail page and confirming amount/description read-back while preserving attachment/procurement/subcontract upload-download-delete coverage. Per the user's latest confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices; labor risk warnings, system announcement warning type, and face-recognition thresholds remain unrelated and intact. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download coverage are complete.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-23T08:55:00Z"
+  "updated_at": "2026-06-23T09:00:00Z"
 }

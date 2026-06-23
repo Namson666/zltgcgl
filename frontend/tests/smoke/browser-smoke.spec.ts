@@ -255,6 +255,17 @@ test.describe('browser smoke: authenticated core navigation', () => {
         await row.getByTitle('查看详情').click();
         await expect(page.getByRole('heading', { name: '合同详情' })).toBeVisible();
 
+        await page.getByRole('button', { name: '新增进度款' }).click();
+        await page.getByPlaceholder('如：1').fill('1');
+        await page.getByPlaceholder('请输入收款金额').fill('2100');
+        await page.getByPlaceholder('如：30').fill('17');
+        await page.locator('input[type="date"]').fill('2026-06-22');
+        await page.getByPlaceholder('请输入描述（选填）').fill('承包合同收款真实浏览器验收');
+        await page.getByRole('button', { name: '确认创建' }).click();
+        await expect(page.getByText('进度款记录创建成功')).toBeVisible({ timeout: 10000 });
+        await expect(page.getByRole('cell', { name: '¥2,100.00' })).toBeVisible();
+        await expect(page.getByText('承包合同收款真实浏览器验收')).toBeVisible();
+
         const fixturePath = path.resolve(process.cwd(), 'tests/fixtures/contract-attachment.pdf');
         await page.locator('input[type="file"]').setInputFiles(fixturePath);
         await expect(page.getByText('附件上传成功').last()).toBeVisible({ timeout: 10000 });

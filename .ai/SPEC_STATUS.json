@@ -1,9 +1,9 @@
 {
-  "stage": "S25_finance_dashboard_real_summary_pushed",
+  "stage": "S26_contract_progress_receipt_verified_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Finance dashboard real-summary data now has real Chrome coverage: current finance dashboard API contracts, real approved current-month expense setup, API summary/trend/category/ranking read-back, and dashboard UI cards/charts/ranking consistency. Full Chrome smoke is now 23/23. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T08:55:00Z"
+  "notes": "Contract construction progress receipt now has real Chrome coverage on the same contract detail page, while existing contract attachment/procurement/subcontract upload-download-delete paths remain covered. Full Chrome smoke remains 23/23. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T09:00:00Z"
 }
