@@ -1378,6 +1378,7 @@ export const logApi = {
    */
   getLogs: (params?: PaginationParams & {
     userId?: number;              /* 操作人 ID */
+    module?: string;              /* 操作模块 */
     action?: string;              /* 操作类型 */
     startDate?: string;           /* 开始日期 */
     endDate?: string;             /* 结束日期 */

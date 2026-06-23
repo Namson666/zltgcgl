@@ -1,13 +1,25 @@
 {
-  "status": "developer_ai_ocr_config_lifecycle_browser_verified_pushed",
+  "status": "developer_integration_security_observability_browser_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "developer_integration_security_observability_flow",
+      "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_dev_integrations_security.db npx playwright test --config playwright.config.ts -g \"integrations security monitoring and logs\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T064115Z-dev-integrations-security-audit-notools.prompt.md --model sonnet --effort low --max-budget-usd 1.00",
+      "status": "verified",
+      "result": "开发者第三方集成、安全策略、系统监控、操作日志切片已通过真实 Chrome：钉钉集成保存后保持未启用、测试连通性后启用、编辑后重置未启用；API 回读 config/isEnabled；企业账号访问 developer integration/security/monitoring API 均 403；安全策略保存并回读数字/布尔/白名单；监控卡片和 API 正常；日志 API 与 UI 均可按 integration/security + UPDATE 筛选。Focused Chrome 1/1 passed，完整真实 Chrome smoke 20/20 passed。库存预警仍未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/开发者集成安全监控日志CRUD.png",
+        ".ai/workers/20260623T064135Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "developer_ai_ocr_config_lifecycle_flow",
       "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_dev_ai_ocr.db npx playwright test --config playwright.config.ts -g \"AI and OCR config lifecycle\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T061200Z-dev_ai_ocr_config_fast_audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00; code-review-graph build --skip-flows && code-review-graph detect-changes",
@@ -1023,6 +1035,6 @@
     "Finance invoice/receipt/P&L/import/export has real Chrome CRUD/upload/download coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow evidence.",
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
-  "notes": "Developer AI/OCR configuration lifecycle now has focused and full real Chrome coverage, including create/edit/delete, API read-back with sensitive masking, enable/disable/state-reset behavior, OCR connectivity enablement without real external network dependency, enterprise 403 checks, and sensitive-field clearing after save. Developer plans, system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T06:20:00Z"
+  "notes": "Developer integrations/security/monitoring/logs now have focused and full real Chrome coverage, including integration save/test-enable/edit reset, API read-back, enterprise 403 checks, security settings read/save with string-to-number/boolean coercion, monitoring read/refresh, and logs API/UI module-action filtering. Developer AI/OCR, plans, system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
+  "updated_at": "2026-06-23T06:45:00Z"
 }

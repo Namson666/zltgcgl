@@ -1220,6 +1220,171 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('developer can manage integrations security monitoring and logs', async ({ page }) => {
+    test.setTimeout(90_000);
+    const stamp = Date.now();
+    const platform = 'dingtalk';
+    const webhook = `https://example.invalid/smoke-dingtalk-${stamp}`;
+    const editedWebhook = `${webhook}-edited`;
+    const appId = `ding-app-${stamp}`;
+    const appSecret = `ding-secret-${stamp}`;
+
+    await loginDeveloper(page);
+    const developerToken = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(developerToken).toBeTruthy();
+
+    const enterpriseLogin = await page.request.post('/api/auth/user/login', {
+      data: enterpriseAccount,
+    });
+    expect(enterpriseLogin.status()).toBe(200);
+    const enterpriseLoginBody = await readJson(enterpriseLogin);
+    const enterpriseToken = enterpriseLoginBody?.data?.token;
+    expect(enterpriseToken).toBeTruthy();
+
+    const listIntegrations = async () => {
+      const response = await page.request.get('/api/developer/integrations', {
+        headers: { Authorization: `Bearer ${developerToken}` },
+      });
+      expect(response.status()).toBe(200);
+      return readJson(response);
+    };
+
+    await page.goto('/dev/integrations');
+    await expect(page.getByRole('heading', { name: '第三方集成' })).toBeVisible();
+    await expect(page.getByTestId(`integration-card-${platform}`)).toBeVisible();
+    await page.getByTestId(`integration-webhook-${platform}`).fill(webhook);
+    await page.getByTestId(`integration-app-id-${platform}`).fill(appId);
+    await page.getByTestId(`integration-app-secret-${platform}`).fill(appSecret);
+    await page.getByTestId(`integration-save-${platform}`).click();
+    await expectToast(page, '钉钉 配置保存成功');
+    await expect(page.getByTestId(`integration-status-${platform}`)).toContainText('未启用');
+
+    let integrationsBody = await listIntegrations();
+    let integration = (integrationsBody?.data || []).find((item: any) => item.platform === platform);
+    expect(integration?.id).toBeTruthy();
+    expect(integration?.config?.botWebhookUrl).toBe(webhook);
+    expect(integration?.config?.appId).toBe(appId);
+    expect(integration?.config?.appSecret).toBe(appSecret);
+    expect(integration?.isEnabled).toBe(false);
+
+    const forbiddenIntegrationRead = await page.request.get('/api/developer/integrations', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenIntegrationRead.status()).toBe(403);
+    const forbiddenIntegrationSave = await page.request.put('/api/developer/integrations', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { platform, config: { botWebhookUrl: `https://illegal.invalid/${stamp}` } },
+    });
+    expect(forbiddenIntegrationSave.status()).toBe(403);
+    const forbiddenIntegrationTest = await page.request.post('/api/developer/integrations/test', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { platform },
+    });
+    expect(forbiddenIntegrationTest.status()).toBe(403);
+
+    await page.getByTestId(`integration-test-${platform}`).click();
+    await expectToast(page, '钉钉 连通性测试通过');
+    await expect(page.getByTestId(`integration-status-${platform}`)).toContainText('已启用');
+    integrationsBody = await listIntegrations();
+    integration = (integrationsBody?.data || []).find((item: any) => item.platform === platform);
+    expect(integration?.isEnabled).toBe(true);
+
+    await page.getByTestId(`integration-webhook-${platform}`).fill(editedWebhook);
+    await page.getByTestId(`integration-save-${platform}`).click();
+    await expectToast(page, '钉钉 配置保存成功');
+    await expect(page.getByTestId(`integration-status-${platform}`)).toContainText('未启用');
+    integrationsBody = await listIntegrations();
+    integration = (integrationsBody?.data || []).find((item: any) => item.platform === platform);
+    expect(integration?.config?.botWebhookUrl).toBe(editedWebhook);
+    expect(integration?.isEnabled).toBe(false);
+
+    await page.goto('/dev/security');
+    await expect(page.getByRole('heading', { name: '安全策略' })).toBeVisible();
+    await page.getByTestId('security-login-max-attempts').fill('7');
+    await page.getByTestId('security-login-lockout-minutes').fill('21');
+    await page.getByTestId('security-password-min-length').fill('10');
+    await page.getByTestId('security-session-timeout-minutes').fill('90');
+    if ((await page.getByTestId('security-ip-whitelist').count()) === 0) {
+      await page.getByTestId('security-ip-whitelist-toggle').click();
+    }
+    await page.getByTestId('security-ip-whitelist').fill('127.0.0.1\n10.0.0.0/24');
+    await page.getByTestId('security-save-bottom').click();
+    await expectToast(page, '安全设置已保存');
+
+    const securityResponse = await page.request.get('/api/developer/security-settings', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+    });
+    expect(securityResponse.status()).toBe(200);
+    const securityBody = await readJson(securityResponse);
+    expect(Number(securityBody?.data?.login_max_attempts)).toBe(7);
+    expect(Number(securityBody?.data?.login_lockout_minutes)).toBe(21);
+    expect(Number(securityBody?.data?.password_min_length)).toBe(10);
+    expect(Number(securityBody?.data?.session_timeout_minutes)).toBe(90);
+    expect(String(securityBody?.data?.ip_whitelist_enabled)).toBe('true');
+    expect(securityBody?.data?.ip_whitelist).toContain('10.0.0.0/24');
+
+    const forbiddenSecurityRead = await page.request.get('/api/developer/security-settings', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenSecurityRead.status()).toBe(403);
+    const forbiddenSecuritySave = await page.request.put('/api/developer/security-settings', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { login_max_attempts: 99 },
+    });
+    expect(forbiddenSecuritySave.status()).toBe(403);
+
+    await page.goto('/dev/monitoring');
+    await expect(page.getByRole('heading', { name: '系统监控' })).toBeVisible();
+    await expect(page.getByTestId('monitoring-card-0')).toContainText('当前在线');
+    await page.getByTestId('monitoring-refresh').click();
+    await expect(page.getByTestId('monitoring-card-1')).toContainText('今日 API 调用');
+    const monitoringResponse = await page.request.get('/api/developer/monitoring', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+    });
+    expect(monitoringResponse.status()).toBe(200);
+    const monitoringBody = await readJson(monitoringResponse);
+    expect(typeof monitoringBody?.data?.onlineUsers).toBe('number');
+    expect(typeof monitoringBody?.data?.dailyApiCalls).toBe('number');
+    const forbiddenMonitoringRead = await page.request.get('/api/developer/monitoring', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenMonitoringRead.status()).toBe(403);
+
+    const integrationLogsResponse = await page.request.get('/api/logs', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+      params: { module: 'integration', action: 'UPDATE', pageSize: 20 },
+    });
+    expect(integrationLogsResponse.status()).toBe(200);
+    const integrationLogs = await readJson(integrationLogsResponse);
+    expect((integrationLogs?.data || []).some((item: any) => item.description === `更新${platform}集成配置`)).toBe(true);
+
+    const securityLogsResponse = await page.request.get('/api/logs', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+      params: { module: 'security', action: 'UPDATE', pageSize: 20 },
+    });
+    expect(securityLogsResponse.status()).toBe(200);
+    const securityLogs = await readJson(securityLogsResponse);
+    expect((securityLogs?.data || []).some((item: any) => item.description === '更新安全策略设置')).toBe(true);
+
+    await page.goto('/dev/logs');
+    await expect(page.getByRole('heading', { name: '操作日志' })).toBeVisible();
+    await page.getByTestId('logs-module-filter').selectOption('integration');
+    await page.getByTestId('logs-action-filter').selectOption('UPDATE');
+    await expect(page.locator('tbody tr', { hasText: `更新${platform}集成配置` }).first()).toBeVisible();
+    await expect(page.locator('tbody tr', { hasText: '第三方集成' }).first()).toBeVisible();
+    await page.getByTestId('logs-module-filter').selectOption('security');
+    await expect(page.locator('tbody tr', { hasText: '更新安全策略设置' }).first()).toBeVisible();
+    await expect(page.locator('tbody tr', { hasText: '安全策略' }).first()).toBeVisible();
+    await page.getByTestId('logs-reset-filters').click();
+    await expect(page.getByTestId('logs-module-filter')).toHaveValue('');
+    await expect(page.getByTestId('logs-action-filter')).toHaveValue('');
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/开发者集成安全监控日志CRUD.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can create edit and delete supplier and work team', async ({ page }) => {
     await loginEnterprise(page);
     const stamp = Date.now();

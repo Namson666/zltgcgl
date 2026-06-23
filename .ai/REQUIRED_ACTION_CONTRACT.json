@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "developer_ai_ocr_config_lifecycle_pushed",
+  "stage": "developer_integration_security_observability_verified_pending_push",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, system announcement lifecycle, system config/API Key lifecycle, platform plan lifecycle, and AI/OCR configuration lifecycle are covered by real Chrome. AI/OCR now cover UI create/edit/delete, API read-back with sensitive masking, state reset after credential edits, OCR test-enable path, developer-only 403 API enforcement, and sensitive-field clearing after save. Per the user's latest confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices; labor risk warnings, system announcement warning type, and face-recognition thresholds remain unrelated and intact. Project department reimbursement review, finance category/recycle lifecycle, basic admin, WMS main chain, finance voucher/invoice/receipt/import/export/category/recycle, and labor personnel/attendance/salary/risk slices have real Chrome CRUD/upload/download/state-change evidence. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download coverage are complete.",
+  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, system announcement lifecycle, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, and now third-party integration/security/monitoring/logs lifecycle are covered by real Chrome. S22 covers integration save/test-enable/edit reset, security save/read-back with correct string coercion, monitoring read/refresh, logs module/action filtering, and developer-only API 403 checks. Per the user's latest confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices; labor risk warnings, system announcement warning type, and face-recognition thresholds remain unrelated and intact. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download coverage are complete.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-23T06:20:00Z"
+  "updated_at": "2026-06-23T06:45:00Z"
 }

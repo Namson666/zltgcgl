@@ -60,18 +60,20 @@ const MODULE_OPTIONS = [
   { value: 'labor', label: '劳资管理' },
   { value: 'subscription', label: '订阅管理' },
   { value: 'system', label: '系统配置' },
+  { value: 'integration', label: '第三方集成' },
+  { value: 'security', label: '安全策略' },
 ];
 
 /** 可选操作类型列表 */
 const ACTION_OPTIONS = [
   { value: '', label: '全部操作' },
-  { value: 'create', label: '创建' },
-  { value: 'update', label: '更新' },
-  { value: 'delete', label: '删除' },
-  { value: 'login', label: '登录' },
-  { value: 'logout', label: '登出' },
-  { value: 'export', label: '导出' },
-  { value: 'import', label: '导入' },
+  { value: 'CREATE', label: '创建' },
+  { value: 'UPDATE', label: '更新' },
+  { value: 'DELETE', label: '删除' },
+  { value: 'LOGIN', label: '登录' },
+  { value: 'LOGOUT', label: '登出' },
+  { value: 'EXPORT', label: '导出' },
+  { value: 'IMPORT', label: '导入' },
   { value: 'other', label: '其他' },
 ];
 
@@ -105,6 +107,7 @@ const Logs: React.FC = () => {
       const res = await logApi.getLogs({
         page,
         pageSize,
+        module: moduleFilter || undefined,
         action: actionFilter || undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
@@ -119,7 +122,7 @@ const Logs: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, actionFilter, startDate, endDate]);
+  }, [page, pageSize, moduleFilter, actionFilter, startDate, endDate]);
 
   /* 页码或筛选条件变化时重新加载数据 */
   useEffect(() => {
@@ -143,6 +146,13 @@ const Logs: React.FC = () => {
    * 操作类型中文映射
    */
   const actionTextMap: Record<string, string> = {
+    CREATE: '创建',
+    UPDATE: '更新',
+    DELETE: '删除',
+    LOGIN: '登录',
+    LOGOUT: '登出',
+    EXPORT: '导出',
+    IMPORT: '导入',
     create: '创建',
     update: '更新',
     delete: '删除',
@@ -165,6 +175,8 @@ const Logs: React.FC = () => {
     labor: '劳资管理',
     subscription: '订阅管理',
     system: '系统配置',
+    integration: '第三方集成',
+    security: '安全策略',
   };
 
   /**
@@ -172,12 +184,19 @@ const Logs: React.FC = () => {
    */
   const getActionBadgeClass = (action: string): string => {
     switch (action) {
+      case 'CREATE':
       case 'create': return 'bg-green-100 text-green-800';       /* 创建 - 绿色 */
+      case 'UPDATE':
       case 'update': return 'bg-blue-100 text-blue-800';         /* 更新 - 蓝色 */
+      case 'DELETE':
       case 'delete': return 'bg-red-100 text-red-800';           /* 删除 - 红色 */
+      case 'LOGIN':
       case 'login': return 'bg-purple-100 text-purple-800';      /* 登录 - 紫色 */
+      case 'LOGOUT':
       case 'logout': return 'bg-gray-100 text-gray-800';         /* 登出 - 灰色 */
+      case 'EXPORT':
       case 'export': return 'bg-indigo-100 text-indigo-800';     /* 导出 - 靛蓝 */
+      case 'IMPORT':
       case 'import': return 'bg-teal-100 text-teal-800';         /* 导入 - 青色 */
       default: return 'bg-gray-100 text-gray-800';               /* 其他 - 灰色 */
     }
@@ -214,6 +233,7 @@ const Logs: React.FC = () => {
             <div>
               <label className="block text-xs text-gray-500 mb-1">模块</label>
               <select
+                data-testid="logs-module-filter"
                 value={moduleFilter}
                 onChange={(e) => {
                   setModuleFilter(e.target.value);
@@ -233,6 +253,7 @@ const Logs: React.FC = () => {
             <div>
               <label className="block text-xs text-gray-500 mb-1">操作类型</label>
               <select
+                data-testid="logs-action-filter"
                 value={actionFilter}
                 onChange={(e) => {
                   setActionFilter(e.target.value);
@@ -253,6 +274,7 @@ const Logs: React.FC = () => {
               <label className="block text-xs text-gray-500 mb-1">开始日期</label>
               <input
                 type="date"
+                data-testid="logs-start-date"
                 value={startDate}
                 onChange={(e) => {
                   setStartDate(e.target.value);
@@ -267,6 +289,7 @@ const Logs: React.FC = () => {
               <label className="block text-xs text-gray-500 mb-1">结束日期</label>
               <input
                 type="date"
+                data-testid="logs-end-date"
                 value={endDate}
                 onChange={(e) => {
                   setEndDate(e.target.value);
@@ -280,6 +303,7 @@ const Logs: React.FC = () => {
             <div className="flex items-end">
               <button
                 onClick={handleResetFilters}
+                data-testid="logs-reset-filters"
                 className="btn-secondary btn-sm w-full flex items-center justify-center gap-1.5"
               >
                 <RotateCcw size={14} />

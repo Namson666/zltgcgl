@@ -72,15 +72,16 @@ const Security: React.FC = () => {
     try {
       setLoading(true);
       const res = await developerApi.getSecuritySettings();
-      const data = res.data || res;
+      const body = res.data || res;
+      const data = body.data || body;
       if (data && typeof data === 'object') {
         setSettings({
-          login_max_attempts: data.login_max_attempts ?? DEFAULT_SETTINGS.login_max_attempts,
-          login_lockout_minutes: data.login_lockout_minutes ?? DEFAULT_SETTINGS.login_lockout_minutes,
-          password_min_length: data.password_min_length ?? DEFAULT_SETTINGS.password_min_length,
-          password_require_special: data.password_require_special ?? DEFAULT_SETTINGS.password_require_special,
-          session_timeout_minutes: data.session_timeout_minutes ?? DEFAULT_SETTINGS.session_timeout_minutes,
-          ip_whitelist_enabled: data.ip_whitelist_enabled ?? DEFAULT_SETTINGS.ip_whitelist_enabled,
+          login_max_attempts: Number(data.login_max_attempts ?? DEFAULT_SETTINGS.login_max_attempts),
+          login_lockout_minutes: Number(data.login_lockout_minutes ?? DEFAULT_SETTINGS.login_lockout_minutes),
+          password_min_length: Number(data.password_min_length ?? DEFAULT_SETTINGS.password_min_length),
+          password_require_special: String(data.password_require_special ?? DEFAULT_SETTINGS.password_require_special) === 'true',
+          session_timeout_minutes: Number(data.session_timeout_minutes ?? DEFAULT_SETTINGS.session_timeout_minutes),
+          ip_whitelist_enabled: String(data.ip_whitelist_enabled ?? DEFAULT_SETTINGS.ip_whitelist_enabled) === 'true',
           ip_whitelist: data.ip_whitelist ?? '',
         });
       }
@@ -193,6 +194,7 @@ const Security: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchSettings}
+            data-testid="security-refresh"
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             style={{ color: '#8899AA' }}
             title="刷新"
@@ -201,6 +203,7 @@ const Security: React.FC = () => {
           </button>
           <button
             onClick={handleSave}
+            data-testid="security-save-top"
             disabled={saving || !changed}
             className="btn-primary flex items-center gap-2"
           >
@@ -241,6 +244,7 @@ const Security: React.FC = () => {
                 </p>
                 <input
                   type="number"
+                  data-testid="security-login-max-attempts"
                   value={settings.login_max_attempts}
                   onChange={(e) => handleNumberChange('login_max_attempts', e.target.value)}
                   className="input w-full text-sm"
@@ -258,6 +262,7 @@ const Security: React.FC = () => {
                 </p>
                 <input
                   type="number"
+                  data-testid="security-login-lockout-minutes"
                   value={settings.login_lockout_minutes}
                   onChange={(e) => handleNumberChange('login_lockout_minutes', e.target.value)}
                   className="input w-full text-sm"
@@ -287,6 +292,7 @@ const Security: React.FC = () => {
                 </p>
                 <input
                   type="number"
+                  data-testid="security-password-min-length"
                   value={settings.password_min_length}
                   onChange={(e) => handleNumberChange('password_min_length', e.target.value)}
                   className="input w-full text-sm"
@@ -305,6 +311,7 @@ const Security: React.FC = () => {
                 <div className="flex items-center h-10">
                   <button
                     type="button"
+                    data-testid="security-password-special-toggle"
                     onClick={() => handleBooleanChange('password_require_special', !settings.password_require_special)}
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
                       settings.password_require_special ? 'bg-blue-600' : 'bg-gray-200'
@@ -345,6 +352,7 @@ const Security: React.FC = () => {
                 </p>
                 <input
                   type="number"
+                  data-testid="security-session-timeout-minutes"
                   value={settings.session_timeout_minutes}
                   onChange={(e) => handleNumberChange('session_timeout_minutes', e.target.value)}
                   className="input w-full text-sm"
@@ -376,6 +384,7 @@ const Security: React.FC = () => {
                 </div>
                 <button
                   type="button"
+                  data-testid="security-ip-whitelist-toggle"
                   onClick={() => handleBooleanChange('ip_whitelist_enabled', !settings.ip_whitelist_enabled)}
                   className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
                     settings.ip_whitelist_enabled ? 'bg-blue-600' : 'bg-gray-200'
@@ -401,6 +410,7 @@ const Security: React.FC = () => {
                     每行输入一个 IP 地址或 CIDR 网段
                   </p>
                   <textarea
+                    data-testid="security-ip-whitelist"
                     value={settings.ip_whitelist}
                     onChange={(e) => handleTextChange('ip_whitelist', e.target.value)}
                     className="input w-full text-sm font-mono"
@@ -417,6 +427,7 @@ const Security: React.FC = () => {
         <div className="flex items-center justify-end gap-3">
           <button
             onClick={fetchSettings}
+            data-testid="security-reset"
             className="btn-secondary"
             disabled={saving}
           >
@@ -424,6 +435,7 @@ const Security: React.FC = () => {
           </button>
           <button
             onClick={handleSave}
+            data-testid="security-save-bottom"
             disabled={saving || !changed}
             className="btn-primary flex items-center gap-2"
           >

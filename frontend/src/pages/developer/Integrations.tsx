@@ -132,7 +132,14 @@ const Integrations: React.FC = () => {
 	          developerApi.getIntegrations(),
 	          developerApi.getDefaultMiniProgram(),
 	        ]);
-	        const data = res.data || res;
+	        const body = res.data || res;
+	        const rows = body.data || body;
+	        const integrationsByPlatform: Record<string, any> = Array.isArray(rows)
+	          ? rows.reduce((acc: Record<string, any>, item: any) => {
+	              acc[item.platform] = { ...(item.config || {}), enabled: item.isEnabled };
+	              return acc;
+	            }, {})
+	          : rows || {};
 	        const miniProgramBody = miniProgramRes.data || miniProgramRes;
 	        const miniProgramData = miniProgramBody.data || {};
 	        if (miniProgramData) {
@@ -148,7 +155,7 @@ const Integrations: React.FC = () => {
         /* 初始化各平台状态 */
         const initialStates: Record<string, PlatformState> = {};
         PLATFORMS.forEach((platform) => {
-          const platformData = data?.[platform.key];
+          const platformData = integrationsByPlatform?.[platform.key];
           initialStates[platform.key] = {
             config: {
               botWebhookUrl: platformData?.botWebhookUrl || '',
@@ -233,7 +240,7 @@ const Integrations: React.FC = () => {
       toast.success(`${PLATFORMS.find((p) => p.key === platformKey)?.label} 配置保存成功`);
       setPlatformStates((prev) => ({
         ...prev,
-        [platformKey]: { ...prev[platformKey], enabled: true },
+        [platformKey]: { ...prev[platformKey], enabled: false },
       }));
     } catch (error: any) {
       toast.error(error.message || '保存配置失败');
@@ -277,6 +284,7 @@ const Integrations: React.FC = () => {
         ...prev,
         [platformKey]: {
           ...prev[platformKey],
+          enabled: true,
           testStatus: 'success' as const,
           testMessage: data.message || '连通性测试通过',
         },
@@ -432,6 +440,7 @@ const Integrations: React.FC = () => {
           return (
             <div
               key={platform.key}
+              data-testid={`integration-card-${platform.key}`}
               className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
             >
               {/* -------- 卡片头部：平台信息 + 状态 -------- */}
@@ -455,6 +464,7 @@ const Integrations: React.FC = () => {
                   </h3>
                   {/* 启用状态 */}
                   <span
+                    data-testid={`integration-status-${platform.key}`}
                     className={`inline-flex items-center gap-1 text-xs font-medium mt-0.5 ${
                       state.enabled ? 'text-green-600' : 'text-gray-400'
                     }`}
@@ -478,6 +488,7 @@ const Integrations: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    data-testid={`integration-webhook-${platform.key}`}
                     value={state.config.botWebhookUrl}
                     onChange={(e) =>
                       updateConfigField(platform.key, 'botWebhookUrl', e.target.value)
@@ -494,6 +505,7 @@ const Integrations: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    data-testid={`integration-app-id-${platform.key}`}
                     value={state.config.appId}
                     onChange={(e) =>
                       updateConfigField(platform.key, 'appId', e.target.value)
@@ -510,6 +522,7 @@ const Integrations: React.FC = () => {
                   </label>
                   <input
                     type="password"
+                    data-testid={`integration-app-secret-${platform.key}`}
                     value={state.config.appSecret}
                     onChange={(e) =>
                       updateConfigField(platform.key, 'appSecret', e.target.value)
@@ -541,6 +554,7 @@ const Integrations: React.FC = () => {
               >
                 {/* 保存配置按钮 */}
                 <button
+                  data-testid={`integration-save-${platform.key}`}
                   onClick={() => handleSave(platform.key)}
                   disabled={state.saving}
                   className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -560,6 +574,7 @@ const Integrations: React.FC = () => {
 
                 {/* 测试连通性按钮 */}
                 <button
+                  data-testid={`integration-test-${platform.key}`}
                   onClick={() => handleTest(platform.key)}
                   disabled={state.testStatus === 'testing'}
                   className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border transition-colors"

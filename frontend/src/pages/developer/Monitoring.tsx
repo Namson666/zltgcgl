@@ -164,6 +164,7 @@ const Monitoring: React.FC = () => {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
+            data-testid="monitoring-refresh"
             className="btn-primary flex items-center gap-2"
           >
             <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
@@ -179,6 +180,7 @@ const Monitoring: React.FC = () => {
         {statCards.map((card, idx) => (
           <div
             key={idx}
+            data-testid={`monitoring-card-${idx}`}
             className={`bg-white rounded-xl border shadow-sm p-5 hover:shadow-md transition-shadow ${
               card.danger ? 'border-red-200' : 'border-gray-200'
             }`}
