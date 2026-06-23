@@ -1,5 +1,5 @@
 {
-  "status": "portal_host_browser_verified",
+  "status": "portal_host_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",

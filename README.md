@@ -4,7 +4,7 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S17 independent portal Host verification
+- Current phase: S17 independent portal Host verification pushed
 - Current task: 独立登录页已从 localhost/127.0.0.1 验收升级为真实 Host 语义：企业绑定 portal-<stamp>.localhost，Chrome 以该 Host 打开登录页，命中独立门户品牌且无需企业代码登录
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、库存预警产品功能移除且历史 alertThreshold 字段已删除、Prisma Client 同步生成护栏、劳资导出修复、劳资人员/考勤/工资/风控深测、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回均已通过真实 Chrome
 - In progress: 准备进入下一轮剩余历史业务页面深度 CRUD/上传下载验收
@@ -51,8 +51,8 @@
 - Latest pushed implementation commit: `16b26c0 test: cover finance category recycle lifecycle`
 - Latest pushed implementation commit: `dc676cb test: cover department reimbursement review`
 - Latest pushed implementation commit: `7e58b7d test: cover developer UI module portal flow`
-- Current implementation pending commit: independent portal Host verification using `portal-<stamp>.localhost`
-- Updated at: 2026-06-23T04:39:29Z
+- Latest pushed implementation commit: `14245ae test: cover independent portal host login`
+- Updated at: 2026-06-23T04:42:30Z
 
 ## 项目概览
 
