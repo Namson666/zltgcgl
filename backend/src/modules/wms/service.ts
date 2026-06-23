@@ -698,9 +698,12 @@ export async function getTransferCascadePreview(tenantId: string, id: string) {
   const affectedInventory: any[] = [];
   for (const item of order.items) {
     // 调出方
-    if (order.fromSubProjectId) {
+    if (order.fromSubProjectId || order.fromDepartmentId) {
+      const where: any = { materialId: item.materialId };
+      if (order.fromSubProjectId) where.subProjectId = order.fromSubProjectId;
+      else where.departmentId = order.fromDepartmentId;
       const fromInv = await prisma.inventory.findFirst({
-        where: { subProjectId: order.fromSubProjectId, materialId: item.materialId },
+        where,
         include: { material: { select: { name: true } } },
       });
       affectedInventory.push({
@@ -711,9 +714,12 @@ export async function getTransferCascadePreview(tenantId: string, id: string) {
       });
     }
     // 调入方
-    if (order.toSubProjectId) {
+    if (order.toSubProjectId || order.toDepartmentId) {
+      const where: any = { materialId: item.materialId };
+      if (order.toSubProjectId) where.subProjectId = order.toSubProjectId;
+      else where.departmentId = order.toDepartmentId;
       const toInv = await prisma.inventory.findFirst({
-        where: { subProjectId: order.toSubProjectId, materialId: item.materialId },
+        where,
         include: { material: { select: { name: true } } },
       });
       affectedInventory.push({
@@ -842,7 +848,7 @@ export async function deleteReturnOrder(tenantId: string, id: string) {
 
 export async function deleteTransferOrder(tenantId: string, id: string) {
   const order = await prisma.transferOrder.findFirst({
-    where: { id, tenantId },
+    where: { id, tenantId, isActive: true },
     include: { items: true },
   });
   if (!order) throw { status: 404, code: 'NOT_FOUND', message: '调拨单不存在' };
@@ -851,9 +857,12 @@ export async function deleteTransferOrder(tenantId: string, id: string) {
     for (const item of order.items) {
       if (!item.materialId) continue;
       // 调出方：恢复库存（按 materialId + subProjectId 匹配，不限定 projectName）
-      if (order.fromSubProjectId) {
+      if (order.fromSubProjectId || order.fromDepartmentId) {
+        const where: any = { materialId: item.materialId, quantity: { gte: 0 } };
+        if (order.fromSubProjectId) where.subProjectId = order.fromSubProjectId;
+        else where.departmentId = order.fromDepartmentId;
         const fromInvs = await tx.inventory.findMany({
-          where: { subProjectId: order.fromSubProjectId, materialId: item.materialId, quantity: { gte: 0 } },
+          where,
         });
         let remaining = item.quantity;
         for (const inv of fromInvs) {
@@ -864,9 +873,12 @@ export async function deleteTransferOrder(tenantId: string, id: string) {
         }
       }
       // 调入方：扣回库存
-      if (order.toSubProjectId) {
+      if (order.toSubProjectId || order.toDepartmentId) {
+        const where: any = { materialId: item.materialId, quantity: { gte: 0 } };
+        if (order.toSubProjectId) where.subProjectId = order.toSubProjectId;
+        else where.departmentId = order.toDepartmentId;
         const toInvs = await tx.inventory.findMany({
-          where: { subProjectId: order.toSubProjectId, materialId: item.materialId, quantity: { gte: 0 } },
+          where,
         });
         let remaining = item.quantity;
         for (const inv of toInvs) {
@@ -1331,7 +1343,7 @@ export interface TransferListParams {
 export async function listTransferOrders(params: TransferListParams) {
   const { tenantId, fromSubProjectId, toSubProjectId, startDate, endDate, page, pageSize } = params;
   const skip = (page - 1) * pageSize;
-  const where: any = { tenantId };
+  const where: any = { tenantId, isActive: true };
   if (fromSubProjectId) where.fromSubProjectId = fromSubProjectId;
   if (toSubProjectId) where.toSubProjectId = toSubProjectId;
   if (startDate || endDate) {
@@ -1343,7 +1355,13 @@ export async function listTransferOrders(params: TransferListParams) {
   const [orders, total] = await Promise.all([
     prisma.transferOrder.findMany({
       where, skip, take: pageSize, orderBy: { createdAt: 'desc' },
-      include: { fromSubProject: true, toSubProject: true, items: { include: { material: true } } },
+      include: {
+        fromSubProject: { include: { department: { include: { contract: true } } } },
+        toSubProject: { include: { department: { include: { contract: true } } } },
+        fromDepartment: { include: { contract: true } },
+        toDepartment: { include: { contract: true } },
+        items: { include: { material: true } },
+      },
     }),
     prisma.transferOrder.count({ where }),
   ]);
@@ -1396,7 +1414,9 @@ export async function createTransfer(data: CreateTransferData) {
       data: {
         tenantId: data.tenantId, orderNo,
         fromSubProjectId: fromSpId || undefined,
+        fromDepartmentId: fromDeptId || undefined,
         toSubProjectId: toSpId || undefined,
+        toDepartmentId: toDeptId || undefined,
         transferDate: new Date(data.transferDate),
         remark: data.remark,
         items: { create: data.items.map(item => ({
@@ -1442,19 +1462,25 @@ export async function createTransfer(data: CreateTransferData) {
 }
 
 export async function getTransferExportData(tenantId: string, fromSubProjectId?: string, toSubProjectId?: string) {
-  const where: any = { tenantId };
+  const where: any = { tenantId, isActive: true };
   if (fromSubProjectId) where.fromSubProjectId = fromSubProjectId;
   if (toSubProjectId) where.toSubProjectId = toSubProjectId;
 
   const orders = await prisma.transferOrder.findMany({
     where, orderBy: { createdAt: 'desc' },
-    include: { fromSubProject: true, toSubProject: true, items: { include: { material: true } } },
+    include: {
+      fromSubProject: { include: { department: { include: { contract: true } } } },
+      toSubProject: { include: { department: { include: { contract: true } } } },
+      fromDepartment: { include: { contract: true } },
+      toDepartment: { include: { contract: true } },
+      items: { include: { material: true } },
+    },
   });
 
   const rows = orders.flatMap(o =>
     o.items.map((item: any) => ({
       '调拨单号': o.orderNo, '调拨日期': o.transferDate.toLocaleDateString('zh-CN'),
-      '调出项目': o.fromSubProject?.name || '', '调入项目': o.toSubProject?.name || '',
+      '调出项目': o.fromSubProject?.name || o.fromDepartment?.name || '', '调入项目': o.toSubProject?.name || o.toDepartment?.name || '',
       '物资名称': item.material?.name || '', '物资编码': item.material?.code || '',
       '项目名称': item.projectName || '', '数量': item.quantity,
     }))

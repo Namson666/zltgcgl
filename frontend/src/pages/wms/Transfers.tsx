@@ -21,6 +21,8 @@ interface TransferRecord {
   createdAt?: string;
   fromSubProject?: { name: string; department?: { name: string; contract?: { name: string } } };
   toSubProject?: { name: string; department?: { name: string; contract?: { name: string } } };
+  fromDepartment?: { name: string; contract?: { name: string } };
+  toDepartment?: { name: string; contract?: { name: string } };
   items?: TransferItem[];
 }
 
@@ -84,6 +86,7 @@ const Transfers: React.FC = () => {
   const [remark, setRemark] = useState('');
   const [selectedItems, setSelectedItems] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // ── 详情弹窗 ──
   const [showDetail, setShowDetail] = useState(false);
@@ -222,6 +225,19 @@ const Transfers: React.FC = () => {
     } catch { toast.error('下载失败'); }
   };
 
+  const handleExportTransfers = async () => {
+    setExporting(true);
+    try {
+      const res = await wmsApi.exportTransfers();
+      downloadBlob(res.data as Blob, '调拨记录.xlsx');
+      toast.success('调拨记录已导出');
+    } catch {
+      toast.error('导出调拨记录失败');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // ── 删除调拨单 ──
   const openDeleteConfirm = async (id: string) => {
     setDeletingId(id);
@@ -264,9 +280,14 @@ const Transfers: React.FC = () => {
           <h1 className="page-title">物资调拨</h1>
           <p className="page-subtitle">跨合同/跨项目部物资调拨管理，完整溯源</p>
         </div>
-        <button className="btn-primary" onClick={openCreate}>
-          <Plus size={16} /> 新增调拨
-        </button>
+        <div className="flex gap-2">
+          <button className="btn-secondary" onClick={handleExportTransfers} disabled={exporting}>
+            <Download size={16} /> {exporting ? '导出中...' : '导出调拨记录'}
+          </button>
+          <button className="btn-primary" onClick={openCreate}>
+            <Plus size={16} /> 新增调拨
+          </button>
+        </div>
       </div>
 
       {/* 搜索 */}
@@ -297,10 +318,10 @@ const Transfers: React.FC = () => {
               {loading ? <tr><td colSpan={9} className="table-td text-center py-12 text-gray-400">加载中...</td></tr>
                 : !records.length ? <tr><td colSpan={9} className="table-td text-center py-12"><EmptyState title="暂无调拨记录" /></td></tr>
                 : records.map(r => {
-                  const fromContract = r.fromSubProject?.department?.contract?.name || '—';
-                  const fromDept = r.fromSubProject?.department?.name || r.fromSubProject?.name || '—';
-                  const toContract = r.toSubProject?.department?.contract?.name || '—';
-                  const toDept = r.toSubProject?.department?.name || r.toSubProject?.name || '—';
+                  const fromContract = r.fromSubProject?.department?.contract?.name || r.fromDepartment?.contract?.name || '—';
+                  const fromDept = r.fromSubProject?.department?.name || r.fromDepartment?.name || r.fromSubProject?.name || '—';
+                  const toContract = r.toSubProject?.department?.contract?.name || r.toDepartment?.contract?.name || '—';
+                  const toDept = r.toSubProject?.department?.name || r.toDepartment?.name || r.toSubProject?.name || '—';
                   return (
                     <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
                       onClick={() => { setDetailRecord(r); setShowDetail(true); }}>
@@ -751,10 +772,10 @@ const Transfers: React.FC = () => {
             </div>
             <div className="px-6 py-3 border-b border-gray-100 shrink-0">
               <div className="flex flex-wrap gap-4 text-sm">
-                <span className="text-gray-500">调出合同：<span className="font-medium text-gray-700">{detailRecord.fromSubProject?.department?.contract?.name || '—'}</span></span>
-                <span className="text-gray-500">调出项目部：<span className="font-medium text-gray-700">{detailRecord.fromSubProject?.department?.name || detailRecord.fromSubProject?.name || '—'}</span></span>
-                <span className="text-gray-500">调入合同：<span className="font-medium text-gray-700">{detailRecord.toSubProject?.department?.contract?.name || '—'}</span></span>
-                <span className="text-gray-500">调入项目部：<span className="font-medium text-gray-700">{detailRecord.toSubProject?.department?.name || detailRecord.toSubProject?.name || '—'}</span></span>
+                <span className="text-gray-500">调出合同：<span className="font-medium text-gray-700">{detailRecord.fromSubProject?.department?.contract?.name || detailRecord.fromDepartment?.contract?.name || '—'}</span></span>
+                <span className="text-gray-500">调出项目部：<span className="font-medium text-gray-700">{detailRecord.fromSubProject?.department?.name || detailRecord.fromDepartment?.name || detailRecord.fromSubProject?.name || '—'}</span></span>
+                <span className="text-gray-500">调入合同：<span className="font-medium text-gray-700">{detailRecord.toSubProject?.department?.contract?.name || detailRecord.toDepartment?.contract?.name || '—'}</span></span>
+                <span className="text-gray-500">调入项目部：<span className="font-medium text-gray-700">{detailRecord.toSubProject?.department?.name || detailRecord.toDepartment?.name || detailRecord.toSubProject?.name || '—'}</span></span>
                 <span className="text-gray-500">调拨日期：<span className="font-medium text-gray-700">{detailRecord.transferDate ? formatDate(detailRecord.transferDate) : '—'}</span></span>
               </div>
               {detailRecord.remark && <p className="text-sm text-gray-500 mt-2">备注：{detailRecord.remark}</p>}

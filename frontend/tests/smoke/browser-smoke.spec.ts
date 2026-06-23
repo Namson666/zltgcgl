@@ -2042,6 +2042,99 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can create export and delete wms transfer records with cascade preview', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+    const stamp = Date.now();
+    const materialName = `浏览器调拨导出物资-${stamp}`;
+    const projectName = `调拨导出项目-${stamp}`;
+    const supplierName = `调拨导出供应商-${stamp}`;
+    const transferRemark = `调拨导出删除-${stamp}`;
+
+    const departmentsResponse = await page.request.get('/api/departments?pageSize=100', { headers: authHeaders });
+    expect(departmentsResponse.status()).toBe(200);
+    const departmentsBody = await readJson(departmentsResponse);
+    const firstDepartment = (departmentsBody?.data || []).find((item: any) => item.name === '第一项目部') || (departmentsBody?.data || [])[0];
+    const secondDepartment = (departmentsBody?.data || []).find((item: any) => item.name === '第二项目部') || (departmentsBody?.data || [])[1];
+    expect(firstDepartment?.id).toBeTruthy();
+    expect(secondDepartment?.id).toBeTruthy();
+
+    const inboundResponse = await page.request.post('/api/wms/inbound', {
+      headers: authHeaders,
+      data: {
+        departmentId: firstDepartment.id,
+        supplierName,
+        inboundDate: '2026-06-23',
+        remark: `调拨前置入库-${stamp}`,
+        items: [
+          { materialName, projectName, unit: '件', quantity: 7, actualQty: 7, unitPrice: 16 },
+        ],
+      },
+    });
+    expect(inboundResponse.status()).toBe(201);
+
+    await page.goto('/wms/transfers');
+    await expect(page.getByRole('heading', { name: '物资调拨' })).toBeVisible();
+    await page.getByRole('button', { name: '新增调拨' }).click();
+    await chooseMultiSelectModalOption(page, '请选择项目部', /选择调出项目部/, firstDepartment.name);
+    await chooseSingleSelectModalOption(page, '请选择项目部', /选择调入项目部/, secondDepartment.name);
+    await expect(page.getByText(materialName)).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('可选').fill(transferRemark);
+    const transferMaterialRow = page.locator('tr', { hasText: materialName }).first();
+    await transferMaterialRow.locator('input[type="checkbox"]').check();
+    await transferMaterialRow.locator('input[type="number"]').fill('3');
+    await page.getByRole('button', { name: /确认调拨/ }).click();
+    await expectToast(page, '调拨成功');
+    await expect(page.locator('tr', { hasText: transferRemark })).toBeVisible();
+    await expect(page.locator('tr', { hasText: transferRemark })).toContainText(firstDepartment.name);
+    await expect(page.locator('tr', { hasText: transferRemark })).toContainText(secondDepartment.name);
+
+    const createdResponse = await page.request.get('/api/wms/transfers?pageSize=20', { headers: authHeaders });
+    expect(createdResponse.status()).toBe(200);
+    const createdBody = await readJson(createdResponse);
+    const createdTransfer = (createdBody?.data || []).find((order: any) =>
+      order.remark === transferRemark
+      && order.fromDepartmentId === firstDepartment.id
+      && order.toDepartmentId === secondDepartment.id
+      && (order.items || []).some((item: any) => (item.material?.name || item.materialName) === materialName)
+    );
+    expect(createdTransfer?.id).toBeTruthy();
+    expect(createdTransfer?.orderNo).toBeTruthy();
+
+    const transferDownloadPromise = page.waitForEvent('download');
+    await page.locator('tr', { hasText: transferRemark }).getByTitle('下载调拨单').click();
+    expect((await transferDownloadPromise).suggestedFilename()).toMatch(/^调拨单-.*\.pdf$/);
+
+    const transferExportPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出调拨记录' }).click();
+    expect((await transferExportPromise).suggestedFilename()).toBe('调拨记录.xlsx');
+    await expectToast(page, '调拨记录已导出');
+
+    const rowForDelete = page.locator('tr', { hasText: createdTransfer.orderNo });
+    await rowForDelete.getByTitle('删除').click();
+    await expect(page.getByRole('heading', { name: '确认删除调拨单' })).toBeVisible();
+    const deleteDialog = page.locator('.fixed').filter({ hasText: '确认删除调拨单' }).last();
+    await expect(deleteDialog.getByText(createdTransfer.orderNo)).toBeVisible();
+    await expect(deleteDialog.getByText('库存影响（将反向恢复库存）')).toBeVisible();
+    await expect(deleteDialog.getByText(materialName).first()).toBeVisible();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expectToast(page, '调拨单已删除，可在回收站恢复');
+    await expect(page.locator('tr', { hasText: createdTransfer.orderNo })).toHaveCount(0);
+
+    const afterDeleteResponse = await page.request.get('/api/wms/transfers?pageSize=50', { headers: authHeaders });
+    expect(afterDeleteResponse.status()).toBe(200);
+    const afterDeleteBody = await readJson(afterDeleteResponse);
+    expect((afterDeleteBody?.data || []).some((order: any) => order.id === createdTransfer.id)).toBe(false);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/调拨导出删除预览.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can complete wms inbound outbound return transfer chain', async ({ page }) => {
     test.setTimeout(150_000);
     await loginEnterprise(page);

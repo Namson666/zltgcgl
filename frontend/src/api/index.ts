@@ -1007,6 +1007,12 @@ export const wmsApi = {
     http.get(`/wms/transfers/${id}/pdf`, {}, { responseType: 'blob' }),
 
   /**
+   * 导出调拨记录
+   */
+  exportTransfers: (params?: any) =>
+    http.get('/wms/transfers/export', params || {}, { responseType: 'blob' }),
+
+  /**
    * 获取班组台账
    * @param params - 分页参数
    * @returns 分页的班组台账记录

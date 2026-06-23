@@ -5,6 +5,7 @@ const { prismaMock } = vi.hoisted(() => ({
     material: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -23,6 +24,7 @@ const { prismaMock } = vi.hoisted(() => ({
     },
     inventory: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
@@ -33,6 +35,15 @@ const { prismaMock } = vi.hoisted(() => ({
     outboundOrder: {
       findMany: vi.fn(),
     },
+    transferOrder: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
+      create: vi.fn(),
+    },
+    department: {
+      findUnique: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -41,7 +52,7 @@ vi.mock('../../common/utils/prisma', () => ({
   prisma: prismaMock,
 }));
 
-import { createExcelInbound, deleteMaterial, getOutboundExportData, listMaterials, listReturnOrders, updateMaterial } from './service';
+import { createExcelInbound, createTransfer, deleteMaterial, getOutboundExportData, getTransferExportData, listMaterials, listReturnOrders, listTransferOrders, updateMaterial } from './service';
 
 describe('wms material service tenant safeguards', () => {
   beforeEach(() => {
@@ -198,6 +209,114 @@ describe('wms material service tenant safeguards', () => {
       },
       orderBy: { createdAt: 'desc' },
       include: { subProject: true, items: { include: { material: true } }, creator: { select: { name: true } } },
+    });
+  });
+
+  it('lists only active transfer orders', async () => {
+    prismaMock.transferOrder.findMany.mockResolvedValue([]);
+    prismaMock.transferOrder.count.mockResolvedValue(0);
+
+    await listTransferOrders({
+      tenantId: 'tenant-1',
+      fromSubProjectId: 'from-sub-1',
+      toSubProjectId: 'to-sub-1',
+      page: 1,
+      pageSize: 20,
+    });
+
+    expect(prismaMock.transferOrder.findMany).toHaveBeenCalledWith({
+      where: {
+        tenantId: 'tenant-1',
+        isActive: true,
+        fromSubProjectId: 'from-sub-1',
+        toSubProjectId: 'to-sub-1',
+      },
+      skip: 0,
+      take: 20,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        fromSubProject: { include: { department: { include: { contract: true } } } },
+        toSubProject: { include: { department: { include: { contract: true } } } },
+        fromDepartment: { include: { contract: true } },
+        toDepartment: { include: { contract: true } },
+        items: { include: { material: true } },
+      },
+    });
+    expect(prismaMock.transferOrder.count).toHaveBeenCalledWith({
+      where: {
+        tenantId: 'tenant-1',
+        isActive: true,
+        fromSubProjectId: 'from-sub-1',
+        toSubProjectId: 'to-sub-1',
+      },
+    });
+  });
+
+  it('exports only active transfer orders', async () => {
+    prismaMock.transferOrder.findMany.mockResolvedValue([]);
+
+    await getTransferExportData('tenant-1', 'from-sub-1', 'to-sub-1');
+
+    expect(prismaMock.transferOrder.findMany).toHaveBeenCalledWith({
+      where: {
+        tenantId: 'tenant-1',
+        isActive: true,
+        fromSubProjectId: 'from-sub-1',
+        toSubProjectId: 'to-sub-1',
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        fromSubProject: { include: { department: { include: { contract: true } } } },
+        toSubProject: { include: { department: { include: { contract: true } } } },
+        fromDepartment: { include: { contract: true } },
+        toDepartment: { include: { contract: true } },
+        items: { include: { material: true } },
+      },
+    });
+  });
+
+  it('creates department-scoped transfer orders with source and target departments', async () => {
+    prismaMock.inventory.findFirst
+      .mockResolvedValueOnce({ id: 'source-inventory-1', quantity: 5 })
+      .mockResolvedValueOnce({ id: 'source-inventory-1', quantity: 5 })
+      .mockResolvedValueOnce(null);
+    prismaMock.material.findUnique.mockResolvedValue({ id: 'material-1', name: '钢筋', unit: '吨' });
+    prismaMock.department.findUnique
+      .mockResolvedValueOnce({ id: 'from-dept-1', name: '第一项目部' })
+      .mockResolvedValueOnce({ id: 'to-dept-1', name: '第二项目部' });
+    prismaMock.transferOrder.create.mockResolvedValue({ id: 'transfer-1', orderNo: 'TRF-20260623-0001' });
+    prismaMock.transferOrder.findFirst.mockResolvedValue(null);
+    prismaMock.inventory.update.mockResolvedValue({ id: 'source-inventory-1' });
+    prismaMock.inventory.create.mockResolvedValue({ id: 'target-inventory-1' });
+
+    const result = await createTransfer({
+      tenantId: 'tenant-1',
+      fromDepartmentId: 'from-dept-1',
+      toDepartmentId: 'to-dept-1',
+      transferDate: '2026-06-23',
+      remark: '项目部调拨',
+      items: [{ materialId: 'material-1', quantity: 2, projectName: '1号楼' }],
+    });
+
+    expect(result.order).toEqual({ id: 'transfer-1', orderNo: 'TRF-20260623-0001' });
+    expect(prismaMock.transferOrder.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        tenantId: 'tenant-1',
+        orderNo: 'TRF-20260623-0001',
+        fromDepartmentId: 'from-dept-1',
+        toDepartmentId: 'to-dept-1',
+        transferDate: new Date('2026-06-23'),
+        remark: '项目部调拨',
+      }),
+    });
+    expect(prismaMock.inventory.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        tenantId: 'tenant-1',
+        departmentId: 'to-dept-1',
+        materialId: 'material-1',
+        projectName: '1号楼',
+        quantity: 2,
+      }),
     });
   });
 });
