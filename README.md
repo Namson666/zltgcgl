@@ -4,8 +4,8 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S32 WMS transfer export/delete verified pending push
-- Current task: WMS 调拨录入/导出/删除预览已通过真实 Chrome：UI 新增调拨、PDF 下载、调拨记录导出、删除级联预览、项目部级调拨库存回滚、软删除后列表/API 不再显示；库存预警仍不恢复、不纳入验收矩阵
+- Current phase: S32 WMS transfer export/delete pushed
+- Current task: WMS 调拨录入/导出/删除预览已通过真实 Chrome 并推送：UI 新增调拨、PDF 下载、调拨记录导出、删除级联预览、项目部级调拨库存回滚、软删除后列表/API 不再显示；库存预警仍不恢复、不纳入验收矩阵
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/系统配置/API Key/套餐生命周期、开发者 AI/OCR 配置生命周期均已通过真实 Chrome
 - In progress: 准备进入下一轮剩余历史业务页面深度 CRUD/上传下载验收；库存预警已移出产品范围，不作为后续功能板块验收项
 - Next action: 继续补齐剩余历史业务页面深度 CRUD/上传下载验收，并配置真实第三方人脸识别网关/密钥
@@ -22,7 +22,7 @@
   8. .ai/session/HANDOFF.md
 - Must read spec:
   1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
-- Last verified command: focused Chrome `create export and delete wms transfer records` passed 1/1; `bash scripts/verify.sh` passed with backend Prisma generate + backend 46 tests/build + frontend 36 tests/build; full `bash scripts/browser-smoke.sh` passed real Chrome 28/28; Claude worker PASS (`.ai/workers/20260623T103434Z-audit_worker.result.md`); `code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50 with function-level gaps covered by backend unit + Chrome e2e; pending push
+- Last verified command: focused Chrome `create export and delete wms transfer records` passed 1/1; `bash scripts/verify.sh` passed with backend Prisma generate + backend 46 tests/build + frontend 36 tests/build; full `bash scripts/browser-smoke.sh` passed real Chrome 28/28; Claude worker PASS (`.ai/workers/20260623T103434Z-audit_worker.result.md`); `code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50 with function-level gaps covered by backend unit + Chrome e2e; pushed implementation at 714028e
 - Claude worker evidence: `.ai/workers/20260622T142134Z-audit_worker.result.md` first found a blocker-risk around photo read failure; fixed. `.ai/workers/20260622T142430Z-audit_worker.result.md` returned PASS / BLOCKERS none; path traversal Yellow was also fixed and reverified.
 - Claude worker evidence: latest `.ai/workers/20260622T150714Z-audit_worker.result.md` returned PASS after fixing the WorkTeam search field blocker found by `.ai/workers/20260622T150334Z-audit_worker.result.md`.
 - Claude worker evidence: latest `.ai/workers/20260622T153551Z-audit_worker.result.md` returned PASS for inventory alert removal and labor export fixes.
@@ -77,8 +77,8 @@
 - Latest pushed implementation commit: `f54298f feat: cover wms inbound import export flow`
 - Latest pushed implementation commit: `157fefa feat: cover wms return import export flow`
 - Latest pushed implementation commit: `48b2e18 feat: cover wms outbound export delete flow`
-- Latest verified implementation pending push: WMS transfer create/export/delete-preview
-- Updated at: 2026-06-23T10:40:00Z
+- Latest pushed implementation commit: `714028e feat: cover wms transfer export delete flow`
+- Updated at: 2026-06-23T10:45:00Z
 
 ## 项目概览
 
