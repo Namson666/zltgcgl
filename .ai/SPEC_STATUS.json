@@ -1,9 +1,9 @@
 {
-  "stage": "S19_developer_system_config_api_keys_verified",
+  "stage": "S19_developer_system_config_api_keys_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "Developer SystemConfig and API Key lifecycle now have real Chrome coverage: system config create/edit/delete plus API read-back and enterprise 403; API Key create rawKey modal, keyPrefix/isActive read-back, disable/enable, enterprise 403 for read/write/delete, and delete. Full Chrome smoke is now 17/17. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T05:24:00Z"
+  "updated_at": "2026-06-23T05:28:00Z"
 }

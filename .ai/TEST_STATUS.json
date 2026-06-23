@@ -1,5 +1,5 @@
 {
-  "status": "developer_system_config_api_keys_browser_verified",
+  "status": "developer_system_config_api_keys_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -964,5 +964,5 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "Developer system config and API Key lifecycle now have focused and full real Chrome coverage, including UI create/edit/delete/state-change, API read-back, and enterprise 403 checks. Developer announcements, module/portal, WMS, finance, labor, admin, and inventory-alert-removal evidence remain green. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T05:24:00Z"
+  "updated_at": "2026-06-23T05:28:00Z"
 }
