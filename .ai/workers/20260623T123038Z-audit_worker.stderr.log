@@ -1,0 +1,1 @@
+Claude CLI second attempt produced no stdout/stderr for more than two minutes and was interrupted by Codex to avoid blocking delivery. A prior S37 Claude attempt at 20260623T122509Z failed before audit with "Error: Exceeded USD budget (1)".

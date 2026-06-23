@@ -98,6 +98,16 @@ async function expectToast(page: any, text: string | RegExp) {
 
 const formatSmokeMoney = (value: number) => `¥${value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+const formatDeveloperMoney = (value: number) => (value >= 10000 ? `¥${(value / 10000).toFixed(1)}万` : `¥${value.toFixed(0)}`);
+
+const formatDeveloperBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
+
 const paginatedTotal = (body: any) => Number(body?.pagination?.total ?? body?.meta?.total ?? body?.data?.total ?? body?.data?.recordCount ?? 0);
 
 function generateValidIdCard(stamp: number, birthDate = '19900301') {
@@ -562,6 +572,82 @@ test.describe('browser smoke: authenticated core navigation', () => {
 	    await expect(page.getByText('企业小程序接入配置已保存')).toBeVisible();
 	    await page.screenshot({
 	      path: '../docs/smoke-evidence/开发者企业管理.png',
+      fullPage: true,
+    });
+  });
+
+  test('developer can verify dashboard real summary and quick actions', async ({ page }) => {
+    await loginDeveloper(page);
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+
+    const [statsResponse, usageResponse, revenueResponse, dailyResponse] = await Promise.all([
+      page.request.get('/api/developer/stats', { headers: authHeaders }),
+      page.request.get('/api/developer/stats/usage?sortBy=apiUsage&limit=10', { headers: authHeaders }),
+      page.request.get('/api/developer/stats/revenue?months=12', { headers: authHeaders }),
+      page.request.get('/api/developer/stats/daily?days=30', { headers: authHeaders }),
+    ]);
+    for (const response of [statsResponse, usageResponse, revenueResponse, dailyResponse]) {
+      expect(response.status()).toBe(200);
+    }
+
+    const statsBody = await readJson(statsResponse);
+    const usageBody = await readJson(usageResponse);
+    const revenueBody = await readJson(revenueResponse);
+    const dailyBody = await readJson(dailyResponse);
+    const stats = statsBody.data;
+    const usageRows = usageBody.data || [];
+    const revenueRows = revenueBody.data || [];
+    const dailyRows = dailyBody.data || [];
+
+    await page.goto('/dev');
+    await expect(page.getByRole('heading', { name: '开发者后台' })).toBeVisible();
+    await expect(page.getByTestId('developer-dashboard-tenants')).toContainText(String(stats.tenants.total));
+    await expect(page.getByTestId('developer-dashboard-tenants')).toContainText(`本月新增 ${stats.tenants.newThisMonth}`);
+    await expect(page.getByTestId('developer-dashboard-users')).toContainText(String(stats.users.total));
+    await expect(page.getByTestId('developer-dashboard-users')).toContainText(`本月新增 ${stats.users.newThisMonth}`);
+    await expect(page.getByTestId('developer-dashboard-revenue')).toContainText(formatDeveloperMoney(Number(stats.revenue.thisMonth || 0)));
+    await expect(page.getByTestId('developer-dashboard-revenue')).toContainText(`累计 ${formatDeveloperMoney(Number(stats.revenue.total || 0))}`);
+    await expect(page.getByTestId('developer-dashboard-api-usage')).toContainText(String(stats.apiUsage.total));
+    await expect(page.getByTestId('developer-dashboard-api-usage')).toContainText(`本月 ${stats.apiUsage.thisMonth} 次`);
+    await expect(page.getByTestId('developer-dashboard-storage')).toContainText(formatDeveloperBytes(Number(stats.attachments.totalSize || 0)));
+    await expect(page.getByTestId('developer-dashboard-storage')).toContainText(`本月新增 ${formatDeveloperBytes(Number(stats.attachments.newThisMonth || 0))}`);
+    await expect(page.getByTestId('developer-dashboard-online-users')).toContainText(String(stats.onlineUsers));
+
+    if (usageRows.length > 0) {
+      const topUsage = usageRows[0];
+      await expect(page.getByTestId('developer-dashboard-usage-ranking')).toContainText(topUsage.name);
+      await expect(page.getByTestId('developer-dashboard-usage-ranking')).toContainText(topUsage.code);
+      await expect(page.getByTestId('developer-dashboard-usage-ranking')).toContainText(String(topUsage.userCount));
+      await expect(page.getByTestId('developer-dashboard-usage-ranking')).toContainText(formatDeveloperBytes(Number(topUsage.storage || 0)));
+    }
+    if (revenueRows.length > 0) {
+      const latestRevenue = revenueRows[revenueRows.length - 1];
+      await expect(page.getByTestId('developer-dashboard-revenue-trend')).toContainText(latestRevenue.month.slice(5));
+    }
+    if (dailyRows.length > 0) {
+      const sampledDaily = dailyRows.find((_: any, index: number) => index % 3 === 0) || dailyRows[0];
+      await expect(page.getByTestId('developer-dashboard-daily-trend')).toContainText(sampledDaily.date.slice(5));
+    }
+
+    await page.getByTestId('developer-dashboard-action-tenants').click();
+    await expect(page.getByRole('heading', { name: '租户管理' })).toBeVisible();
+    await page.goto('/dev');
+    await page.getByTestId('developer-dashboard-action-ai-config').click();
+    await expect(page.getByRole('heading', { name: 'AI 模型配置' })).toBeVisible();
+    await page.goto('/dev');
+    await page.getByTestId('developer-dashboard-action-ocr-config').click();
+    await expect(page.getByRole('heading', { name: 'OCR 配置' })).toBeVisible();
+    await page.goto('/dev');
+    await page.getByTestId('developer-dashboard-action-system-config').click();
+    await expect(page.getByRole('heading', { name: '系统配置' })).toBeVisible();
+    await page.goto('/dev');
+    await page.getByTestId('developer-dashboard-action-logs').click();
+    await expect(page.getByRole('heading', { name: '操作日志' })).toBeVisible();
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/开发者首页数据看板真实汇总.png',
       fullPage: true,
     });
   });

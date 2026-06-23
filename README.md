@@ -4,9 +4,9 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S36 enterprise main dashboard real-summary verified
-- Current task: 企业首页数据看板真实汇总已通过真实 Chrome：合同/项目部/人员/WMS/工资/考勤/异常卡片全部用真实 API 对比验证；库存预警仍不恢复、不纳入验收矩阵
-- Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总均已通过真实 Chrome
+- Current phase: S37 developer main dashboard real-summary verified
+- Current task: 开发者首页数据看板真实汇总已通过真实 Chrome：统计卡片/用量排行/趋势图/快捷入口全部用真实 API 对比或点击验证；库存预警仍不恢复、不纳入验收矩阵
+- Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总、开发者首页数据看板真实汇总均已通过真实 Chrome
 - In progress: 准备进入下一轮剩余历史业务页面深度 CRUD/上传下载验收；库存预警已移出产品范围，不作为后续功能板块验收项
 - Next action: 继续补齐剩余历史业务页面深度 CRUD/上传下载验收，并配置真实第三方人脸识别网关/密钥
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：生产 DNS/反代/证书未接入真实域名验证、真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
@@ -53,10 +53,10 @@
 - Claude worker evidence: latest `.ai/workers/20260623T105329Z-audit_worker.result.md` returned PASS for WMS inventory/work-team ledger exports, active-only net quantity, SQLite-safe search, and no inventory-alert restoration.
 - Claude worker evidence: S34 prompts `.ai/workers/20260623T111326Z-wms-delivery-ocr-export-audit.prompt.md` and `.ai/workers/20260623T111326Z-wms-delivery-ocr-export-audit-short.prompt.md` were attempted through Claude CLI, but Claude hung/no-output twice and was interrupted; S34 remains verified by unit/build/focused Chrome/full Chrome/code-review-graph.
 - Claude worker evidence: S35 prompt `.ai/workers/developer-tenant-crud-audit.prompt.md` was invoked through Claude CLI and timed out after 90 seconds; `.ai/workers/20260623T114711Z-audit_worker.result.md` and `.ai/workers/20260623T120109Z-audit_worker.result.md` record these as Yellow external-tool evidence, not PASS.
-- code-review-graph evidence: latest `code-review-graph build --skip-flows && code-review-graph detect-changes` ran; graph built 137 files / 1618 nodes / 25937 edges; risk score 0.50. Static gaps for developer tenant service/UI functions are covered by focused and full real Chrome assertions.
+- code-review-graph evidence: latest `code-review-graph build --skip-flows && code-review-graph detect-changes` ran; graph built 137 files / 1621 nodes / 26190 edges; risk score 0.50. Static gaps for developer dashboard component/helper functions are covered by focused and full real Chrome API-vs-UI assertions.
 - Previous pushed implementation commit: `ebf731c feat: add supplier and work team CRUD coverage`
 - Safe rollback point: pushed commit `f171bc2 chore: mark full route matrix pushed`
-- Browser smoke evidence: `docs/smoke-evidence/playwright-results.json`, `docs/smoke-evidence/playwright-report/index.html`, legacy screenshots, `docs/smoke-evidence/full-route-*.png`, `docs/smoke-evidence/供应商班组CRUD.png`, `docs/smoke-evidence/劳资工资发放导出.png`, `docs/smoke-evidence/劳资人员考勤工资风控CRUD.png`, `docs/smoke-evidence/模块开通独立登录验收.png`, `docs/smoke-evidence/开发者UI模块开通独立登录.png`, `docs/smoke-evidence/基础后台CRUD.png`, `docs/smoke-evidence/物资主链路CRUD.png`, `docs/smoke-evidence/物资档案CRUD导出.png`, `docs/smoke-evidence/入库导入导出删除预览.png`, `docs/smoke-evidence/退库导入导出删除预览.png`, `docs/smoke-evidence/出库导出删除预览.png`, `docs/smoke-evidence/调拨导出删除预览.png`, `docs/smoke-evidence/财务备用金费用CRUD上传.png`, `docs/smoke-evidence/财务看板真实汇总数据.png`, `docs/smoke-evidence/财务发票收款盈亏导入导出.png`, `docs/smoke-evidence/财务类别回收站CRUD.png`, `docs/smoke-evidence/项目部报账审核驳回CRUD.png`, `docs/smoke-evidence/开发者套餐生命周期CRUD.png`, `docs/smoke-evidence/开发者AIOCR配置生命周期CRUD.png`, `docs/smoke-evidence/开发者集成安全监控日志CRUD.png`, `docs/smoke-evidence/开发者支付发票存储CRUD.png`, `docs/smoke-evidence/企业订阅计划生命周期CRUD.png`, and `docs/smoke-evidence/企业首页数据看板真实汇总.png`; latest real Chrome smoke passed 32 tests
+- Browser smoke evidence: `docs/smoke-evidence/playwright-results.json`, `docs/smoke-evidence/playwright-report/index.html`, legacy screenshots, `docs/smoke-evidence/full-route-*.png`, `docs/smoke-evidence/供应商班组CRUD.png`, `docs/smoke-evidence/劳资工资发放导出.png`, `docs/smoke-evidence/劳资人员考勤工资风控CRUD.png`, `docs/smoke-evidence/模块开通独立登录验收.png`, `docs/smoke-evidence/开发者UI模块开通独立登录.png`, `docs/smoke-evidence/基础后台CRUD.png`, `docs/smoke-evidence/物资主链路CRUD.png`, `docs/smoke-evidence/物资档案CRUD导出.png`, `docs/smoke-evidence/入库导入导出删除预览.png`, `docs/smoke-evidence/退库导入导出删除预览.png`, `docs/smoke-evidence/出库导出删除预览.png`, `docs/smoke-evidence/调拨导出删除预览.png`, `docs/smoke-evidence/财务备用金费用CRUD上传.png`, `docs/smoke-evidence/财务看板真实汇总数据.png`, `docs/smoke-evidence/财务发票收款盈亏导入导出.png`, `docs/smoke-evidence/财务类别回收站CRUD.png`, `docs/smoke-evidence/项目部报账审核驳回CRUD.png`, `docs/smoke-evidence/开发者套餐生命周期CRUD.png`, `docs/smoke-evidence/开发者AIOCR配置生命周期CRUD.png`, `docs/smoke-evidence/开发者集成安全监控日志CRUD.png`, `docs/smoke-evidence/开发者支付发票存储CRUD.png`, `docs/smoke-evidence/企业订阅计划生命周期CRUD.png`, `docs/smoke-evidence/企业首页数据看板真实汇总.png`, and `docs/smoke-evidence/开发者首页数据看板真实汇总.png`; latest real Chrome smoke passed 33 tests
 - Previous pushed implementation commit: `e7c0772 feat: remove inventory alerts and fix labor exports`
 - Last pushed implementation commit: `b122ebc test: cover module entitlements and portal login`
 - Previous implementation commit: `5fe8382 test: cover admin crud and remove inventory alert docs`
@@ -84,7 +84,8 @@
 - Latest pushed implementation commit: `0cb6997 feat: cover wms inventory ledger exports`
 - Latest pushed implementation commit: `bbb943a feat: cover wms delivery export ocr guard`
 - Latest pushed implementation commit: `e31544b feat: cover enterprise dashboard summary`
-- Updated at: 2026-06-23T11:55:00Z
+- Latest verified implementation pending push: developer main dashboard real-summary coverage
+- Updated at: 2026-06-23T12:35:00Z
 
 ## 项目概览
 

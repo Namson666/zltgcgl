@@ -7,14 +7,14 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_enterprise_main_dashboard_real_summary_verification",
+    "working_tree": "dirty_after_developer_main_dashboard_real_summary_verification",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "enterprise_main_dashboard_real_summary_pushed",
+    "push_status": "developer_main_dashboard_real_summary_pending_push",
     "pushed_commit": "e31544b feat: cover enterprise dashboard summary",
     "last_pushed_commit": "e31544b"
   },
@@ -23,7 +23,7 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "enterprise_main_dashboard_real_summary_pushed",
+    "push_status": "developer_main_dashboard_real_summary_pending_push",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
     "pushed_commit": "e31544b feat: cover enterprise dashboard summary"
   },
@@ -34,11 +34,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "enterprise_main_dashboard_real_summary_pushed",
-  "updated_at": "2026-06-23T12:20:00Z",
-  "push_status": "enterprise_main_dashboard_real_summary_pushed",
+  "status": "developer_main_dashboard_real_summary_verified_pending_push",
+  "updated_at": "2026-06-23T12:35:00Z",
+  "push_status": "developer_main_dashboard_real_summary_pending_push",
   "last_pushed_commit": "e31544b",
-  "current_commit": "e31544b feat: cover enterprise dashboard summary",
+  "current_commit": "developer_main_dashboard_real_summary_pending_push",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -70,11 +70,12 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S36_enterprise_main_dashboard_real_summary_verified",
-  "current_task": "企业首页数据看板真实汇总已通过真实 Chrome：合同/项目部/人员/WMS/工资/考勤/异常卡片全部用真实 API 对比验证；库存预警仍不恢复。",
-  "last_verified_at": "2026-06-23T12:15:00Z",
-  "last_verified_command": "focused Chrome main dashboard real summary 1/1; bash scripts/verify.sh backend 53 frontend 36 build; bash scripts/browser-smoke.sh 32/32; code-review-graph risk 0.50; Claude CLI attempted but timed out after 60s and is recorded Yellow",
+  "current_phase": "S37_developer_main_dashboard_real_summary_verified",
+  "current_task": "开发者首页数据看板真实汇总已通过真实 Chrome：统计卡片/用量排行/趋势图/快捷入口全部用真实 API 对比或点击验证；库存预警仍不恢复。",
+  "last_verified_at": "2026-06-23T12:35:00Z",
+  "last_verified_command": "focused Chrome developer dashboard real summary 1/1; bash scripts/verify.sh backend 53 frontend 36 build; bash scripts/browser-smoke.sh 33/33; code-review-graph risk 0.50; Claude CLI attempted but budget/timeout Yellow",
   "history": [
+    "2026-06-23: Developer main dashboard real-summary verified locally in real Chrome. Added stable test ids to /dev summary cards, trend/ranking sections, and quick actions. Browser test reads real developer stats/usage/revenue/daily APIs, asserts dashboard UI values and trend labels match, and clicks quick actions to tenant management, AI config, OCR config, system config, and logs. verify passed, focused Chrome 1/1 passed, full real Chrome 33/33 passed, code-review-graph risk 0.50. Claude CLI first exceeded USD budget 1, second produced no output for more than two minutes and was interrupted; recorded Yellow, not PASS. Pending commit/push.",
     "2026-06-23: Enterprise main dashboard real-summary verified locally in real Chrome. Fixed dashboard API response unwrapping for contract/department pagination totals, WMS meta totals, labor personnel totals, salary totals, anomaly unresolved totals, and changed monthly attendance from fake current day-of-month to real /labor/attendance/monthly attendanceDays. Fixed laborApi.getMonthlySummary route. Browser test reads real API values and asserts dashboard cards match. verify passed, focused Chrome 1/1 passed, full real Chrome 32/32 passed, code-review-graph risk 0.50. Claude CLI audit timed out after 60s and is recorded Yellow, not PASS. Pending commit/push.",
     "2026-06-23: Developer tenant CRUD/users/recycle-bin deep flow verified locally in real Chrome. Fixed developer tenant UI to use developer-scoped tenant users/roles/password APIs, tenant search keyword/search compatibility, React confirm callback wrapping, and permanent tenant delete / clear recycle bin dependency cleanup for SQLite FK chains. Browser test covers create/search/edit tenant, detail roles/users, create user, reset password, login with reset password, soft-delete, restore, re-delete, permanent delete API absence, and clear recycle bin API absence. verify passed, focused Chrome 1/1 passed, full real Chrome 31/31 passed, code-review-graph risk 0.50. Claude CLI audit timed out after 90s/60s and is recorded Yellow, not PASS. Implementation committed at this commit.",
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted.",

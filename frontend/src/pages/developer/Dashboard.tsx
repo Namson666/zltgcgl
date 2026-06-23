@@ -124,9 +124,9 @@ const DeveloperDashboard: React.FC = () => {
   /* ---------- 渲染统计卡片 ---------- */
   const renderStatCard = (
     title: string, value: string | number, subtitle: string,
-    icon: React.ReactNode, bgColor: string, iconColor: string
+    icon: React.ReactNode, bgColor: string, iconColor: string, testId?: string
   ) => (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow" data-testid={testId}>
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <p className="text-sm text-gray-500 mb-1 truncate">{title}</p>
@@ -216,20 +216,20 @@ const DeveloperDashboard: React.FC = () => {
        * ========================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
         {renderStatCard('企业总数', stats?.tenants.total ?? '--', `本月新增 ${stats?.tenants.newThisMonth ?? 0}`,
-          <Building2 size={22} />, 'bg-blue-50', 'text-blue-600')}
+          <Building2 size={22} />, 'bg-blue-50', 'text-blue-600', 'developer-dashboard-tenants')}
         {renderStatCard('用户总数', stats?.users.total ?? '--', `本月新增 ${stats?.users.newThisMonth ?? 0}`,
-          <Users size={22} />, 'bg-green-50', 'text-green-600')}
+          <Users size={22} />, 'bg-green-50', 'text-green-600', 'developer-dashboard-users')}
         {renderStatCard('本月收入', stats ? formatMoney(stats.revenue.thisMonth) : '--',
           `累计 ${stats ? formatMoney(stats.revenue.total) : '--'}`,
-          <DollarSign size={22} />, 'bg-emerald-50', 'text-emerald-600')}
+          <DollarSign size={22} />, 'bg-emerald-50', 'text-emerald-600', 'developer-dashboard-revenue')}
         {renderStatCard('API调用', stats?.apiUsage.total ?? '--',
           `本月 ${stats?.apiUsage.thisMonth ?? 0} 次`,
-          <Activity size={22} />, 'bg-purple-50', 'text-purple-600')}
+          <Activity size={22} />, 'bg-purple-50', 'text-purple-600', 'developer-dashboard-api-usage')}
         {renderStatCard('附件存储', stats ? formatBytes(stats.attachments.totalSize) : '--',
           `本月新增 ${stats ? formatBytes(stats.attachments.newThisMonth) : '--'}`,
-          <HardDrive size={22} />, 'bg-amber-50', 'text-amber-600')}
+          <HardDrive size={22} />, 'bg-amber-50', 'text-amber-600', 'developer-dashboard-storage')}
         {renderStatCard('当前在线', stats?.onlineUsers ?? '--', '实时在线用户数',
-          <Globe size={22} />, 'bg-rose-50', 'text-rose-600')}
+          <Globe size={22} />, 'bg-rose-50', 'text-rose-600', 'developer-dashboard-online-users')}
       </div>
 
       {/* ==========================================
@@ -237,7 +237,7 @@ const DeveloperDashboard: React.FC = () => {
        * ========================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* ---------- 收入趋势 ---------- */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm" data-testid="developer-dashboard-revenue-trend">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold" style={{ color: '#1A2B3C' }}>
               <DollarSign size={16} className="inline mr-1.5 text-emerald-500" />
@@ -266,7 +266,7 @@ const DeveloperDashboard: React.FC = () => {
         </div>
 
         {/* ---------- 每日注册趋势 ---------- */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm" data-testid="developer-dashboard-daily-trend">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold" style={{ color: '#1A2B3C' }}>
               <TrendingUp size={16} className="inline mr-1.5 text-blue-500" />
@@ -319,7 +319,7 @@ const DeveloperDashboard: React.FC = () => {
        * ========================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* ---------- 用量排行 ---------- */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm" data-testid="developer-dashboard-usage-ranking">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h2 className="text-base font-semibold" style={{ color: '#1A2B3C' }}>
               <Activity size={16} className="inline mr-1.5 text-purple-500" />
@@ -396,6 +396,7 @@ const DeveloperDashboard: React.FC = () => {
               bgColor="bg-blue-50"
               iconColor="text-blue-600"
               onClick={() => navigate('/dev/tenants')}
+              testId="developer-dashboard-action-tenants"
             />
             <ActionButton
               icon={<Cpu size={18} />}
@@ -404,6 +405,7 @@ const DeveloperDashboard: React.FC = () => {
               bgColor="bg-purple-50"
               iconColor="text-purple-600"
               onClick={() => navigate('/dev/ai-config')}
+              testId="developer-dashboard-action-ai-config"
             />
             <ActionButton
               icon={<FileSearch size={18} />}
@@ -412,6 +414,7 @@ const DeveloperDashboard: React.FC = () => {
               bgColor="bg-green-50"
               iconColor="text-green-600"
               onClick={() => navigate('/dev/ocr-config')}
+              testId="developer-dashboard-action-ocr-config"
             />
             <ActionButton
               icon={<Settings size={18} />}
@@ -420,6 +423,7 @@ const DeveloperDashboard: React.FC = () => {
               bgColor="bg-cyan-50"
               iconColor="text-cyan-600"
               onClick={() => navigate('/dev/system-config')}
+              testId="developer-dashboard-action-system-config"
             />
             <ActionButton
               icon={<ScrollText size={18} />}
@@ -428,6 +432,7 @@ const DeveloperDashboard: React.FC = () => {
               bgColor="bg-amber-50"
               iconColor="text-amber-600"
               onClick={() => navigate('/dev/logs')}
+              testId="developer-dashboard-action-logs"
             />
           </div>
         </div>
@@ -446,9 +451,11 @@ const ActionButton: React.FC<{
   bgColor: string;
   iconColor: string;
   onClick: () => void;
-}> = ({ icon, label, desc, bgColor, iconColor, onClick }) => (
+  testId?: string;
+}> = ({ icon, label, desc, bgColor, iconColor, onClick, testId }) => (
   <button
     onClick={onClick}
+    data-testid={testId}
     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left group"
   >
     <div className={`w-9 h-9 rounded-lg ${bgColor} ${iconColor} flex items-center justify-center flex-shrink-0`}>

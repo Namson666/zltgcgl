@@ -1,9 +1,9 @@
 {
-  "stage": "S36_enterprise_main_dashboard_real_summary_verified",
+  "stage": "S37_developer_main_dashboard_real_summary_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Enterprise main dashboard real-summary data is verified in real Chrome: Dashboard now unwraps contract/department pagination totals, WMS meta totals, labor personnel totals, salary paid/payable totals, anomaly unresolved totals, and real monthly attendance summary. The previous fake monthly attendance display based on the current day-of-month is removed. Full Chrome smoke is 32/32. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Claude CLI audit was invoked but timed out after 60s and is recorded as Yellow external-tool evidence; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T12:15:00Z"
+  "notes": "Developer main dashboard real-summary data is verified in real Chrome: /dev now has stable test ids for summary cards, trend/ranking sections, and quick actions. The browser test reads real developer stats/usage/revenue/daily APIs, asserts UI values and labels match, and clicks quick actions to real developer pages. Full Chrome smoke is 33/33. Inventory alert / 库存预警 remains out of scope and was not restored. Claude CLI audit attempts hit budget/no-output timeout and are recorded as Yellow external-tool evidence; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T12:35:00Z"
 }
