@@ -7,14 +7,14 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "clean_after_mini_program_phone_prebinding_toggle_push",
+    "working_tree": "dirty_after_mini_program_phone_prebinding_toggle_safety_verification",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "mini_program_phone_prebinding_toggle_pushed",
+    "push_status": "mini_program_phone_prebinding_toggle_safety_pending_push",
     "pushed_commit": "2d160ba feat: add mini program prebinding toggle",
     "last_pushed_commit": "2d160ba"
   },
@@ -23,7 +23,7 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "mini_program_phone_prebinding_toggle_pushed",
+    "push_status": "mini_program_phone_prebinding_toggle_safety_pending_push",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
     "pushed_commit": "2d160ba feat: add mini program prebinding toggle"
   },
@@ -34,12 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "mini_program_phone_prebinding_toggle_pushed",
-  "updated_at": "2026-06-23T16:02:22Z",
-  "push_status": "mini_program_phone_prebinding_toggle_pushed",
+  "status": "mini_program_phone_prebinding_toggle_safety_verified_pending_push",
+  "updated_at": "2026-06-23T16:12:46Z",
+  "push_status": "mini_program_phone_prebinding_toggle_safety_pending_push",
   "last_pushed_commit": "2d160ba",
-  "current_commit": "2d160ba feat: add mini program prebinding toggle",
+  "current_commit": "41fb4b9 chore: mark mini program prebinding toggle pushed",
   "notes": [
+    "2026-06-24: S45 default mini-program phone prebinding disable-confirm and type-safety polish verified locally; focused Chrome 1/1, verify, full Chrome 35/35, code-review-graph risk 0.50, Claude retry PASS; pending commit/push.",
     "2026-06-23: S44 default mini-program phone prebinding enable/disable lifecycle pushed at 2d160ba; status marker pending.",
     "2026-06-23: S44 default mini-program phone prebinding enable/disable lifecycle verified locally;停用后默认小程序无 tenantId 打卡恢复 MULTIPLE_TENANTS 且不写记录，重新启用后恢复自动分流；verify passed, full Chrome 35/35, Claude audit PASS; pending commit/push.",
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
@@ -72,8 +73,8 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S43_mini_program_phone_prebinding_verified",
-  "current_task": "默认小程序同手机号多企业分流已补齐管理员预绑定：开发者后台可预绑定手机号到企业/人员，默认 appId 不带 tenantId 打卡直达预绑定企业；库存预警仍不恢复。",
+  "current_phase": "S45_mini_program_phone_prebinding_toggle_safety_verified",
+  "current_task": "Commit and push S45 mini-program phone prebinding disable-confirm and type-safety polish.",
   "last_verified_at": "2026-06-23T15:40:34Z",
   "last_verified_command": "focused Chrome mini-program prebinding 1/1; bash scripts/verify.sh backend 57 frontend 36 build; bash scripts/browser-smoke.sh 35/35; code-review-graph risk 0.50; Claude CLI audit WARN nonblocking",
   "history": [

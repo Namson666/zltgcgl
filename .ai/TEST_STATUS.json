@@ -1,13 +1,26 @@
 {
-  "status": "mini_program_phone_prebinding_toggle_verified",
+  "status": "mini_program_phone_prebinding_toggle_safety_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "mini_program_phone_prebinding_toggle_safety_flow",
+      "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"mini-program check-in does not silently route\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker_S45_mini_program_prebinding_toggle_safety_retry --prompt-file .ai/workers/S45-mini-program-prebinding-toggle-safety-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
+      "status": "verified_claude_pass_after_budget_retry",
+      "result": "默认小程序手机号预绑定停用安全确认已通过真实 Chrome：开发者点击停用会弹出原生确认，文案包含手机号和“不再自动分流”影响；Chrome 测试实际拦截并接受确认，然后继续验证停用后默认小程序不带 tenantId 打卡返回 MULTIPLE_TENANTS 且两个企业不写记录，重新启用后恢复自动分流。前端 phoneBindings 和 handleTogglePhoneBinding 从 any 收敛为 MiniProgramPhoneBinding 类型。Focused Chrome 1/1 passed，verify backend 57 + frontend 36 + builds passed，full Chrome 35/35 passed，code-review-graph risk 0.50。Claude 首次因 USD budget=1 失败，retry PASS 无阻塞。库存预警未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/小程序手机号多企业分流.png",
+        ".ai/workers/20260623T160959Z-audit_worker_S45_mini_program_prebinding_toggle_safety_retry.result.md",
+        ".ai/workers/20260623T160823Z-audit_worker_S45_mini_program_prebinding_toggle_safety.result.md"
+      ]
+    },
     {
       "type": "mini_program_phone_prebinding_toggle_flow",
       "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"mini-program check-in does not silently route\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh (first run 34/35 with old first-test 409, focused rerun passed 1/1, second full run passed 35/35); code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker_S44_mini_program_prebinding_toggle --prompt-file .ai/workers/S44-mini-program-prebinding-toggle-audit.prompt.md --model sonnet --effort medium --max-budget-usd 1.00",
@@ -1306,5 +1319,5 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "WMS transfer create/export/delete-preview now has focused and full real Chrome coverage, including real UI transfer creation, transfer PDF download, transfer ledger export download, cascade preview, and delete verification. Transfer list/export now filters active records only, department-scoped transfer IDs are persisted, and transfer preview/delete rollback supports department-scoped inventory. Enterprise subscription lifecycle, developer payments/invoices/storage, integrations/security/monitoring/logs, AI/OCR, plans, system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T15:59:33Z"
+  "updated_at": "2026-06-23T16:12:46Z"
 }

@@ -1,0 +1,9 @@
+Diff artifact intentionally compacted after Claude audit.
+
+Reason: the raw `git diff --binary` captured Playwright evidence screenshots,
+producing a multi-megabyte patch not suitable for repository history.
+
+Review source of truth:
+
+- `git diff -- frontend/src/pages/developer/Integrations.tsx frontend/tests/smoke/browser-smoke.spec.ts`
+- `.ai/workers/20260623T160959Z-audit_worker_S45_mini_program_prebinding_toggle_safety_retry.result.md`

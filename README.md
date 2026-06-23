@@ -4,10 +4,10 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S44 mini-program phone prebinding toggle verified
-- Current task: 默认小程序手机号预绑定已补齐启用/停用生命周期：开发者后台可停用/启用预绑定，停用后默认 appId 不带 tenantId 打卡恢复 MULTIPLE_TENANTS 且不写记录，重新启用后恢复自动分流；库存预警仍不恢复、不纳入验收矩阵
+- Current phase: S45 mini-program phone prebinding toggle safety verified
+- Current task: 默认小程序手机号预绑定停用已补安全确认：停用前弹窗提示手机号和不再自动分流影响，类型从 any 收敛为 MiniProgramPhoneBinding；库存预警仍不恢复、不纳入验收矩阵
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖、小程序同手机号多企业冲突保护、冲突后选择企业打卡 appId 校验闭环、管理员手机号预绑定和企业自有 appId 直达验收；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、劳资工资发放生命周期、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/企业端公告首页可见/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总、开发者首页数据看板真实汇总、公开注册企业登录闭环均已通过真实 Chrome
-- In progress: S44 已提交并推送；库存预警已移出产品范围，不作为后续功能板块验收项
+- In progress: S45 已本地验证，准备提交并推送；库存预警已移出产品范围，不作为后续功能板块验收项
 - Next action: 继续补齐剩余历史业务页面深度 CRUD/上传下载验收，并配置真实第三方人脸识别网关/密钥
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：生产 DNS/反代/证书未接入真实域名验证、真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
 - Do not repeat: 不要恢复库存预警；不要把 Build Green 当 Product Green
@@ -22,8 +22,8 @@
   8. .ai/session/HANDOFF.md
 - Must read spec:
   1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
-- Last verified command: focused Chrome `mini-program check-in does not silently route` passed 1/1 with prebinding toggle assertions; `bash scripts/verify.sh` passed with backend Prisma generate + backend 57 tests/build + frontend 36 tests/build; full `bash scripts/browser-smoke.sh` passed real Chrome 35/35 on the second full run after a first-run historical first-test 409 that passed in focused rerun; `code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50; Claude CLI worker `.ai/workers/20260623T155647Z-audit_worker_S44_mini_program_prebinding_toggle.result.md` returned PASS with no blockers
-- Claude worker evidence: latest `.ai/workers/20260623T155647Z-audit_worker_S44_mini_program_prebinding_toggle.result.md` returned PASS for default mini-program phone prebinding enable/disable lifecycle; no blockers. Yellow follow-ups: optional confirm dialog, stronger TypeScript typing, operation-history UI.
+- Last verified command: focused Chrome `mini-program check-in does not silently route` passed 1/1 with prebinding disable-confirm assertions; `bash scripts/verify.sh` passed with backend Prisma generate + backend 57 tests/build + frontend 36 tests/build; full `bash scripts/browser-smoke.sh` passed real Chrome 35/35; `code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50; Claude CLI worker `.ai/workers/20260623T160959Z-audit_worker_S45_mini_program_prebinding_toggle_safety_retry.result.md` returned PASS with no blockers after an initial budget-limit retry
+- Claude worker evidence: latest `.ai/workers/20260623T160959Z-audit_worker_S45_mini_program_prebinding_toggle_safety_retry.result.md` returned PASS for default mini-program phone prebinding disable confirmation and type-safety polish; no blockers. Initial S45 Claude attempt hit USD budget and is recorded as Yellow evidence.
 - Claude worker evidence: `.ai/workers/20260622T142134Z-audit_worker.result.md` first found a blocker-risk around photo read failure; fixed. `.ai/workers/20260622T142430Z-audit_worker.result.md` returned PASS / BLOCKERS none; path traversal Yellow was also fixed and reverified.
 - Claude worker evidence: latest `.ai/workers/20260622T150714Z-audit_worker.result.md` returned PASS after fixing the WorkTeam search field blocker found by `.ai/workers/20260622T150334Z-audit_worker.result.md`.
 - Claude worker evidence: latest `.ai/workers/20260622T153551Z-audit_worker.result.md` returned PASS for inventory alert removal and labor export fixes.

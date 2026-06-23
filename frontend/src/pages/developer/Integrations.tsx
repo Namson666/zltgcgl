@@ -61,6 +61,24 @@ interface PlatformState {
   testMessage: string;              /* 测试结果消息 */
 }
 
+interface MiniProgramPhoneBinding {
+  id: string;
+  phone: string;
+  tenantId: string;
+  personnelId: string;
+  isEnabled: boolean;
+  tenant?: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  personnel?: {
+    id: string;
+    name: string;
+    phone: string;
+  };
+}
+
 /* ========================================
  * 常量定义
  * ======================================== */
@@ -123,7 +141,7 @@ const Integrations: React.FC = () => {
 	    personnelId: '',
 	    remark: '',
 	  });
-	  const [phoneBindings, setPhoneBindings] = useState<any[]>([]);
+	  const [phoneBindings, setPhoneBindings] = useState<MiniProgramPhoneBinding[]>([]);
 	  const [savingPhoneBinding, setSavingPhoneBinding] = useState(false);
 
   /* ---------- 数据加载 ---------- */
@@ -388,9 +406,12 @@ const Integrations: React.FC = () => {
 	    }
 	  };
 
-	  const handleTogglePhoneBinding = async (binding: any) => {
+	  const handleTogglePhoneBinding = async (binding: MiniProgramPhoneBinding) => {
 	    try {
 	      const nextEnabled = !binding.isEnabled;
+	      if (!nextEnabled && !window.confirm(`停用后，手机号 ${binding.phone} 将不再自动分流到企业「${binding.tenant?.name || binding.tenantId}」，员工需要手动选择企业。确定停用吗？`)) {
+	        return;
+	      }
 	      await developerApi.updateDefaultMiniProgramBinding(binding.id, { isEnabled: nextEnabled });
 	      toast.success(`手机号预绑定已${nextEnabled ? '启用' : '停用'}`);
 	      await loadPhoneBindings();

@@ -905,6 +905,11 @@ test.describe('browser smoke: authenticated core navigation', () => {
     expect(Number(tenantBCheckIns?.data?.total || 0)).toBe(0);
 
     const bindingRow = page.getByTestId('mini-program-binding-row').filter({ hasText: sharedPhone });
+    page.once('dialog', async (dialog) => {
+      expect(dialog.message()).toContain(sharedPhone);
+      expect(dialog.message()).toContain('不再自动分流');
+      await dialog.accept();
+    });
     await bindingRow.getByRole('button', { name: '停用' }).click();
     await expect(bindingRow.getByRole('button', { name: '启用' })).toBeVisible();
 

@@ -1,0 +1,7 @@
+Diff artifact intentionally compacted after Claude budget-failure attempt.
+
+Reason: the raw `git diff --binary` captured Playwright evidence screenshots,
+producing a multi-megabyte patch not suitable for repository history.
+
+This worker attempt failed before audit due to `Exceeded USD budget (1)`.
+Use the later S45 Claude worker result as the audit source of truth.
