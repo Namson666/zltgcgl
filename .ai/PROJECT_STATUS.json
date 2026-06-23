@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "clean_after_labor_payment_lifecycle_commit",
+    "working_tree": "dirty_after_enterprise_announcements_dashboard_implementation",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "labor_payment_lifecycle_prepared_for_push",
-    "pushed_commit": "a616f85 feat: cover labor payment lifecycle",
-    "last_pushed_commit": "a616f85"
+    "push_status": "enterprise_announcements_dashboard_pending_commit_push",
+    "pushed_commit": "9665492 chore: mark labor payment lifecycle pushed",
+    "last_pushed_commit": "9665492"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "labor_payment_lifecycle_prepared_for_push",
+    "push_status": "enterprise_announcements_dashboard_pending_commit_push",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "a616f85 feat: cover labor payment lifecycle"
+    "pushed_commit": "9665492 chore: mark labor payment lifecycle pushed"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,11 +34,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "labor_payment_lifecycle_committed_prepared_for_push",
-  "updated_at": "2026-06-23T14:35:00Z",
-  "push_status": "labor_payment_lifecycle_prepared_for_push",
-  "last_pushed_commit": "a616f85",
-  "current_commit": "a616f85 feat: cover labor payment lifecycle",
+  "status": "enterprise_announcements_dashboard_verified_pending_commit_push",
+  "updated_at": "2026-06-23T14:50:00Z",
+  "push_status": "enterprise_announcements_dashboard_pending_commit_push",
+  "last_pushed_commit": "9665492",
+  "current_commit": "9665492 chore: mark labor payment lifecycle pushed",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -70,11 +70,12 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S39_labor_payment_lifecycle_verified",
-  "current_task": "劳资工资发放生命周期已通过真实 Chrome：银行卡字段持久化；新增为待确认；确认后才结算/触发风控；未确认可删；已确认不可删；库存预警仍不恢复。",
-  "last_verified_at": "2026-06-23T14:30:00Z",
-  "last_verified_command": "focused Chrome labor payment 1/1; focused Chrome labor risk 1/1; bash scripts/verify.sh backend 57 frontend 36 build; bash scripts/browser-smoke.sh 34/34; code-review-graph risk 0.50; Claude CLI attempted but no-output timeout Yellow",
+  "current_phase": "S40_enterprise_announcements_dashboard_verified",
+  "current_task": "企业端公告可见闭环已通过真实 Chrome：企业只读已发布公告；开发者普通 token 403；企业 token 仍不能管理开发者公告；Dashboard 展示/编辑同步/下架隐藏/重发可见/删除隐藏均验证；库存预警仍不恢复。",
+  "last_verified_at": "2026-06-23T14:50:00Z",
+  "last_verified_command": "focused Chrome announcement lifecycle 1/1; bash scripts/verify.sh backend 57 frontend 36 build; bash scripts/browser-smoke.sh 34/34; code-review-graph risk 0.50; Claude CLI audit PASS",
   "history": [
+    "2026-06-23: Enterprise announcements dashboard visibility verified locally in real Chrome. Added tenant-user-only /api/announcements and /api/v1/announcements returning only published announcements, wired Dashboard to show recent announcements, and expanded announcement lifecycle smoke to prove developer normal token 403 on enterprise endpoint, enterprise token 403 on developer management APIs, published announcements visible in API/Dashboard, edits sync, unpublish hides, republish shows, and delete hides. verify passed with backend 57 + frontend 36 + builds, focused Chrome 1/1 passed, full Chrome 34/34 passed, code-review-graph risk 0.50, Claude audit PASS. Pending commit/push.",
     "2026-06-23: Labor payment lifecycle verified locally in real Chrome. Added persisted PaymentRecord.bankAccount and browser-smoke migration wiring; createPayment now creates pending/unconfirmed records without salary settlement/anomaly side effects; confirmation performs settlement/anomaly detection; unconfirmed payments can be deleted; confirmed payments return 400 and UI shows protected state. Added backend service tests for create/confirm/delete and browser coverage for create/delete/confirm/export/report plus risk flow confirmation. verify passed with backend 8 files / 57 tests + frontend 36 tests/build, focused Chrome labor payment 1/1 passed, focused Chrome labor risk 1/1 passed, full Chrome 34/34 passed, code-review-graph risk 0.50. Claude CLI produced no output for about 120 seconds and was interrupted; recorded Yellow, not PASS. Pending commit/push.",
     "2026-06-23: Public registration + original tenant-code login closure verified locally in real Chrome. Fixed Register to persist zlt_token and zlt_user after self-registration, including tenantId/tenantCode/tenantName/enabledModules/isDeveloper=false. Browser test creates a tenant through /register, verifies automatic dashboard login, localStorage, /api/auth/me, reload persistence, default module visibility, logout, original tenant-code login with generated tenant code/phone/password, and developer API cleanup. verify passed, focused Chrome 1/1 passed, full real Chrome 34/34 passed, code-review-graph risk 0.50. Claude CLI produced no output for more than two minutes and was interrupted; recorded Yellow, not PASS. Pending commit/push.",
     "2026-06-23: Developer main dashboard real-summary verified locally in real Chrome. Added stable test ids to /dev summary cards, trend/ranking sections, and quick actions. Browser test reads real developer stats/usage/revenue/daily APIs, asserts dashboard UI values and trend labels match, and clicks quick actions to tenant management, AI config, OCR config, system config, and logs. verify passed, focused Chrome 1/1 passed, full real Chrome 33/33 passed, code-review-graph risk 0.50. Claude CLI first exceeded USD budget 1, second produced no output for more than two minutes and was interrupted; recorded Yellow, not PASS. Pending commit/push.",

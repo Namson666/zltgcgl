@@ -1076,6 +1076,10 @@ test.describe('browser smoke: authenticated core navigation', () => {
       headers: { Authorization: `Bearer ${enterpriseToken}` },
     });
     expect(forbiddenDeveloperResponse.status()).toBe(403);
+    const forbiddenEnterpriseAnnouncementResponse = await page.request.get('/api/announcements', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+    });
+    expect(forbiddenEnterpriseAnnouncementResponse.status()).toBe(403);
 
     const listAnnouncements = async () => {
       const response = await page.request.get('/api/developer/announcements', {
@@ -1084,29 +1088,55 @@ test.describe('browser smoke: authenticated core navigation', () => {
       expect(response.status()).toBe(200);
       return readJson(response);
     };
+    const listEnterpriseAnnouncements = async () => {
+      const response = await page.request.get('/api/announcements?limit=10', {
+        headers: { Authorization: `Bearer ${enterpriseToken}` },
+      });
+      expect(response.status()).toBe(200);
+      return readJson(response);
+    };
+
     let listBody = await listAnnouncements();
     let announcement = (listBody?.data || []).find((item: any) => item.title === initialTitle);
     expect(announcement?.id).toBeTruthy();
+    const announcementId = announcement.id;
     expect(announcement?.isPublished).toBe(true);
     expect(announcement?.publishedAt).toBeTruthy();
     expect(announcement?.type).toBe('maintenance');
     const firstPublishedAt = announcement.publishedAt;
+
+    let enterpriseListBody = await listEnterpriseAnnouncements();
+    let enterpriseAnnouncement = (enterpriseListBody?.data || []).find((item: any) => item.id === announcementId);
+    expect(enterpriseAnnouncement?.title).toBe(initialTitle);
+    expect(enterpriseAnnouncement?.content).toBe(initialContent);
+
+    await page.evaluate(() => localStorage.clear());
+    await loginEnterprise(page);
+    await page.goto('/dashboard');
+    await expect(page.getByTestId('dashboard-announcements')).toContainText(initialTitle);
+    await expect(page.getByTestId('dashboard-announcements')).toContainText(initialContent);
+
+    await page.evaluate(() => localStorage.clear());
+    await loginDeveloper(page);
+    await page.goto('/dev/announcements');
+    announcementRow = page.locator('tr', { hasText: initialTitle });
+    await expect(announcementRow).toBeVisible();
 
     const forbiddenCreateResponse = await page.request.post('/api/developer/announcements', {
       headers: { Authorization: `Bearer ${enterpriseToken}` },
       data: { title: `非法公告${stamp}`, content: '企业用户不能创建开发者公告', type: 'info' },
     });
     expect(forbiddenCreateResponse.status()).toBe(403);
-    const forbiddenUpdateResponse = await page.request.put(`/api/developer/announcements/${announcement.id}`, {
+    const forbiddenUpdateResponse = await page.request.put(`/api/developer/announcements/${announcementId}`, {
       headers: { Authorization: `Bearer ${enterpriseToken}` },
       data: { title: `非法编辑${stamp}` },
     });
     expect(forbiddenUpdateResponse.status()).toBe(403);
-    const forbiddenPublishResponse = await page.request.post(`/api/developer/announcements/${announcement.id}/publish`, {
+    const forbiddenPublishResponse = await page.request.post(`/api/developer/announcements/${announcementId}/publish`, {
       headers: { Authorization: `Bearer ${enterpriseToken}` },
     });
     expect(forbiddenPublishResponse.status()).toBe(403);
-    const forbiddenDeleteResponse = await page.request.delete(`/api/developer/announcements/${announcement.id}`, {
+    const forbiddenDeleteResponse = await page.request.delete(`/api/developer/announcements/${announcementId}`, {
       headers: { Authorization: `Bearer ${enterpriseToken}` },
     });
     expect(forbiddenDeleteResponse.status()).toBe(403);
@@ -1123,30 +1153,52 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await expect(announcementRow).toContainText(editedContent);
 
     listBody = await listAnnouncements();
-    announcement = (listBody?.data || []).find((item: any) => item.id === announcement.id);
+    announcement = (listBody?.data || []).find((item: any) => item.id === announcementId);
     expect(announcement?.title).toBe(editedTitle);
     expect(announcement?.content).toBe(editedContent);
     expect(announcement?.type).toBe('warning');
     expect(announcement?.isPublished).toBe(true);
+    enterpriseListBody = await listEnterpriseAnnouncements();
+    enterpriseAnnouncement = (enterpriseListBody?.data || []).find((item: any) => item.id === announcementId);
+    expect(enterpriseAnnouncement?.title).toBe(editedTitle);
+    expect(enterpriseAnnouncement?.content).toBe(editedContent);
 
     await announcementRow.getByTitle('下架').click();
     await expect(page.getByText('公告已下架')).toBeVisible();
     announcementRow = page.locator('tr', { hasText: editedTitle });
     await expect(announcementRow).toContainText('草稿');
     listBody = await listAnnouncements();
-    announcement = (listBody?.data || []).find((item: any) => item.id === announcement.id);
+    announcement = (listBody?.data || []).find((item: any) => item.id === announcementId);
     expect(announcement?.isPublished).toBe(false);
     expect(announcement?.publishedAt).toBeNull();
+    enterpriseListBody = await listEnterpriseAnnouncements();
+    enterpriseAnnouncement = (enterpriseListBody?.data || []).find((item: any) => item.id === announcementId);
+    expect(enterpriseAnnouncement).toBeUndefined();
 
     await announcementRow.getByTitle('发布').click();
     await expect(page.getByText('公告已发布')).toBeVisible();
     announcementRow = page.locator('tr', { hasText: editedTitle });
     await expect(announcementRow).toContainText('已发布');
     listBody = await listAnnouncements();
-    announcement = (listBody?.data || []).find((item: any) => item.id === announcement.id);
+    announcement = (listBody?.data || []).find((item: any) => item.id === announcementId);
     expect(announcement?.isPublished).toBe(true);
     expect(announcement?.publishedAt).toBeTruthy();
     expect(announcement?.publishedAt).not.toBe(firstPublishedAt);
+    enterpriseListBody = await listEnterpriseAnnouncements();
+    enterpriseAnnouncement = (enterpriseListBody?.data || []).find((item: any) => item.id === announcementId);
+    expect(enterpriseAnnouncement?.title).toBe(editedTitle);
+
+    await page.evaluate(() => localStorage.clear());
+    await loginEnterprise(page);
+    await page.goto('/dashboard');
+    await expect(page.getByTestId('dashboard-announcements')).toContainText(editedTitle);
+    await expect(page.getByTestId('dashboard-announcements')).toContainText(editedContent);
+
+    await page.evaluate(() => localStorage.clear());
+    await loginDeveloper(page);
+    await page.goto('/dev/announcements');
+    announcementRow = page.locator('tr', { hasText: editedTitle });
+    await expect(announcementRow).toBeVisible();
 
     await announcementRow.getByTitle('删除').click();
     await expect(page.getByText('确定要删除此公告吗？此操作不可撤销。')).toBeVisible();
@@ -1154,8 +1206,11 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await expect(page.getByText('公告已删除')).toBeVisible();
     await expect(page.locator('tr', { hasText: editedTitle })).toHaveCount(0);
     listBody = await listAnnouncements();
-    announcement = (listBody?.data || []).find((item: any) => item.id === announcement.id);
+    announcement = (listBody?.data || []).find((item: any) => item.id === announcementId);
     expect(announcement).toBeUndefined();
+    enterpriseListBody = await listEnterpriseAnnouncements();
+    enterpriseAnnouncement = (enterpriseListBody?.data || []).find((item: any) => item.id === announcementId);
+    expect(enterpriseAnnouncement).toBeUndefined();
 
     await page.screenshot({
       path: '../docs/smoke-evidence/开发者系统公告生命周期CRUD.png',

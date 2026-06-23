@@ -1,9 +1,9 @@
 {
-  "stage": "S39_labor_payment_lifecycle_verified",
+  "stage": "S40_enterprise_announcements_dashboard_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Labor payment lifecycle is verified in real Chrome: PaymentRecord.bankAccount is now persisted; creating a labor payment creates a pending/unconfirmed record without salary settlement or anomaly creation; confirmation performs settlement/anomaly detection; unconfirmed payments can be deleted; confirmed payments are protected from deletion. Focused Chrome labor payment and risk flows passed, verify passed with backend 8 files / 57 tests and frontend 36 tests/build, full Chrome smoke passed 34/34, code-review-graph risk 0.50. Inventory alert / 库存预警 remains out of scope and was not restored. Claude CLI audit attempt produced no output and is recorded as Yellow external-tool evidence; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T14:30:00Z"
+  "notes": "Enterprise announcement dashboard closure is verified in real Chrome: /api/announcements is tenant-user-only and returns only published announcements; developer normal tokens receive 403; enterprise users remain forbidden from developer announcement management APIs; Dashboard renders published announcements; edit/unpublish/republish/delete visibility is covered by API/UI assertions. Focused Chrome announcement lifecycle 1/1 passed, verify passed with backend 57 tests and frontend 36 tests/build, full Chrome smoke passed 34/34, code-review-graph risk 0.50, Claude CLI audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered.",
+  "updated_at": "2026-06-23T14:50:00Z"
 }

@@ -15,6 +15,7 @@ import { requireTenantModule } from './common/middleware/module';
 import { authenticate, requireUser } from './common/middleware/auth';
 import authRoutes from './modules/auth/routes';
 import developerRoutes from './modules/developer/routes';
+import announcementRoutes from './modules/announcement/routes';
 import tenantRoutes from './modules/tenant/routes';
 import subscriptionRoutes from './modules/subscription/routes';
 import contractRoutes from './modules/contract/routes';
@@ -84,6 +85,10 @@ app.use('/api/v1/mobile', mobileRoutes);
 // 开发者后台路由
 app.use('/api/developer', developerRoutes);
 app.use('/api/v1/developer', developerRoutes);
+
+// 企业端系统公告只读路由：已发布公告属于基础功能，不受业务模块开通限制
+app.use('/api/announcements', authenticate, requireUser, announcementRoutes);
+app.use('/api/v1/announcements', authenticate, requireUser, announcementRoutes);
 
 // 租户管理路由
 app.use('/api/tenants', tenantRoutes);

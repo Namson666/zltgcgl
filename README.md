@@ -4,9 +4,9 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S39 labor payment lifecycle verified
-- Current task: 劳资工资发放生命周期已通过真实 Chrome：银行卡字段持久化；新增为待确认；确认后才结算/触发风控；未确认可删；已确认不可删；库存预警仍不恢复、不纳入验收矩阵
-- Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、劳资工资发放生命周期、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总、开发者首页数据看板真实汇总、公开注册企业登录闭环均已通过真实 Chrome
+- Current phase: S40 enterprise announcements dashboard verified
+- Current task: 企业端公告可见闭环已通过真实 Chrome：企业只读已发布公告；开发者普通 token 403；企业 token 不能管理开发者公告；企业首页展示/编辑同步/下架隐藏/重发可见/删除隐藏均验证；库存预警仍不恢复、不纳入验收矩阵
+- Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、劳资工资发放生命周期、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/企业端公告首页可见/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总、开发者首页数据看板真实汇总、公开注册企业登录闭环均已通过真实 Chrome
 - In progress: 准备进入下一轮剩余历史业务页面深度 CRUD/上传下载验收；库存预警已移出产品范围，不作为后续功能板块验收项
 - Next action: 继续补齐剩余历史业务页面深度 CRUD/上传下载验收，并配置真实第三方人脸识别网关/密钥
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：生产 DNS/反代/证书未接入真实域名验证、真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
@@ -22,7 +22,7 @@
   8. .ai/session/HANDOFF.md
 - Must read spec:
   1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
-- Last verified command: focused Chrome `main dashboard real summary` passed 1/1; `bash scripts/verify.sh` passed with backend Prisma generate + backend 53 tests/build + frontend 36 tests/build; full `bash scripts/browser-smoke.sh` passed real Chrome 32/32; `code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50 with static gaps covered by real Chrome e2e; Claude CLI worker was attempted for S35/S36 but timed out after 90s/60s/60s, recorded as Yellow external-tool issue
+- Last verified command: focused Chrome `developer can manage announcement lifecycle` passed 1/1; `bash scripts/verify.sh` passed with backend Prisma generate + backend 57 tests/build + frontend 36 tests/build; full `bash scripts/browser-smoke.sh` passed real Chrome 34/34; `code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50; Claude CLI worker `.ai/workers/20260623T144448Z-audit_worker.result.md` returned PASS
 - Claude worker evidence: `.ai/workers/20260622T142134Z-audit_worker.result.md` first found a blocker-risk around photo read failure; fixed. `.ai/workers/20260622T142430Z-audit_worker.result.md` returned PASS / BLOCKERS none; path traversal Yellow was also fixed and reverified.
 - Claude worker evidence: latest `.ai/workers/20260622T150714Z-audit_worker.result.md` returned PASS after fixing the WorkTeam search field blocker found by `.ai/workers/20260622T150334Z-audit_worker.result.md`.
 - Claude worker evidence: latest `.ai/workers/20260622T153551Z-audit_worker.result.md` returned PASS for inventory alert removal and labor export fixes.

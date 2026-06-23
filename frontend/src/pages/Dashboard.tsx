@@ -29,10 +29,11 @@ import {
   ArrowRight,
   CalendarCheck,
   ClipboardList,
+  Megaphone,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../lib/AuthContext';
-import { contractApi, departmentApi, laborApi, wmsApi } from '../api';
+import { announcementApi, contractApi, departmentApi, laborApi, wmsApi } from '../api';
 import { formatMoney } from '../components/ui/Common';
 
 /* ========================================
@@ -60,6 +61,14 @@ interface LaborStats {
   monthlyAttendance: number;       /* 本月出勤天数 */
   monthlySalary: number;           /* 本月工资总额 */
   anomalyCount: number;            /* 异常数 */
+}
+
+interface DashboardAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  publishedAt?: string | null;
 }
 
 const unwrapApiData = (response: any) => response?.data?.data ?? response?.data ?? response;
@@ -90,6 +99,7 @@ const Dashboard: React.FC = () => {
   const [topStats, setTopStats] = useState<TopStats | null>(null);       /* 顶部统计数据 */
   const [wmsStats, setWmsStats] = useState<WmsStats | null>(null);       /* 物资管理统计 */
   const [laborStats, setLaborStats] = useState<LaborStats | null>(null);  /* 劳资管理统计 */
+  const [announcements, setAnnouncements] = useState<DashboardAnnouncement[]>([]);
   const [loading, setLoading] = useState(true);                           /* 加载状态 */
 
   /* ---------- 数据加载 ---------- */
@@ -206,6 +216,20 @@ const Dashboard: React.FC = () => {
     fetchAllStats();
   }, []);
 
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const response = await announcementApi.getPublished({ limit: 3 });
+        const data = unwrapApiData(response);
+        setAnnouncements(Array.isArray(data) ? data : []);
+      } catch {
+        setAnnouncements([]);
+      }
+    };
+
+    fetchAnnouncements();
+  }, []);
+
   /* ---------- 渲染辅助函数 ---------- */
 
   /**
@@ -222,6 +246,15 @@ const Dashboard: React.FC = () => {
       return <span className="text-lg text-gray-400">暂无数据</span>;
     }
     return isMoney ? formatMoney(value) : String(value);
+  };
+
+  const getAnnouncementTypeLabel = (type: string): string => {
+    const labels: Record<string, string> = {
+      info: '通知',
+      warning: '警告',
+      maintenance: '维护',
+    };
+    return labels[type] || '通知';
   };
 
   return (
@@ -241,6 +274,51 @@ const Dashboard: React.FC = () => {
           欢迎回来，{user?.realName || user?.username || '用户'}
         </div>
       </div>
+
+      {announcements.length > 0 && (
+        <div className="card mb-8" data-testid="dashboard-announcements">
+          <div className="card-header">
+            <h2 className="card-title flex items-center gap-2">
+              <Megaphone size={20} style={{ color: 'var(--primary)' }} />
+              系统公告
+            </h2>
+          </div>
+          <div className="card-body space-y-3">
+            {announcements.map((announcement) => (
+              <div
+                key={announcement.id}
+                className="rounded-xl border p-4"
+                data-testid={`dashboard-announcement-${announcement.id}`}
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="rounded-full px-2 py-0.5 text-xs"
+                        style={{ backgroundColor: 'var(--primary-bg)', color: 'var(--primary)' }}
+                      >
+                        {getAnnouncementTypeLabel(announcement.type)}
+                      </span>
+                      <h3 className="font-semibold" style={{ color: 'var(--foreground)' }}>
+                        {announcement.title}
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-sm whitespace-pre-wrap" style={{ color: 'var(--muted-foreground)' }}>
+                      {announcement.content}
+                    </p>
+                  </div>
+                  {announcement.publishedAt && (
+                    <span className="text-xs shrink-0" style={{ color: 'var(--muted-foreground)' }}>
+                      {new Date(announcement.publishedAt).toLocaleDateString('zh-CN')}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ==========================================
        * 顶部统计卡片（4个）

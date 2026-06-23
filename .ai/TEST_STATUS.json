@@ -1,13 +1,25 @@
 {
-  "status": "labor_payment_lifecycle_verified",
+  "status": "enterprise_announcements_dashboard_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_enterprise_announcements_dashboard_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "enterprise_announcements_dashboard_flow",
+      "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"developer can manage announcement lifecycle\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623224426-enterprise-announcements-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
+      "status": "verified_claude_pass",
+      "result": "企业端公告可见闭环已通过真实 Chrome：新增企业只读 /api/announcements 与 /api/v1/announcements，只返回 isPublished=true 的公告且不受物资/劳资/财务模块开关影响；开发者普通 token 访问企业公告接口返回 403，企业 token 访问开发者公告管理 GET/POST/PUT/PUBLISH/DELETE 返回 403；企业首页 Dashboard 显示最近已发布公告；开发者编辑后企业接口同步可见；下架后企业接口不可见；重新发布后企业首页可见；删除后企业接口不可见。Focused Chrome announcement lifecycle 1/1 passed，verify backend 57 + frontend 36 + builds passed，full Chrome 34/34 passed，code-review-graph risk 0.50，Claude audit PASS。库存预警未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/开发者系统公告生命周期CRUD.png",
+        ".ai/workers/20260623T144448Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "labor_payment_lifecycle_flow",
       "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"labor salary payment\"; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"personnel attendance salary and risk\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T142633Z-audit_worker.prompt.md --model sonnet --effort low --max-budget-usd 3.00",

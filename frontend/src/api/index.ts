@@ -483,6 +483,14 @@ export const developerApi = {
 };
 
 /* ========================================
+ * 3. 企业端基础 API (announcementApi)
+ * ======================================== */
+export const announcementApi = {
+  getPublished: (params?: { limit?: number }) =>
+    http.get('/announcements', params),
+};
+
+/* ========================================
  * 3. 租户管理模块 API (tenantApi)
  * 项目部内部管理：用户、角色、部门等
  * ======================================== */
