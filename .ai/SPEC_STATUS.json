@@ -1,9 +1,9 @@
 {
-  "stage": "S34_wms_delivery_ocr_export_verified",
+  "stage": "S34_wms_delivery_ocr_export_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "WMS delivery-order export and OCR upload guard now have real Chrome API/UI evidence: browser creates a delivery order through the real API, verifies delivery list read-back, clicks the Inbound page 导出送货单 button to download 送货单.xlsx, and uploads a real PNG through the OCR file chooser to verify failure handling. Backend delivery export reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date; inbound order/material filters are SQLite-safe. Full Chrome smoke is 30/30. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Claude CLI audit was attempted twice but hung/no output and was interrupted; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T11:20:00Z"
+  "updated_at": "2026-06-23T11:30:00Z"
 }

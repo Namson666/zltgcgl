@@ -7,7 +7,7 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_wms_delivery_ocr_export_verified",
+    "working_tree": "dirty_after_wms_delivery_ocr_export_push_marker",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
@@ -20,9 +20,9 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "pending_wms_delivery_ocr_export",
+    "push_status": "wms_delivery_ocr_export_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "0cb6997 feat: cover wms inventory ledger exports"
+    "pushed_commit": "bbb943a feat: cover wms delivery export ocr guard"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -31,11 +31,11 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "yellow_wms_delivery_ocr_export_verified_pending_push",
-  "updated_at": "2026-06-23T11:20:00Z",
-  "push_status": "pending_wms_delivery_ocr_export",
-  "last_pushed_commit": "0cb6997",
-  "current_commit": "wms_inventory_ledger_export_pushed",
+  "status": "yellow_wms_delivery_ocr_export_pushed",
+  "updated_at": "2026-06-23T11:30:00Z",
+  "push_status": "wms_delivery_ocr_export_pushed",
+  "last_pushed_commit": "bbb943a",
+  "current_commit": "wms_delivery_ocr_export_pushed",
   "notes": [
     "2026-06-22: Phase 4 mobile check-in hardening committed and pushed at 8bb864e; remaining Yellow items are production face provider, npm audit high vulnerabilities, and broader exhaustive full-product regression.",
     "2026-06-22: Face provider HTTP gateway verified locally with tests, Chrome smoke, Claude audit, and code-review-graph; pending commit/push.",
@@ -64,7 +64,8 @@
     "2026-06-23: Developer system config + API Key lifecycle verified locally in real Chrome. Fixed SystemConfig API response unwrap and API Key status/isActive contract. System config create/edit/delete and API Key create/disable/enable/delete have UI+API read-back, enterprise 403 coverage, rawKey state cleanup, and screenshots. verify passed, focused Chrome 1/1 passed, full real Chrome 17/17 passed, Claude audit PASS, code-review-graph risk 0.50; pushed at 3dd1dd6.",
     "2026-06-23: Developer platform plan lifecycle verified locally in real Chrome. Plans now cover UI create/edit/delete, API read-back for tier/type/price/maxUsers/extraUser/description, invalid tier 400, subscribed combination delete 409, cleanup delete after changing to an unreferenced combination, and enterprise GET/POST/PUT/DELETE developer plan API 403. User reconfirmed WMS inventory alert / 库存预警 is not needed; current product code, schema, route/API/menu, and browser matrix remain free of inventory-alert residue. verify passed, focused Chrome 1/1 passed, full real Chrome 18/18 passed, Claude audit PASS, code-review-graph risk 0.60; pushed at 68e2874.",
     "2026-06-23: Developer AI/OCR configuration lifecycle verified locally in real Chrome. AI covers create, API masked read-back, enable, credential edit reset to disabled, sensitive input clearing, delete, and enterprise GET/PUT/PATCH/DELETE 403. OCR covers create, API masked read-back, tencent test-enable path, credential edit reset to disabled, no-refresh re-enable after useConfigList state refresh fix, sensitive input clearing, delete, and enterprise GET/PUT/PATCH/DELETE 403. Claude first WARN found missing OCR sensitiveFields; fixed and final Claude PASS. verify passed, focused Chrome 1/1 passed, full real Chrome 19/19 passed, code-review-graph risk 0.50; pushed at 1fb9b96.",
-    "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push."
+    "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
+    "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
   "current_phase": "S34_wms_delivery_ocr_export_verified",
   "current_task": "WMS 送货单导出/OCR 上传保护已通过真实 Chrome：送货单导出筛选、页面下载、OCR 上传失败保护和 SQLite-safe 入库搜索均已验证；库存预警仍不恢复。",

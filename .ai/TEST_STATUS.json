@@ -1,5 +1,5 @@
 {
-  "status": "wms_delivery_ocr_export_browser_verified",
+  "status": "wms_delivery_ocr_export_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -11,8 +11,8 @@
     {
       "type": "wms_delivery_ocr_export_flow",
       "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"export delivery orders\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T111326Z-wms-delivery-ocr-export-audit*.prompt.md --model sonnet --effort low --max-budget-usd 3/8",
-      "status": "verified_claude_timeout_yellow",
-      "result": "WMS 送货单导出/OCR 上传保护切片已通过真实 Chrome：后端送货单导出复用 listDeliveryOrders 筛选语义（tenant/supplier/contract/subProject/date），入库 order/material 搜索改为 SQLite-safe contains，入库页新增导出送货单按钮；真实 Chrome 通过 API 创建送货单，页面点击下载 送货单.xlsx，并用真实文件选择器上传 PNG 验证 OCR 失败保护不落脏数据。Focused Chrome 1/1 passed，verify backend 7/53 + frontend 2/36 + build，full Chrome 30/30 passed，code-review-graph risk 0.50 with static gaps covered by backend service tests + focused/full Chrome。Claude CLI attempted twice but hung/no output and was interrupted; recorded as Yellow external-tool issue, not product blocker. 库存预警未恢复。",
+      "status": "verified_pushed_claude_timeout_yellow",
+      "result": "WMS 送货单导出/OCR 上传保护切片已通过真实 Chrome：后端送货单导出复用 listDeliveryOrders 筛选语义（tenant/supplier/contract/subProject/date），入库 order/material 搜索改为 SQLite-safe contains，入库页新增导出送货单按钮；真实 Chrome 通过 API 创建送货单，页面点击下载 送货单.xlsx，并用真实文件选择器上传 PNG 验证 OCR 失败保护不落脏数据。Focused Chrome 1/1 passed，verify backend 7/53 + frontend 2/36 + build，full Chrome 30/30 passed，code-review-graph risk 0.50 with static gaps covered by backend service tests + focused/full Chrome。Claude CLI attempted twice but hung/no output and was interrupted; recorded as Yellow external-tool issue, not product blocker. 库存预警未恢复。 Implementation pushed at bbb943a to origin public-main and main.",
       "evidence_files": [
         "docs/smoke-evidence/playwright-results.json",
         "docs/smoke-evidence/playwright-report/index.html",
