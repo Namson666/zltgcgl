@@ -1,9 +1,9 @@
 {
-  "stage": "S17_portal_host_pushed",
+  "stage": "S18_developer_announcements_lifecycle_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Independent login now has real Host semantics in Chrome smoke: a tenant is bound to portal-<stamp>.localhost, the browser opens that exact Host, portal branding loads without tenant code, developer-login entry is hidden, and tenant login succeeds. Full Chrome smoke remains 15/15. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T04:42:30Z"
+  "notes": "Developer backend System Announcements now have real Chrome lifecycle coverage: create publishes immediately, edit persists title/content/type, unpublish clears publishedAt, republish refreshes publishedAt, delete removes the record, and enterprise users receive 403 for read/write developer announcement APIs. Full Chrome smoke is now 16/16. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T04:58:00Z"
 }

@@ -604,6 +604,129 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('developer can manage announcement lifecycle', async ({ page }) => {
+    test.setTimeout(90_000);
+    const stamp = Date.now();
+    const initialTitle = `公告生命周期${stamp}`;
+    const editedTitle = `公告生命周期已编辑${stamp}`;
+    const initialContent = `公告内容${stamp}`;
+    const editedContent = `公告内容已编辑${stamp}`;
+
+    await loginDeveloper(page);
+    await page.goto('/dev/announcements');
+    await expect(page.getByRole('heading', { name: '系统公告' })).toBeVisible();
+
+    await page.getByRole('button', { name: '发布公告' }).click();
+    await page.getByTestId('announcement-title').fill(initialTitle);
+    await page.getByTestId('announcement-type').selectOption('maintenance');
+    await page.getByTestId('announcement-content').fill(initialContent);
+    await page.getByRole('button', { name: '确认发布' }).click();
+    await expect(page.getByText('公告已发布')).toBeVisible();
+    let announcementRow = page.locator('tr', { hasText: initialTitle });
+    await expect(announcementRow).toBeVisible();
+    await expect(announcementRow).toContainText('维护');
+    await expect(announcementRow).toContainText('已发布');
+
+    const developerToken = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(developerToken).toBeTruthy();
+    const enterpriseLogin = await page.request.post('/api/auth/user/login', {
+      data: enterpriseAccount,
+    });
+    expect(enterpriseLogin.status()).toBe(200);
+    const enterpriseLoginBody = await readJson(enterpriseLogin);
+    const enterpriseToken = enterpriseLoginBody?.data?.token;
+    expect(enterpriseToken).toBeTruthy();
+    const forbiddenDeveloperResponse = await page.request.get('/api/developer/announcements', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenDeveloperResponse.status()).toBe(403);
+
+    const listAnnouncements = async () => {
+      const response = await page.request.get('/api/developer/announcements', {
+        headers: { Authorization: `Bearer ${developerToken}` },
+      });
+      expect(response.status()).toBe(200);
+      return readJson(response);
+    };
+    let listBody = await listAnnouncements();
+    let announcement = (listBody?.data || []).find((item: any) => item.title === initialTitle);
+    expect(announcement?.id).toBeTruthy();
+    expect(announcement?.isPublished).toBe(true);
+    expect(announcement?.publishedAt).toBeTruthy();
+    expect(announcement?.type).toBe('maintenance');
+    const firstPublishedAt = announcement.publishedAt;
+
+    const forbiddenCreateResponse = await page.request.post('/api/developer/announcements', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { title: `非法公告${stamp}`, content: '企业用户不能创建开发者公告', type: 'info' },
+    });
+    expect(forbiddenCreateResponse.status()).toBe(403);
+    const forbiddenUpdateResponse = await page.request.put(`/api/developer/announcements/${announcement.id}`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { title: `非法编辑${stamp}` },
+    });
+    expect(forbiddenUpdateResponse.status()).toBe(403);
+    const forbiddenPublishResponse = await page.request.post(`/api/developer/announcements/${announcement.id}/publish`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenPublishResponse.status()).toBe(403);
+    const forbiddenDeleteResponse = await page.request.delete(`/api/developer/announcements/${announcement.id}`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenDeleteResponse.status()).toBe(403);
+
+    await announcementRow.getByTitle('编辑').click();
+    await page.getByTestId('announcement-title').fill(editedTitle);
+    await page.getByTestId('announcement-type').selectOption('warning');
+    await page.getByTestId('announcement-content').fill(editedContent);
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expect(page.getByText('公告已更新')).toBeVisible();
+    announcementRow = page.locator('tr', { hasText: editedTitle });
+    await expect(announcementRow).toBeVisible();
+    await expect(announcementRow).toContainText('警告');
+    await expect(announcementRow).toContainText(editedContent);
+
+    listBody = await listAnnouncements();
+    announcement = (listBody?.data || []).find((item: any) => item.id === announcement.id);
+    expect(announcement?.title).toBe(editedTitle);
+    expect(announcement?.content).toBe(editedContent);
+    expect(announcement?.type).toBe('warning');
+    expect(announcement?.isPublished).toBe(true);
+
+    await announcementRow.getByTitle('下架').click();
+    await expect(page.getByText('公告已下架')).toBeVisible();
+    announcementRow = page.locator('tr', { hasText: editedTitle });
+    await expect(announcementRow).toContainText('草稿');
+    listBody = await listAnnouncements();
+    announcement = (listBody?.data || []).find((item: any) => item.id === announcement.id);
+    expect(announcement?.isPublished).toBe(false);
+    expect(announcement?.publishedAt).toBeNull();
+
+    await announcementRow.getByTitle('发布').click();
+    await expect(page.getByText('公告已发布')).toBeVisible();
+    announcementRow = page.locator('tr', { hasText: editedTitle });
+    await expect(announcementRow).toContainText('已发布');
+    listBody = await listAnnouncements();
+    announcement = (listBody?.data || []).find((item: any) => item.id === announcement.id);
+    expect(announcement?.isPublished).toBe(true);
+    expect(announcement?.publishedAt).toBeTruthy();
+    expect(announcement?.publishedAt).not.toBe(firstPublishedAt);
+
+    await announcementRow.getByTitle('删除').click();
+    await expect(page.getByText('确定要删除此公告吗？此操作不可撤销。')).toBeVisible();
+    await page.getByRole('button', { name: '删除' }).last().click();
+    await expect(page.getByText('公告已删除')).toBeVisible();
+    await expect(page.locator('tr', { hasText: editedTitle })).toHaveCount(0);
+    listBody = await listAnnouncements();
+    announcement = (listBody?.data || []).find((item: any) => item.id === announcement.id);
+    expect(announcement).toBeUndefined();
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/开发者系统公告生命周期CRUD.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can create edit and delete supplier and work team', async ({ page }) => {
     await loginEnterprise(page);
     const stamp = Date.now();

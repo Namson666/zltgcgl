@@ -670,7 +670,15 @@ export async function listAnnouncements(params: AnnouncementListParams) {
 }
 
 export const createAnnouncement = (data: { title: string; content: string; type?: string }) =>
-  prisma.announcement.create({ data: { title: data.title, content: data.content, type: data.type || 'info' } });
+  prisma.announcement.create({
+    data: {
+      title: data.title,
+      content: data.content,
+      type: data.type || 'info',
+      isPublished: true,
+      publishedAt: new Date(),
+    },
+  });
 
 export const updateAnnouncement = (id: string, data: { title?: string; content?: string; type?: string }) => {
   const updateData: any = {};

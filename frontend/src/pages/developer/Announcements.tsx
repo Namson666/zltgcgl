@@ -44,7 +44,8 @@ interface Announcement {
   title: string;                    /* 公告标题 */
   content: string;                  /* 公告内容 */
   type: AnnouncementType;           /* 公告类型 */
-  status: string;                   /* 状态：published / draft */
+  status?: string;                  /* 兼容旧状态字段：published / draft */
+  isPublished?: boolean;            /* 后端真实字段 */
   publishedAt?: string;             /* 发布时间 */
   createdAt: string;                /* 创建时间 */
 }
@@ -73,6 +74,9 @@ const TYPE_BADGE: Record<AnnouncementType, { label: string; type: 'info' | 'warn
   warning: { label: '警告', type: 'warning' },
   maintenance: { label: '维护', type: 'danger' },
 };
+
+const getAnnouncementStatus = (announcement: Announcement) =>
+  announcement.status || (announcement.isPublished ? 'published' : 'draft');
 
 /* ========================================
  * Announcements 系统公告管理组件
@@ -204,7 +208,7 @@ const Announcements: React.FC = () => {
   const handleToggleStatus = async (announcement: Announcement) => {
     try {
       await developerApi.toggleAnnouncement(announcement.id);
-      const actionText = announcement.status === 'published' ? '已下架' : '已发布';
+      const actionText = getAnnouncementStatus(announcement) === 'published' ? '已下架' : '已发布';
       toast.success(`公告${actionText}`);
       fetchAnnouncements();
     } catch (error: any) {
@@ -273,6 +277,7 @@ const Announcements: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                  data-testid="announcement-title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="input w-full text-sm"
@@ -283,6 +288,7 @@ const Announcements: React.FC = () => {
               <div>
                 <label className="block text-xs text-gray-500 mb-1">公告类型</label>
                 <select
+                  data-testid="announcement-type"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as AnnouncementType })}
                   className="input w-full text-sm"
@@ -300,6 +306,7 @@ const Announcements: React.FC = () => {
                   公告内容 <span className="text-red-500">*</span>
                 </label>
                 <textarea
+                  data-testid="announcement-content"
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   className="input w-full text-sm"
@@ -379,6 +386,7 @@ const Announcements: React.FC = () => {
                 /* 公告数据行 */
                 announcements.map((announcement) => {
                   const badgeInfo = TYPE_BADGE[announcement.type] || { label: announcement.type, type: 'default' as const };
+                  const status = getAnnouncementStatus(announcement);
                   return (
                     <tr key={announcement.id} className="hover:bg-gray-50 transition-colors">
                       {/* 标题 */}
@@ -407,8 +415,8 @@ const Announcements: React.FC = () => {
                       {/* 状态 */}
                       <td className="px-5 py-3">
                         <StatusBadge
-                          status={announcement.status === 'published' ? '已发布' : '草稿'}
-                          type={announcement.status === 'published' ? 'success' : 'default'}
+                          status={status === 'published' ? '已发布' : '草稿'}
+                          type={status === 'published' ? 'success' : 'default'}
                         />
                       </td>
                       {/* 发布时间 */}
@@ -434,11 +442,11 @@ const Announcements: React.FC = () => {
                           <button
                             onClick={() => handleToggleStatus(announcement)}
                             className={`p-1.5 rounded-lg transition-colors ${
-                              announcement.status === 'published'
+                              status === 'published'
                                 ? 'text-gray-400 hover:text-amber-600 hover:bg-amber-50'
                                 : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
                             }`}
-                            title={announcement.status === 'published' ? '下架' : '发布'}
+                            title={status === 'published' ? '下架' : '发布'}
                           >
                             <Send size={15} />
                           </button>

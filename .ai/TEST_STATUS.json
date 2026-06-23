@@ -1,13 +1,37 @@
 {
-  "status": "portal_host_browser_verified_pushed",
+  "status": "developer_announcements_lifecycle_browser_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_developer_ui_module_portal_developer_announcements_lifecycle",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "developer_announcements_lifecycle_flow",
+      "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_dev_announcements.db npx playwright test --config playwright.config.ts -g \"announcement lifecycle\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; claude -p <.ai/workers/20260623T045726Z-developer_announcements_final2_audit.prompt.md>; code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified",
+      "result": "开发者系统公告生命周期已通过真实 Chrome：创建公告后立即发布并写入 publishedAt；UI/API 验证维护类型、已发布状态；企业普通用户 GET/POST/PUT/PUBLISH/DELETE 开发者公告接口均返回 403；开发者 UI 编辑标题/内容/类型，API 回读一致；下架后 isPublished=false 且 publishedAt=null；重新发布后 publishedAt 更新；删除后 UI 和 API 均确认记录消失。Focused Chrome 1/1 passed，完整真实 Chrome smoke 16/16 passed。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/开发者系统公告生命周期CRUD.png",
+        ".ai/workers/20260623T045726Z-developer_announcements_final2_audit.result.md"
+      ]
+    },
+    {
+      "type": "claude_cli_audit",
+      "command": "claude -p <.ai/workers/20260623T045726Z-developer_announcements_final2_audit.prompt.md>",
+      "status": "verified_with_yellow_notes",
+      "result": "PASS with no blockers. Claude noted the optional status compatibility branch and a brittle delete selector as Yellow follow-ups. It also mentioned toggle endpoint coverage, but this codebase uses /publish for the publish/unpublish lifecycle and that endpoint is covered with enterprise 403 plus developer UI/API assertions."
+    },
+    {
+      "type": "code_review_graph",
+      "command": "code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_with_yellow_notes",
+      "result": "Graph built 136 files / 1545 nodes / 20475 edges. detect-changes risk score 0.50. Function-level gaps for createAnnouncement/getAnnouncementStatus/listAnnouncements are covered by focused and full real Chrome lifecycle/API assertions."
+    },
     {
       "type": "independent_portal_host_flow",
       "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_portal_host.db npx playwright test --config playwright.config.ts -g \"module entitlements hide disabled modules\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; claude -p <.ai/workers/20260623T043739Z-portal_host_audit.prompt.md>; code-review-graph build --skip-flows && code-review-graph detect-changes",
@@ -914,6 +938,6 @@
     "Finance invoice/receipt/P&L/import/export has real Chrome CRUD/upload/download coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow evidence.",
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
-  "notes": "Inventory alert remains removed from active WMS product requirements and the historical Prisma Material.alertThreshold schema/init SQL column has now also been deleted. verify and browser-smoke force Prisma Client generation; real Chrome passed 12/12 after proving WMS inbound/outbound/return/transfer still works without the deleted field. Finance invoice/receipt/P&L/import/export and labor personnel/attendance/salary/risk are included in real Chrome CRUD/upload/download/state-change coverage. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T02:58:00Z"
+  "notes": "Developer system announcement lifecycle now has focused and full real Chrome coverage for create/edit/unpublish/republish/delete plus developer-only API permission checks. Inventory alert remains removed from active WMS product requirements and historical Prisma Material.alertThreshold schema/init SQL. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
+  "updated_at": "2026-06-23T04:58:00Z"
 }
