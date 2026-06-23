@@ -87,6 +87,7 @@ const Outbound: React.FC = () => {
   const [remark, setRemark] = useState('');
   const [selectedItems, setSelectedItems] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [successOrders, setSuccessOrders] = useState<any[] | null>(null);
 
   // ── 详情弹窗 ──
@@ -280,6 +281,19 @@ const Outbound: React.FC = () => {
     }
   };
 
+  const handleExportOutbound = async () => {
+    setExporting(true);
+    try {
+      const res = await wmsApi.exportOutbound({ keyword });
+      downloadBlob(res.data as Blob, '出库记录.xlsx');
+      toast.success('出库记录已导出');
+    } catch {
+      toast.error('导出出库记录失败');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // ── 删除出库单（含级联预览） ──
   const openDeleteConfirm = async (id: string) => {
     setDeletingId(id);
@@ -345,6 +359,9 @@ const Outbound: React.FC = () => {
           <p className="page-subtitle">领料单管理、出库登记与查询</p>
         </div>
         <div className="flex gap-2">
+          <button className="btn-secondary" onClick={handleExportOutbound} disabled={exporting}>
+            <Download size={16} /> {exporting ? '导出中...' : '导出出库记录'}
+          </button>
           <button className="btn-primary" onClick={openCreate}>
             <Plus size={16} /> 新增出库
           </button>

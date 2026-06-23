@@ -30,6 +30,9 @@ const { prismaMock } = vi.hoisted(() => ({
       findMany: vi.fn(),
       count: vi.fn(),
     },
+    outboundOrder: {
+      findMany: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -38,7 +41,7 @@ vi.mock('../../common/utils/prisma', () => ({
   prisma: prismaMock,
 }));
 
-import { createExcelInbound, deleteMaterial, listMaterials, listReturnOrders, updateMaterial } from './service';
+import { createExcelInbound, deleteMaterial, getOutboundExportData, listMaterials, listReturnOrders, updateMaterial } from './service';
 
 describe('wms material service tenant safeguards', () => {
   beforeEach(() => {
@@ -173,6 +176,28 @@ describe('wms material service tenant safeguards', () => {
     });
     expect(prismaMock.returnOrder.count).toHaveBeenCalledWith({
       where: { tenantId: 'tenant-1', isActive: true, subProjectId: 'sub-project-1' },
+    });
+  });
+
+  it('exports only active outbound orders', async () => {
+    prismaMock.outboundOrder.findMany.mockResolvedValue([]);
+
+    await getOutboundExportData('tenant-1', 'sub-project-1', 'work-team-1', '钢筋', '2026-06-01', '2026-06-30');
+
+    expect(prismaMock.outboundOrder.findMany).toHaveBeenCalledWith({
+      where: {
+        tenantId: 'tenant-1',
+        isActive: true,
+        subProjectId: 'sub-project-1',
+        workTeamId: 'work-team-1',
+        outboundDate: {
+          gte: new Date('2026-06-01'),
+          lte: new Date('2026-06-30'),
+        },
+        items: { some: { material: { name: { contains: '钢筋', mode: 'insensitive' } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { subProject: true, items: { include: { material: true } }, creator: { select: { name: true } } },
     });
   });
 });

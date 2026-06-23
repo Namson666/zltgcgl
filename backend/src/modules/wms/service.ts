@@ -1126,7 +1126,7 @@ export async function deleteOutboundOrder(tenantId: string, id: string) {
 }
 
 export async function getOutboundExportData(tenantId: string, subProjectId?: string, workTeamId?: string, keyword?: string, startDate?: string, endDate?: string) {
-  const where: any = { tenantId };
+  const where: any = { tenantId, isActive: true };
   if (subProjectId) where.subProjectId = subProjectId;
   if (workTeamId) where.workTeamId = workTeamId;
   if (startDate || endDate) {

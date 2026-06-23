@@ -1952,6 +1952,96 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can create export and delete wms outbound records with cascade preview', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+    const stamp = Date.now();
+    const materialName = `浏览器出库导出物资-${stamp}`;
+    const projectName = `出库导出项目-${stamp}`;
+    const supplierName = `出库导出供应商-${stamp}`;
+    const inboundRemark = `出库前置入库-${stamp}`;
+    const outboundRemark = `出库导出删除-${stamp}`;
+
+    const departmentsResponse = await page.request.get('/api/departments?pageSize=100', { headers: authHeaders });
+    expect(departmentsResponse.status()).toBe(200);
+    const departmentsBody = await readJson(departmentsResponse);
+    const department = (departmentsBody?.data || []).find((item: any) => item.name === '第一项目部') || (departmentsBody?.data || [])[0];
+    expect(department?.id).toBeTruthy();
+
+    const inboundResponse = await page.request.post('/api/wms/inbound', {
+      headers: authHeaders,
+      data: {
+        departmentId: department.id,
+        supplierName,
+        inboundDate: '2026-06-23',
+        remark: inboundRemark,
+        items: [
+          { materialName, projectName, unit: '件', quantity: 9, actualQty: 9, unitPrice: 18 },
+        ],
+      },
+    });
+    expect(inboundResponse.status()).toBe(201);
+
+    await page.goto('/wms/outbound');
+    await expect(page.getByRole('heading', { name: '出库管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增出库' }).click();
+    await chooseMultiSelectModalOption(page, '请选择项目部', /选择项目部/, department.name);
+    await expect(page.getByText(materialName)).toBeVisible({ timeout: 15000 });
+    await selectFirstRealOption(page.locator('select').filter({ hasText: '请选择班组' }));
+    await page.getByPlaceholder('可选').fill(outboundRemark);
+    const outboundMaterialRow = page.locator('tr', { hasText: materialName }).first();
+    await outboundMaterialRow.locator('input[type="checkbox"]').check();
+    await outboundMaterialRow.locator('input[type="number"]').fill('4');
+    await page.getByRole('button', { name: /确认出库/ }).click();
+    await expect(page.getByRole('heading', { name: '出库成功' })).toBeVisible();
+
+    const outboundPdfPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /下载出库单 PDF/ }).click();
+    expect((await outboundPdfPromise).suggestedFilename()).toMatch(/^出库单-.*\.pdf$/);
+    await page.getByRole('button', { name: '返回继续出库' }).click();
+    await expect(page.getByRole('heading', { name: '出库管理' })).toBeVisible();
+    await expect(page.locator('tr', { hasText: outboundRemark })).toBeVisible();
+
+    const createdResponse = await page.request.get('/api/wms/outbound?pageSize=20', { headers: authHeaders });
+    expect(createdResponse.status()).toBe(200);
+    const createdBody = await readJson(createdResponse);
+    const createdOutbound = (createdBody?.data || []).find((order: any) =>
+      order.remark === outboundRemark
+      && (order.items || []).some((item: any) => (item.material?.name || item.materialName) === materialName)
+    );
+    expect(createdOutbound?.id).toBeTruthy();
+    expect(createdOutbound?.orderNo).toBeTruthy();
+
+    const outboundExportPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出出库记录' }).click();
+    expect((await outboundExportPromise).suggestedFilename()).toBe('出库记录.xlsx');
+    await expectToast(page, '出库记录已导出');
+
+    const rowForDelete = page.locator('tr', { hasText: createdOutbound.orderNo });
+    await rowForDelete.getByTitle('删除').click();
+    await expect(page.getByRole('heading', { name: '确认删除出库单' })).toBeVisible();
+    const deleteDialog = page.locator('.fixed').filter({ hasText: '确认删除出库单' }).last();
+    await expect(deleteDialog.getByText(createdOutbound.orderNo)).toBeVisible();
+    await expect(deleteDialog.getByText('库存影响（将恢复以下库存）')).toBeVisible();
+    await expect(deleteDialog.getByText(materialName)).toBeVisible();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expectToast(page, '出库单已删除，可在回收站恢复');
+    await expect(page.locator('tr', { hasText: createdOutbound.orderNo })).toHaveCount(0);
+
+    const afterDeleteResponse = await page.request.get('/api/wms/outbound?pageSize=50', { headers: authHeaders });
+    expect(afterDeleteResponse.status()).toBe(200);
+    const afterDeleteBody = await readJson(afterDeleteResponse);
+    expect((afterDeleteBody?.data || []).some((order: any) => order.id === createdOutbound.id)).toBe(false);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/出库导出删除预览.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can complete wms inbound outbound return transfer chain', async ({ page }) => {
     test.setTimeout(150_000);
     await loginEnterprise(page);

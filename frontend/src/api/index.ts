@@ -952,6 +952,12 @@ export const wmsApi = {
     http.delete(`/wms/outbound/${id}`),
 
   /**
+   * 导出出库记录
+   */
+  exportOutbound: (params?: any) =>
+    http.get('/wms/outbound/export', params || {}, { responseType: 'blob' }),
+
+  /**
    * 获取退库记录列表
    * @param params - 分页参数
    * @returns 分页的退库记录
