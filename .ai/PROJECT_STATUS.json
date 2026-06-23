@@ -7,14 +7,14 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "clean_after_labor_report_type_export_push",
+    "working_tree": "dirty_after_labor_report_all_types_verification",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "labor_report_type_export_pushed",
+    "push_status": "labor_report_all_types_pending_push",
     "pushed_commit": "e98e23a chore: mark labor report typed export pushed",
     "last_pushed_commit": "e98e23a"
   },
@@ -23,7 +23,7 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "labor_report_type_export_pushed",
+    "push_status": "labor_report_all_types_pending_push",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
     "pushed_commit": "e98e23a chore: mark labor report typed export pushed"
   },
@@ -34,12 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "labor_report_type_export_pushed",
-  "updated_at": "2026-06-23T16:56:42Z",
-  "push_status": "labor_report_type_export_pushed",
+  "status": "labor_report_all_types_verified_pending_push",
+  "updated_at": "2026-06-23T17:12:08Z",
+  "push_status": "labor_report_all_types_pending_push",
   "last_pushed_commit": "e98e23a",
   "current_commit": "e98e23a chore: mark labor report typed export pushed",
   "notes": [
+    "2026-06-24: S48 labor report all frontend types verified locally; salary/social/payment/attendance each selected in real Chrome, xlsx sheet names parsed, UI downloads checked, focused 1/1, verify, full Chrome 35/35, code-review-graph risk 0.50, Claude audit PASS; pending commit/push.",
     "2026-06-24: S47 labor report typed export pushed at eb8ee97; follow-up status marker pushed at e98e23a.",
     "2026-06-24: S47 labor report typed export verified locally; payment/attendance typed xlsx sheets, invalid type 400, and no-type legacy four-sheet compatibility covered by real Chrome + ExcelJS parsing; verify, full Chrome 35/35, code-review-graph risk 0.50, Claude final audit PASS; pushed to public-main and main.",
     "2026-06-24: S46 tenant independent login Logo upload pushed at 4514894; follow-up status marker pushed.",
@@ -78,10 +79,10 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S47_labor_report_type_export_pushed",
-  "current_task": "Continue remaining deep CRUD/upload/download browser regression or production face gateway/DNS validation.",
+  "current_phase": "S48_labor_report_all_types_verified",
+  "current_task": "Commit and push S48 labor report all frontend types coverage.",
   "last_verified_at": "2026-06-23T15:40:34Z",
-  "last_verified_command": "focused Chrome labor report typed export 1/1; bash scripts/verify.sh backend 57 frontend 36 build; bash scripts/browser-smoke.sh 35/35; code-review-graph risk 0.50; Claude CLI final audit PASS",
+  "last_verified_command": "focused Chrome labor report all frontend types 1/1; bash scripts/verify.sh backend 57 frontend 36 build; bash scripts/browser-smoke.sh 35/35; code-review-graph risk 0.50; Claude CLI audit PASS",
   "history": [
     {
       "date": "2026-06-23T15:59:33Z",

@@ -1,13 +1,25 @@
 {
-  "status": "labor_report_type_export_verified",
+  "status": "labor_report_all_types_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_labor_report_type_export_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_labor_report_type_export_labor_report_all_frontend_types_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "labor_report_all_frontend_types_flow",
+      "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"enterprise user can download labor salary payment and report exports\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S48-labor-report-all-types-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
+      "status": "verified_claude_pass",
+      "result": "劳资报表前端四种可选类型已全部通过真实 Chrome：salary、social、payment、attendance 均真实选择下拉，直接请求后端导出并用 ExcelJS 解析 xlsx 工作表名，点击页面导出 Excel 按钮并断言下载文件名与成功 toast；payment 额外断言工资发放人员在预览中可见，attendance 断言该发放人员不出现在考勤预览中，非法 type 和 no-type 旧四表兼容仍由同一测试覆盖。Focused Chrome 1/1 passed；verify backend 57 + frontend 36 + builds passed；full Chrome 35/35 passed；code-review-graph risk 0.50；Claude audit PASS。库存预警未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/劳资工资发放导出.png",
+        ".ai/workers/20260623T170959Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "labor_report_type_export_flow",
       "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"enterprise user can download labor salary payment and report exports\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S47-labor-report-type-export-final-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",

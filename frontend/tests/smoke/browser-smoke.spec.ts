@@ -3418,7 +3418,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await page.getByPlaceholder('银行卡号').fill('6222020202020202055');
     await page.getByPlaceholder('备注').fill('真实浏览器工资发放删除验收');
     await page.getByRole('button', { name: '确认发放' }).click();
-    await expect(page.getByText('发放记录创建成功')).toBeVisible();
+    await expectToast(page, '发放记录创建成功');
     const deleteRow = page.locator('tr', { hasText: deleteRecipientName });
     await expect(deleteRow).toBeVisible();
     await expect(deleteRow).toContainText('待确认');
@@ -3450,7 +3450,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await page.getByPlaceholder('银行卡号').fill('6222020202020202020');
     await page.getByPlaceholder('备注').fill('真实浏览器工资发放导出验收');
     await page.getByRole('button', { name: '确认发放' }).click();
-    await expect(page.getByText('发放记录创建成功')).toBeVisible();
+    await expectToast(page, '发放记录创建成功');
     const paymentRow = page.locator('tr', { hasText: recipientName });
     await expect(paymentRow).toBeVisible();
     await expect(paymentRow).toContainText('待确认');
@@ -3494,33 +3494,34 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await expect(monthSelect.locator(`option[value="${month}"]`)).toHaveCount(1, { timeout: 10000 });
     await monthSelect.selectOption(month);
     await expect(monthSelect).toHaveValue(month);
-    await page.locator('select').nth(1).selectOption('payment');
+    const reportTypeSelect = page.locator('select').nth(1);
+    async function expectTypedReportExport(type: string, title: string, expectedSheet: string) {
+      await reportTypeSelect.selectOption(type);
+      await expect(reportTypeSelect).toHaveValue(type);
+      const response = await page.request.get(`/api/labor/reports/export?months=${month}&type=${type}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(response.status()).toBe(200);
+      expect(await workbookSheetNames(response)).toEqual([expectedSheet]);
+      const downloadPromise = page.waitForEvent('download');
+      await page.getByRole('button', { name: /导出 Excel/ }).click();
+      const download = await downloadPromise;
+      expect(download.suggestedFilename()).toBe(`${month}-${title}.xlsx`);
+      await expectToast(page, '报表导出成功');
+    }
+
+    await expectTypedReportExport('salary', '月度工资汇总表', '月度工资汇总表');
+    await expectTypedReportExport('social', '社保缴纳明细表', '社保缴纳明细表');
+
+    await reportTypeSelect.selectOption('payment');
     await expect(page.getByText(new RegExp(`${month} 工资发放明细表`))).toBeVisible();
     await expect(page.getByText(recipientName)).toBeVisible({ timeout: 10000 });
-    const paymentExportResponse = await page.request.get(`/api/labor/reports/export?months=${month}&type=payment`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(paymentExportResponse.status()).toBe(200);
-    expect(await workbookSheetNames(paymentExportResponse)).toEqual(['工资发放明细表']);
-    const reportDownloadPromise = page.waitForEvent('download');
-    await page.getByRole('button', { name: /导出 Excel/ }).click();
-    const reportDownload = await reportDownloadPromise;
-    expect(reportDownload.suggestedFilename()).toBe(`${month}-工资发放明细表.xlsx`);
-    await expectToast(page, '报表导出成功');
+    await expectTypedReportExport('payment', '工资发放明细表', '工资发放明细表');
 
-    await page.locator('select').nth(1).selectOption('attendance');
+    await reportTypeSelect.selectOption('attendance');
     await expect(page.getByText(new RegExp(`${month} 月度考勤汇总表`))).toBeVisible();
     await expect(page.getByText(recipientName)).toHaveCount(0);
-    const attendanceExportResponse = await page.request.get(`/api/labor/reports/export?months=${month}&type=attendance`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(attendanceExportResponse.status()).toBe(200);
-    expect(await workbookSheetNames(attendanceExportResponse)).toEqual(['月度考勤汇总表']);
-    const attendanceDownloadPromise = page.waitForEvent('download');
-    await page.getByRole('button', { name: /导出 Excel/ }).click();
-    const attendanceDownload = await attendanceDownloadPromise;
-    expect(attendanceDownload.suggestedFilename()).toBe(`${month}-月度考勤汇总表.xlsx`);
-    await expectToast(page, '报表导出成功');
+    await expectTypedReportExport('attendance', '月度考勤汇总表', '月度考勤汇总表');
 
     const invalidReportResponse = await page.request.get(`/api/labor/reports/export?months=${month}&type=unknown`, {
       headers: { Authorization: `Bearer ${token}` },

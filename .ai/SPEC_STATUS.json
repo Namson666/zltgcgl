@@ -1,9 +1,9 @@
 {
-  "stage": "S47_labor_report_type_export_verified",
+  "stage": "S48_labor_report_all_types_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "S47 labor report typed export is verified in real Chrome: /api/labor/reports/export now respects type=payment/attendance/social/salary/arrears/anomaly and returns a single matching worksheet, rejects unknown type with INVALID_REPORT_TYPE, and keeps no-type legacy four-sheet export compatible. Real Chrome validates payment and attendance UI preview/download filenames, parses backend xlsx sheet names for payment, attendance, invalid type, and no-type legacy export. Focused Chrome 1/1 passed, verify passed with backend 57 tests/build and frontend 36 tests/build, full Chrome smoke passed 35/35, code-review-graph risk 0.50, Claude final audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered.",
-  "updated_at": "2026-06-23T16:54:22Z"
+  "notes": "S48 labor report all frontend export types are verified in real Chrome: /labor/reports dropdown types salary, social, payment, and attendance are each selected in the real browser, backend xlsx responses are parsed with ExcelJS to confirm exact worksheet names, UI export button downloads the expected filenames, and success toasts are asserted. Payment and attendance preview behavior remains covered; salary/social are covered through selection + real xlsx/download because the test month may have no preview rows. Focused Chrome 1/1 passed, verify passed with backend 57 tests/build and frontend 36 tests/build, full Chrome smoke passed 35/35, code-review-graph risk 0.50, Claude audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered.",
+  "updated_at": "2026-06-23T17:12:08Z"
 }

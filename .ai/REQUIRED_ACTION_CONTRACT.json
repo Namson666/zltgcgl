@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "labor_report_type_export_pushed",
+  "stage": "labor_report_all_types_verified",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -52,9 +52,9 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-23T16:56:42Z",
-  "current_phase": "S47_labor_report_type_export_pushed",
-  "current_task": "Continue remaining deep CRUD/upload/download browser regression or production face gateway/DNS validation.",
-  "last_completed": "Labor report typed export verified: selected payment/attendance export now generates matching single-sheet xlsx, invalid type returns 400, no-type legacy four-sheet export remains compatible, and real Chrome parses backend xlsx sheet names.",
-  "next_action": "Continue remaining deep CRUD/upload/download browser regression or production face gateway/DNS validation."
+  "updated_at": "2026-06-23T17:12:08Z",
+  "current_phase": "S48_labor_report_all_types_verified",
+  "current_task": "Commit and push S48 labor report all frontend types coverage.",
+  "last_completed": "Labor report all frontend types verified: salary, social, payment, and attendance are all selected in real Chrome, downloaded through the UI, and verified by parsing backend xlsx worksheet names.",
+  "next_action": "Commit and push S48, then continue remaining deep CRUD/upload/download browser regression or production face gateway/DNS validation."
 }
