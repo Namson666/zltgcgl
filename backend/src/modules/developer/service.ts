@@ -200,7 +200,7 @@ export interface TenantListParams {
 export async function listTenants(params: TenantListParams) {
   const { page, pageSize, search, isActive: isActiveFilter } = params;
   const where: any = { deletedAt: null };
-  if (search) where.OR = [{ name: { contains: search, mode: 'insensitive' } }, { code: { contains: search, mode: 'insensitive' } }];
+  if (search) where.OR = [{ name: { contains: search } }, { code: { contains: search } }];
   if (isActiveFilter === 'true') where.isActive = true;
   else if (isActiveFilter === 'false') where.isActive = false;
 
@@ -366,17 +366,68 @@ export async function restoreTenant(id: string) {
   return { tenantName: tenant.name };
 }
 
+async function purgeTenantForPermanentDelete(tx: any, tenantId: string) {
+  const [users, roles, subscription] = await Promise.all([
+    tx.user.findMany({ where: { tenantId }, select: { id: true } }),
+    tx.role.findMany({ where: { tenantId }, select: { id: true } }),
+    tx.subscription.findUnique({ where: { tenantId }, select: { id: true } }),
+  ]);
+  const userIds = users.map((user: { id: string }) => user.id);
+  const roleIds = roles.map((role: { id: string }) => role.id);
+
+  // SQLite does not reliably topologically sort tenant cascades when roles are
+  // restricted by users in the physical schema. Clear direct dependents first,
+  // then let the final tenant delete handle the broader cascade tree.
+  await tx.operationLog.updateMany({
+    where: {
+      OR: [
+        { tenantId },
+        ...(userIds.length ? [{ userId: { in: userIds } }] : []),
+      ],
+    },
+    data: { tenantId: null, userId: null },
+  });
+  await tx.refreshToken.deleteMany({
+    where: {
+      OR: [
+        { tenantId },
+        ...(userIds.length ? [{ userType: 'user', userId: { in: userIds } }] : []),
+      ],
+    },
+  });
+  if (subscription) {
+    await tx.subscriptionPayment.deleteMany({ where: { subscriptionId: subscription.id } });
+    await tx.subscription.deleteMany({ where: { tenantId } });
+  }
+  if (roleIds.length) {
+    await tx.permission.deleteMany({ where: { roleId: { in: roleIds } } });
+  }
+  await tx.user.deleteMany({ where: { tenantId } });
+  await tx.role.deleteMany({ where: { tenantId } });
+  await tx.tenantModuleEntitlement.deleteMany({ where: { tenantId } });
+  await tx.tenantPortalConfig.deleteMany({ where: { tenantId } });
+  await tx.miniProgramConfig.deleteMany({ where: { tenantId } });
+  await tx.attendanceSetting.deleteMany({ where: { tenantId } });
+  await tx.tenant.delete({ where: { id: tenantId } });
+}
+
 export async function permanentDeleteTenant(id: string) {
   const tenant = await prisma.tenant.findUnique({ where: { id } });
   if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
   if (!tenant.deletedAt) throw { status: 400, code: 'NOT_DELETED', message: '请先将企业移入回收站' };
-  await prisma.tenant.delete({ where: { id } });
+  await prisma.$transaction(async (tx) => {
+    await purgeTenantForPermanentDelete(tx, id);
+  });
   return { tenantName: tenant.name, tenantCode: tenant.code };
 }
 
 export async function clearRecycleBin() {
   const deletedTenants = await prisma.tenant.findMany({ where: { deletedAt: { not: null } }, select: { id: true, name: true, code: true } });
-  if (deletedTenants.length > 0) await prisma.tenant.deleteMany({ where: { deletedAt: { not: null } } });
+  for (const tenant of deletedTenants) {
+    await prisma.$transaction(async (tx) => {
+      await purgeTenantForPermanentDelete(tx, tenant.id);
+    });
+  }
   return { count: deletedTenants.length };
 }
 
@@ -398,6 +449,16 @@ export async function listTenantUsers(tenantId: string, page: number, pageSize: 
 
   const formatted = users.map(({ passwordHash: _, ...user }) => user);
   return { users: formatted, total, totalPages: Math.ceil(total / pageSize) };
+}
+
+export async function listTenantRoles(tenantId: string) {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
+  if (!tenant) throw { status: 404, code: 'NOT_FOUND', message: '指定的企业不存在' };
+  return prisma.role.findMany({
+    where: { tenantId },
+    orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+    select: { id: true, name: true, displayName: true, isDefault: true },
+  });
 }
 
 export interface CreateTenantUserInput {

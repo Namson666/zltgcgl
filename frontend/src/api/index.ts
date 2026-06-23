@@ -179,8 +179,8 @@ export const developerApi = {
    * @param params - 分页和搜索参数
    * @returns 分页的租户列表
    */
-  getTenants: (params?: PaginationParams) =>
-    http.get('/developer/tenants', params),
+  getTenants: (params?: PaginationParams & { keyword?: string; search?: string }) =>
+    http.get('/developer/tenants', params?.keyword && !params.search ? { ...params, search: params.keyword } : params),
 
   /**
    * 创建新租户（企业）
@@ -195,7 +195,7 @@ export const developerApi = {
    * @param id - 租户 ID
    * @param data - 要更新的字段
    */
-  updateTenant: (id: number, data: any) =>
+  updateTenant: (id: string | number, data: any) =>
     http.put(`/developer/tenants/${id}`, data),
 
   /**
@@ -203,7 +203,7 @@ export const developerApi = {
    * @param id - 租户 ID
    * @returns 更新后的租户状态
    */
-  toggleTenant: (id: number) =>
+  toggleTenant: (id: string | number) =>
     http.patch(`/developer/tenants/${id}/toggle`),
 
   /**
@@ -260,19 +260,19 @@ export const developerApi = {
   /**
    * 删除企业（移入回收站）
    */
-  deleteTenant: (id: number) =>
+  deleteTenant: (id: string | number) =>
     http.delete(`/developer/tenants/${id}`),
 
   /**
    * 从回收站恢复企业
    */
-  restoreTenant: (id: number) =>
+  restoreTenant: (id: string | number) =>
     http.post(`/developer/tenants/${id}/restore`),
 
   /**
    * 永久删除企业
    */
-  permanentDeleteTenant: (id: number) =>
+  permanentDeleteTenant: (id: string | number) =>
     http.delete(`/developer/tenants/${id}/permanent`),
 
   /**
@@ -287,6 +287,24 @@ export const developerApi = {
    */
   getTenantUsers: (tenantId: string) =>
     http.get(`/developer/tenants/${tenantId}/users`),
+
+  /**
+   * 获取指定企业角色列表
+   */
+  getTenantRoles: (tenantId: string) =>
+    http.get(`/developer/tenants/${tenantId}/roles`),
+
+  /**
+   * 为指定企业创建用户
+   */
+  createTenantUser: (tenantId: string, data: any) =>
+    http.post(`/developer/tenants/${tenantId}/users`, data?.realName && !data?.name ? { ...data, name: data.realName } : data),
+
+  /**
+   * 重置指定企业用户密码
+   */
+  resetTenantUserPassword: (tenantId: string, userId: string, data: { newPassword: string }) =>
+    http.post(`/developer/tenants/${tenantId}/users/${userId}/reset-password`, data),
 
   /**
    * 获取 AI 配置

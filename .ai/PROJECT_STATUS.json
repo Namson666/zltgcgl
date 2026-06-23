@@ -7,7 +7,7 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_wms_delivery_ocr_export_push_marker",
+    "working_tree": "dirty_after_developer_tenant_crud_users_recycle_bin_verification",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
@@ -20,9 +20,9 @@
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "wms_delivery_ocr_export_pushed",
+    "push_status": "developer_tenant_crud_users_recycle_bin_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "bbb943a feat: cover wms delivery export ocr guard"
+    "pushed_commit": "this commit: feat: cover developer tenant lifecycle"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -67,11 +67,12 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S34_wms_delivery_ocr_export_verified",
-  "current_task": "WMS 送货单导出/OCR 上传保护已通过真实 Chrome：送货单导出筛选、页面下载、OCR 上传失败保护和 SQLite-safe 入库搜索均已验证；库存预警仍不恢复。",
-  "last_verified_at": "2026-06-23T11:20:00Z",
-  "last_verified_command": "focused Chrome delivery export/OCR 1/1; bash scripts/verify.sh backend 7/53 frontend 2/36 build; bash scripts/browser-smoke.sh 30/30; code-review-graph risk 0.50; Claude CLI attempted twice but hung/no output and was interrupted",
+  "current_phase": "S35_developer_tenant_crud_users_recycle_bin_verified",
+  "current_task": "开发者企业管理深度链路已通过真实 Chrome：企业新增/搜索/编辑/详情、企业用户创建、密码重置登录、回收站恢复、永久删除全部验证；库存预警仍不恢复。",
+  "last_verified_at": "2026-06-23T11:55:00Z",
+  "last_verified_command": "focused Chrome tenant CRUD/users/recycle-bin 1/1; bash scripts/verify.sh backend 53 frontend 36 build; bash scripts/browser-smoke.sh 31/31; code-review-graph risk 0.50; Claude CLI attempted but timed out after 90s and is recorded Yellow",
   "history": [
+    "2026-06-23: Developer tenant CRUD/users/recycle-bin deep flow verified locally in real Chrome. Fixed developer tenant UI to use developer-scoped tenant users/roles/password APIs, tenant search keyword/search compatibility, React confirm callback wrapping, and permanent tenant delete / clear recycle bin dependency cleanup for SQLite FK chains. Browser test covers create/search/edit tenant, detail roles/users, create user, reset password, login with reset password, soft-delete, restore, re-delete, permanent delete API absence, and clear recycle bin API absence. verify passed, focused Chrome 1/1 passed, full real Chrome 31/31 passed, code-review-graph risk 0.50. Claude CLI audit timed out after 90s/60s and is recorded Yellow, not PASS. Implementation committed at this commit.",
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted.",
     "2026-06-23: WMS inventory and work-team ledger export/net-quantity verified locally in real Chrome. Added inventory export buttons for in-stock summary/detail and outbound inventory, added work-team ledger export, made inventory export reuse active stock list filters, fixed keyword/materialName inventory search for SQLite-safe contains, made work-team ledger list/export count only active outbound and active return orders, and removed Prisma insensitive mode from outbound export keyword filtering. Browser test creates inbound 10, outbound 4, return 1, verifies active inventory quantity 7 and work-team ledger net quantity 3/returned 1, downloads inventory summary, outbound inventory, and work-team ledger Excel files. verify passed, focused Chrome 2/2 passed, full real Chrome 29/29 passed, Claude audit PASS, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e; pushed at 0cb6997.",
     "2026-06-23: WMS transfer create/export/delete-preview verified locally in real Chrome. Added transfer record export from the transfer page, fixed backend transfer list/export to filter active transfer orders only, persisted department-scoped transfer fromDepartmentId/toDepartmentId, added department fallback display/export, and fixed cascade preview/delete rollback for department-scoped inventory. Browser test prepares inbound stock through the real API, creates transfer through the UI, downloads the transfer PDF, exports transfer records, verifies cascade inventory rollback preview, deletes, and confirms API absence. verify passed, focused Chrome 1/1 passed, full real Chrome 28/28 passed, Claude audit PASS, code-review-graph risk 0.50 with function-level gaps covered by backend unit and Chrome e2e; pushed at 714028e.",

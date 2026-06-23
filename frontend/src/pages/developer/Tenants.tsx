@@ -31,7 +31,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { developerApi, tenantApi } from '../../api';
+import { developerApi } from '../../api';
 import {
   Pagination,
   EmptyState,
@@ -48,7 +48,7 @@ import Modal from '../../components/ui/Modal';
 
 /** 租户信息接口 */
 interface Tenant {
-  id: number;                     /* 租户 ID */
+  id: string;                     /* 租户 ID */
   name: string;                   /* 企业名称 */
   code: string;                   /* 企业代码 */
   contactName: string;            /* 联系人姓名 */
@@ -62,12 +62,21 @@ interface Tenant {
 
 /** 租户用户信息接口 */
 interface TenantUser {
-  id: number;                     /* 用户 ID */
+  id: string;                     /* 用户 ID */
   username: string;               /* 用户名 */
+  name?: string;                  /* 姓名 */
   realName?: string;              /* 真实姓名 */
-  role?: string;                  /* 角色 */
+  role?: string | { id?: string; name?: string; displayName?: string };  /* 角色 */
   status: string;                 /* 状态 */
+  isActive?: boolean;             /* 是否启用 */
   createdAt: string;              /* 创建时间 */
+}
+
+interface TenantRole {
+  id: string;
+  name: string;
+  displayName?: string;
+  isDefault?: boolean;
 }
 
 /** 租户表单数据接口 */
@@ -84,7 +93,7 @@ interface UserFormData {
   username: string;               /* 用户名 */
   realName: string;               /* 真实姓名 */
   password: string;               /* 密码 */
-  role: string;                   /* 角色 */
+  roleId: string;                 /* 角色 ID */
 }
 
 /* ========================================
@@ -108,7 +117,7 @@ const Tenants: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);  /* 租户详情弹窗 */
   const [detailTenant, setDetailTenant] = useState<Tenant | null>(null);    /* 查看详情的租户 */
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);  /* 确认弹窗 */
-  const [confirmAction, setConfirmAction] = useState<() => void>(() => {});  /* 确认操作回调 */
+  const [confirmAction, setConfirmAction] = useState<() => void | Promise<void>>(() => {});  /* 确认操作回调 */
   const [confirmMessage, setConfirmMessage] = useState('');  /* 确认弹窗消息 */
 
   /* ---------- 表单状态 ---------- */
@@ -123,16 +132,17 @@ const Tenants: React.FC = () => {
 
   /* ---------- 租户详情/用户管理状态 ---------- */
   const [tenantUsers, setTenantUsers] = useState<TenantUser[]>([]);  /* 租户用户列表 */
+  const [tenantRoles, setTenantRoles] = useState<TenantRole[]>([]);   /* 租户角色列表 */
   const [usersLoading, setUsersLoading] = useState(false);         /* 用户列表加载状态 */
   const [showCreateUser, setShowCreateUser] = useState(false);     /* 创建用户弹窗 */
   const [userForm, setUserForm] = useState<UserFormData>({         /* 用户创建表单 */
     username: '',
     realName: '',
     password: '',
-    role: 'user',
+    roleId: '',
   });
   const [userFormLoading, setUserFormLoading] = useState(false);  /* 用户表单提交状态 */
-  const [resetPasswordUserId, setResetPasswordUserId] = useState<number | null>(null);  /* 重置密码的用户 ID */
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);  /* 重置密码的用户 ID */
   const [newPassword, setNewPassword] = useState('');              /* 新密码 */
 
   /* ---------- 回收站状态 ---------- */
@@ -272,7 +282,7 @@ const Tenants: React.FC = () => {
    */
   const handleDeleteTenant = (tenant: Tenant) => {
     setConfirmMessage(`确定要删除企业「${tenant.name}」吗？删除后可在回收站中恢复。`);
-    setConfirmAction(async () => {
+    setConfirmAction(() => async () => {
       try {
         await developerApi.deleteTenant(tenant.id);
         toast.success(`已删除企业「${tenant.name}」`);
@@ -295,10 +305,21 @@ const Tenants: React.FC = () => {
     setShowDetailModal(true);
     setUsersLoading(true);
     try {
-      /* 加载该租户下的用户列表 */
-      const res = await tenantApi.getUsers({ page: 1, pageSize: 100 });
-      const data = res.data || res;
-      setTenantUsers(data.items || []);
+      /* 加载该租户下的用户与角色，必须使用开发者 tenant-scoped 接口，避免误操作当前登录企业 */
+      const [usersRes, rolesRes] = await Promise.all([
+        developerApi.getTenantUsers(tenant.id),
+        developerApi.getTenantRoles(tenant.id),
+      ]);
+      const usersBody = usersRes.data || usersRes;
+      const rolesBody = rolesRes.data || rolesRes;
+      const users = usersBody.data || usersBody.items || [];
+      const roles = rolesBody.data || [];
+      setTenantUsers(users);
+      setTenantRoles(roles);
+      const preferredRole = roles.find((role: TenantRole) => role.name === 'admin')
+        || roles.find((role: TenantRole) => role.name === 'super_admin')
+        || roles[0];
+      setUserForm(prev => ({ ...prev, roleId: preferredRole?.id || '' }));
     } catch (error) {
       console.error('加载用户列表失败:', error);
       toast.error('加载用户列表失败');
@@ -321,17 +342,29 @@ const Tenants: React.FC = () => {
       toast.error('请输入密码');
       return;
     }
+    if (!userForm.roleId) {
+      toast.error('请选择角色');
+      return;
+    }
+    if (!detailTenant) {
+      toast.error('请先选择企业');
+      return;
+    }
 
     try {
       setUserFormLoading(true);
-      await tenantApi.createUser(userForm);
+      await developerApi.createTenantUser(detailTenant.id, {
+        username: userForm.username.trim(),
+        password: userForm.password,
+        name: userForm.realName.trim() || userForm.username.trim(),
+        roleId: userForm.roleId,
+        dataScope: 'ALL',
+      });
       toast.success('用户创建成功');
       setShowCreateUser(false);
-      setUserForm({ username: '', realName: '', password: '', role: 'user' });
+      setUserForm({ username: '', realName: '', password: '', roleId: userForm.roleId });
       /* 刷新用户列表 */
-      if (detailTenant) {
-        handleViewDetail(detailTenant);
-      }
+      handleViewDetail(detailTenant);
     } catch (error: any) {
       toast.error(error.message || '创建用户失败');
     } finally {
@@ -347,10 +380,10 @@ const Tenants: React.FC = () => {
       toast.error('请输入新密码');
       return;
     }
-    if (resetPasswordUserId === null) return;
+    if (resetPasswordUserId === null || !detailTenant) return;
 
     try {
-      await tenantApi.resetPassword(resetPasswordUserId, { newPassword });
+      await developerApi.resetTenantUserPassword(detailTenant.id, resetPasswordUserId, { newPassword });
       toast.success('密码重置成功');
       setResetPasswordUserId(null);
       setNewPassword('');
@@ -408,7 +441,7 @@ const Tenants: React.FC = () => {
    */
   const handlePermanentDelete = (tenant: any) => {
     setConfirmMessage(`确定要永久删除企业「${tenant.name}」吗？此操作不可恢复！`);
-    setConfirmAction(async () => {
+    setConfirmAction(() => async () => {
       try {
         await developerApi.permanentDeleteTenant(tenant.id);
         toast.success(`已永久删除「${tenant.name}」`);
@@ -425,7 +458,7 @@ const Tenants: React.FC = () => {
    */
   const handleClearRecycleBin = () => {
     setConfirmMessage('确定要清空回收站吗？所有已删除的企业将被永久删除，此操作不可恢复！');
-    setConfirmAction(async () => {
+    setConfirmAction(() => async () => {
       try {
         await developerApi.clearRecycleBin();
         toast.success('回收站已清空');
@@ -746,6 +779,7 @@ const Tenants: React.FC = () => {
           setShowDetailModal(false);
           setDetailTenant(null);
           setTenantUsers([]);
+          setTenantRoles([]);
         }}
         title={detailTenant ? `企业详情 - ${detailTenant.name}` : '企业详情'}
         size="xl"
@@ -763,6 +797,7 @@ const Tenants: React.FC = () => {
                 setShowDetailModal(false);
                 setDetailTenant(null);
                 setTenantUsers([]);
+                setTenantRoles([]);
               }}
               className="btn-secondary"
             >
@@ -838,12 +873,14 @@ const Tenants: React.FC = () => {
                   {tenantUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50">
                       <td className="px-4 py-2 text-sm text-gray-700">{user.username}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{user.realName || '-'}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{user.role || '用户'}</td>
+                      <td className="px-4 py-2 text-sm text-gray-700">{user.realName || user.name || '-'}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">
+                        {typeof user.role === 'object' ? (user.role.displayName || user.role.name || '用户') : (user.role || '用户')}
+                      </td>
                       <td className="px-4 py-2">
                         <StatusBadge
-                          status={user.status === 'active' ? '正常' : '停用'}
-                          type={user.status === 'active' ? 'success' : 'danger'}
+                          status={(user.isActive ?? user.status === 'active') ? '正常' : '停用'}
+                          type={(user.isActive ?? user.status === 'active') ? 'success' : 'danger'}
                         />
                       </td>
                       <td className="px-4 py-2 text-center">
@@ -925,12 +962,14 @@ const Tenants: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">角色</label>
             <select
-              value={userForm.role}
-              onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+              value={userForm.roleId}
+              onChange={(e) => setUserForm({ ...userForm, roleId: e.target.value })}
               className="input"
             >
-              <option value="user">普通用户</option>
-              <option value="admin">管理员</option>
+              <option value="">请选择角色</option>
+              {tenantRoles.map(role => (
+                <option key={role.id} value={role.id}>{role.displayName || role.name}</option>
+              ))}
             </select>
           </div>
         </div>

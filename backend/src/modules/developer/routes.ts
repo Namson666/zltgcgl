@@ -349,6 +349,17 @@ router.get('/tenants/:tenantId/users', async (req: AuthenticatedRequest, res: Re
   }
 });
 
+router.get('/tenants/:tenantId/roles', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const roles = await devService.listTenantRoles(req.params.tenantId);
+    res.json({ success: true, data: roles } as ApiResponse);
+  } catch (error: any) {
+    console.error('获取租户角色列表失败:', error);
+    const status = error.status || 500;
+    res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
+  }
+});
+
 router.post('/tenants/:tenantId/users', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { username, password, name, phone, email, roleId, departmentId, dataScope } = req.body;

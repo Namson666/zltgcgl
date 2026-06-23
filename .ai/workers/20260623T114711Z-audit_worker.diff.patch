@@ -1,0 +1,3 @@
+Claude worker was terminated by the local 90s watchdog before scripts/run_claude_worker.py could persist its automatic git diff artifact.
+
+Current repository diff is represented by the enclosing commit and by the verification evidence referenced in .ai/TEST_STATUS.json.

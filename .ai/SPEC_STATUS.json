@@ -1,9 +1,9 @@
 {
-  "stage": "S34_wms_delivery_ocr_export_pushed",
+  "stage": "S35_developer_tenant_crud_users_recycle_bin_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "WMS delivery-order export and OCR upload guard now have real Chrome API/UI evidence: browser creates a delivery order through the real API, verifies delivery list read-back, clicks the Inbound page 导出送货单 button to download 送货单.xlsx, and uploads a real PNG through the OCR file chooser to verify failure handling. Backend delivery export reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date; inbound order/material filters are SQLite-safe. Full Chrome smoke is 30/30. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Claude CLI audit was attempted twice but hung/no output and was interrupted; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T11:30:00Z"
+  "notes": "Developer tenant management deep CRUD is verified in real Chrome: create/search/edit tenant, open detail, fetch tenant roles, create tenant user, reset tenant user password, login with reset password, soft-delete, restore from recycle bin, re-delete, permanent delete, and clear recycle bin. Fixes include developer-scoped tenant users/roles/password APIs, getTenants keyword/search compatibility, React confirm callback wrapping, and permanent delete / clear recycle bin dependency cleanup for SQLite FK chains. Full Chrome smoke is 31/31. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Claude CLI audit was invoked twice but timed out after 90s/60s and is recorded as Yellow external-tool evidence; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T11:55:00Z"
 }

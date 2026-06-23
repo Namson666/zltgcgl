@@ -498,6 +498,200 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('developer can manage tenant CRUD users passwords and recycle bin', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginDeveloper(page);
+    const developerToken = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(developerToken).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${developerToken}` };
+
+    const stamp = Date.now();
+    const tenantName = `开发者企业CRUD-${stamp}`;
+    const tenantNameEdited = `${tenantName}-已编辑`;
+    const tenantCode = `devcrud${String(stamp).slice(-8)}`;
+    const contactName = `联系人${String(stamp).slice(-4)}`;
+    const contactPhone = `139${String(stamp).slice(-8)}`;
+    const userName = `dev_user_${String(stamp).slice(-8)}`;
+    const userRealName = `开发者创建用户${String(stamp).slice(-4)}`;
+    const resetPassword = 'Admin@2025';
+
+    await page.goto('/dev/tenants');
+    await expect(page.getByText('租户管理')).toBeVisible();
+
+    await page.getByRole('button', { name: '新增租户' }).click();
+    await page.getByPlaceholder('请输入企业名称').fill(tenantName);
+    await page.getByPlaceholder('请输入企业代码（唯一标识）').fill(tenantCode);
+    await page.getByPlaceholder('请输入联系人姓名').fill(contactName);
+    await page.getByPlaceholder('请输入联系电话').fill(contactPhone);
+    await page.getByPlaceholder('请输入企业地址（选填）').fill('浏览器验收地址');
+    await page.getByRole('button', { name: '确认创建' }).click();
+    await expectToast(page, '租户创建成功');
+
+    await page.getByPlaceholder('搜索企业名称或企业代码...').fill(tenantCode);
+    await page.keyboard.press('Enter');
+    const createdRow = page.locator('tr', { hasText: tenantCode });
+    await expect(createdRow).toBeVisible();
+    await expect(createdRow).toContainText(tenantName);
+
+    const createdResponse = await page.request.get(`/api/developer/tenants?search=${encodeURIComponent(tenantCode)}&pageSize=10`, {
+      headers: authHeaders,
+    });
+    expect(createdResponse.status()).toBe(200);
+    const createdBody = await readJson(createdResponse);
+    const createdTenant = (createdBody?.data || []).find((tenant: any) => tenant.code === tenantCode);
+    expect(createdTenant?.id).toBeTruthy();
+    expect(createdTenant?.userCount).toBe(0);
+
+    await createdRow.getByTitle('编辑').click();
+    await page.getByPlaceholder('请输入企业名称').fill(tenantNameEdited);
+    await page.getByPlaceholder('请输入联系人姓名').fill(`${contactName}改`);
+    await page.getByRole('button', { name: '保存修改' }).click();
+    await expectToast(page, '租户信息已更新');
+    await expect(page.locator('tr', { hasText: tenantCode })).toContainText(tenantNameEdited);
+
+    const editedResponse = await page.request.get(`/api/developer/tenants?search=${encodeURIComponent(tenantCode)}&pageSize=10`, {
+      headers: authHeaders,
+    });
+    expect(editedResponse.status()).toBe(200);
+    const editedBody = await readJson(editedResponse);
+    const editedTenant = (editedBody?.data || []).find((tenant: any) => tenant.id === createdTenant.id);
+    expect(editedTenant?.name).toBe(tenantNameEdited);
+    expect(editedTenant?.contactName).toBe(`${contactName}改`);
+
+    await page.locator('tr', { hasText: tenantCode }).getByTitle('查看详情').click();
+    await expect(page.getByRole('heading', { name: `企业详情 - ${tenantNameEdited}` })).toBeVisible();
+    await expect(page.getByText(tenantCode).last()).toBeVisible();
+    await page.getByRole('button', { name: '创建用户' }).click();
+    await page.getByPlaceholder('请输入用户名').fill(userName);
+    await page.getByPlaceholder('请输入真实姓名（选填）').fill(userRealName);
+    await page.getByPlaceholder('请输入密码').fill('Admin@2024');
+    await page.locator('select').last().selectOption({ label: '管理员' });
+    await page.getByRole('button', { name: '确认创建' }).click();
+    await expectToast(page, '用户创建成功');
+    await expect(page.getByRole('heading', { name: `企业详情 - ${tenantNameEdited}` })).toBeVisible();
+    await expect(page.locator('tr', { hasText: userName })).toContainText(userRealName);
+
+    const tenantUsersResponse = await page.request.get(`/api/developer/tenants/${createdTenant.id}/users?pageSize=20`, {
+      headers: authHeaders,
+    });
+    expect(tenantUsersResponse.status()).toBe(200);
+    const tenantUsersBody = await readJson(tenantUsersResponse);
+    const createdUser = (tenantUsersBody?.data || []).find((user: any) => user.username === userName);
+    expect(createdUser?.id).toBeTruthy();
+    expect(createdUser?.tenantId).toBe(createdTenant.id);
+    expect(createdUser?.name).toBe(userRealName);
+
+    await page.locator('tr', { hasText: userName }).getByTitle('重置密码').click();
+    await page.getByPlaceholder('请输入新密码').fill(resetPassword);
+    await page.getByRole('button', { name: '确认重置' }).click();
+    await expectToast(page, '密码重置成功');
+
+    const loginWithResetPassword = await page.request.post('/api/auth/user/login', {
+      data: { tenantCode, username: userName, password: resetPassword },
+    });
+    expect(loginWithResetPassword.status()).toBe(200);
+    const loginWithResetPasswordBody = await readJson(loginWithResetPassword);
+    expect(loginWithResetPasswordBody?.data?.user?.tenantId).toBe(createdTenant.id);
+
+    await page.getByRole('button', { name: '关闭' }).last().click();
+    await expect(page.getByRole('heading', { name: `企业详情 - ${tenantNameEdited}` })).toHaveCount(0);
+    const rowForDelete = page.locator('tr', { hasText: tenantCode });
+    await rowForDelete.getByTitle('删除企业').click();
+    const deleteConfirmText = page.getByText(`确定要删除企业「${tenantNameEdited}」吗？删除后可在回收站中恢复。`);
+    await expect(deleteConfirmText).toBeVisible();
+    await page.getByRole('button', { name: '确认' }).last().click();
+    await expectToast(page, `已删除企业「${tenantNameEdited}」`);
+    await expect(deleteConfirmText).toHaveCount(0);
+    await expect(page.locator('tr', { hasText: tenantCode })).toHaveCount(0);
+
+    const recycleResponse = await page.request.get('/api/developer/tenants/recycle?pageSize=100', {
+      headers: authHeaders,
+    });
+    expect(recycleResponse.status()).toBe(200);
+    const recycleBody = await readJson(recycleResponse);
+    expect((recycleBody?.data || []).some((tenant: any) => tenant.id === createdTenant.id && tenant.code === tenantCode)).toBe(true);
+
+    await page.getByRole('button', { name: /回收站/ }).click();
+    await expect(page.getByRole('heading', { name: '回收站' })).toBeVisible();
+    const recycleRow = page.locator('tr', { hasText: tenantCode });
+    await expect(recycleRow).toBeVisible();
+    await recycleRow.getByRole('button', { name: '恢复' }).click();
+    await expectToast(page, `已恢复企业「${tenantNameEdited}」`);
+    const recycleAfterRestoreResponse = await page.request.get('/api/developer/tenants/recycle?pageSize=100', {
+      headers: authHeaders,
+    });
+    expect(recycleAfterRestoreResponse.status()).toBe(200);
+    const recycleAfterRestoreBody = await readJson(recycleAfterRestoreResponse);
+    expect((recycleAfterRestoreBody?.data || []).some((tenant: any) => tenant.id === createdTenant.id)).toBe(false);
+    await page.getByRole('button', { name: '关闭' }).last().click();
+
+    await page.getByPlaceholder('搜索企业名称或企业代码...').fill(tenantCode);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('tr', { hasText: tenantCode })).toBeVisible();
+
+    await page.locator('tr', { hasText: tenantCode }).getByTitle('删除企业').click();
+    await page.getByRole('button', { name: '确认' }).last().click();
+    await expectToast(page, `已删除企业「${tenantNameEdited}」`);
+    await page.getByRole('button', { name: /回收站/ }).click();
+    const recycleRowForPermanentDelete = page.locator('tr', { hasText: tenantCode });
+    await expect(recycleRowForPermanentDelete).toBeVisible();
+    await recycleRowForPermanentDelete.getByRole('button', { name: '永久删除' }).click();
+    const permanentDeleteConfirmText = page.getByText(`确定要永久删除企业「${tenantNameEdited}」吗？此操作不可恢复！`);
+    await expect(permanentDeleteConfirmText).toBeVisible();
+    const permanentDeleteResponsePromise = page.waitForResponse(response =>
+      response.url().includes(`/api/developer/tenants/${createdTenant.id}/permanent`)
+      && response.request().method() === 'DELETE',
+    );
+    await page.getByRole('button', { name: '确认' }).last().click();
+    const permanentDeleteResponse = await permanentDeleteResponsePromise;
+    const permanentDeleteBody = await readJson(permanentDeleteResponse);
+    expect(permanentDeleteResponse.status(), JSON.stringify(permanentDeleteBody)).toBe(200);
+    await expectToast(page, /已永久删除|企业已永久删除/);
+    await expect(permanentDeleteConfirmText).toHaveCount(0);
+    await expect(page.locator('tr', { hasText: tenantCode })).toHaveCount(0);
+
+    const afterPermanentDeleteResponse = await page.request.get(`/api/developer/tenants?search=${encodeURIComponent(tenantCode)}&pageSize=10`, {
+      headers: authHeaders,
+    });
+    expect(afterPermanentDeleteResponse.status()).toBe(200);
+    const afterPermanentDeleteBody = await readJson(afterPermanentDeleteResponse);
+    expect((afterPermanentDeleteBody?.data || []).some((tenant: any) => tenant.id === createdTenant.id)).toBe(false);
+
+    await page.getByRole('button', { name: '关闭' }).last().click();
+    const tenantForClear = await createSmokeTenant(page, stamp + 101);
+    const deleteTenantForClearResponse = await page.request.delete(`/api/developer/tenants/${tenantForClear.tenantId}`, {
+      headers: authHeaders,
+    });
+    expect(deleteTenantForClearResponse.status()).toBe(200);
+    await page.getByRole('button', { name: /回收站/ }).click();
+    await expect(page.locator('tr', { hasText: tenantForClear.tenantCode })).toBeVisible();
+    const clearRecycleResponsePromise = page.waitForResponse(response =>
+      response.url().includes('/api/developer/tenants/recycle/clear')
+      && response.request().method() === 'DELETE',
+    );
+    await page.getByRole('button', { name: '清空回收站' }).click();
+    const clearRecycleConfirmText = page.getByText('确定要清空回收站吗？所有已删除的企业将被永久删除，此操作不可恢复！');
+    await expect(clearRecycleConfirmText).toBeVisible();
+    await page.getByRole('button', { name: '确认' }).last().click();
+    const clearRecycleResponse = await clearRecycleResponsePromise;
+    const clearRecycleBody = await readJson(clearRecycleResponse);
+    expect(clearRecycleResponse.status(), JSON.stringify(clearRecycleBody)).toBe(200);
+    await expectToast(page, '回收站已清空');
+    await expect(page.locator('tr', { hasText: tenantForClear.tenantCode })).toHaveCount(0);
+
+    const afterClearRecycleResponse = await page.request.get(`/api/developer/tenants?search=${encodeURIComponent(tenantForClear.tenantCode)}&pageSize=10`, {
+      headers: authHeaders,
+    });
+    expect(afterClearRecycleResponse.status()).toBe(200);
+    const afterClearRecycleBody = await readJson(afterClearRecycleResponse);
+    expect((afterClearRecycleBody?.data || []).some((tenant: any) => tenant.id === tenantForClear.tenantId)).toBe(false);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/开发者企业CRUD用户回收站.png',
+      fullPage: true,
+    });
+  });
+
   test('developer can configure tenant modules and independent login through UI', async ({ page }) => {
     test.setTimeout(120_000);
     const stamp = Date.now();

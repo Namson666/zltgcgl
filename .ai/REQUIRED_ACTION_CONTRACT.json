@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "wms_delivery_ocr_export_pushed",
+  "stage": "developer_tenant_crud_users_recycle_bin_verified",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, system announcement lifecycle, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, third-party integration/security/monitoring/logs lifecycle, payments/invoices/storage observability, enterprise subscription plan lifecycle, finance dashboard real-summary data, contract construction progress receipt, contract P&L detail API/UI coverage, WMS material catalog CRUD/export, WMS inbound Excel import/export/delete-preview, WMS delivery order export/OCR upload guard, WMS return Excel import/export/delete-preview, WMS outbound create/export/delete-preview, WMS transfer create/export/delete-preview, and WMS inventory/work-team ledger export net-quantity coverage are covered by real Chrome. S34 covers delivery-order export filtering, UI download, OCR file upload failure protection, and SQLite-safe inbound search. Per the user confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download coverage are complete. Claude CLI was attempted for S34 but hung/no output twice and is recorded as Yellow external-tool evidence.",
+  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, system announcement lifecycle, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, third-party integration/security/monitoring/logs lifecycle, payments/invoices/storage observability, tenant CRUD/users/password/recycle-bin lifecycle, enterprise subscription plan lifecycle, finance dashboard real-summary data, contract construction progress receipt, contract P&L detail API/UI coverage, WMS material catalog CRUD/export, WMS inbound Excel import/export/delete-preview, WMS delivery order export/OCR upload guard, WMS return Excel import/export/delete-preview, WMS outbound create/export/delete-preview, WMS transfer create/export/delete-preview, and WMS inventory/work-team ledger export net-quantity coverage are covered by real Chrome. S35 covers developer-scoped tenant user/role/password APIs, tenant search parameter compatibility, React confirm callbacks, and permanent tenant delete / clear recycle bin dependency cleanup. Per the user confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download coverage are complete. Claude CLI was attempted for S35 but timed out after 90s/60s and is recorded as Yellow external-tool evidence.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,5 +52,5 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-23T11:30:00Z"
+  "updated_at": "2026-06-23T11:55:00Z"
 }

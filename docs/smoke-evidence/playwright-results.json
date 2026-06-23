@@ -108,12 +108,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 16204,
+                      "duration": 16461,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:10:25.974Z",
+                      "startTime": "2026-06-23T11:57:48.002Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -142,12 +142,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2282,
+                      "duration": 2317,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:10:42.556Z",
+                      "startTime": "2026-06-23T11:58:04.903Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -158,6 +158,40 @@
               "id": "5a831c70b3774ee84c9d-e42aafba7f0f51619208",
               "file": "browser-smoke.spec.ts",
               "line": 471,
+              "column": 3
+            },
+            {
+              "title": "developer can manage tenant CRUD users passwords and recycle bin",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome",
+                  "projectName": "chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3672,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-23T11:58:07.227Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5a831c70b3774ee84c9d-109f759809d45371a860",
+              "file": "browser-smoke.spec.ts",
+              "line": 501,
               "column": 3
             },
             {
@@ -176,12 +210,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5299,
+                      "duration": 5487,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:10:44.843Z",
+                      "startTime": "2026-06-23T11:58:10.906Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -191,7 +225,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-41a768a50caf095eb3a0",
               "file": "browser-smoke.spec.ts",
-              "line": 501,
+              "line": 695,
               "column": 3
             },
             {
@@ -210,12 +244,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2231,
+                      "duration": 2264,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:10:50.148Z",
+                      "startTime": "2026-06-23T11:58:16.399Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -225,7 +259,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-a6b712123ab114e8d8f4",
               "file": "browser-smoke.spec.ts",
-              "line": 622,
+              "line": 816,
               "column": 3
             },
             {
@@ -244,12 +278,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2895,
+                      "duration": 2955,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:10:52.385Z",
+                      "startTime": "2026-06-23T11:58:18.668Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -259,7 +293,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-6b295f417ce3fa503d23",
               "file": "browser-smoke.spec.ts",
-              "line": 745,
+              "line": 939,
               "column": 3
             },
             {
@@ -278,12 +312,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2111,
+                      "duration": 2144,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:10:55.286Z",
+                      "startTime": "2026-06-23T11:58:21.628Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -293,7 +327,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-6910caf15ace54f29e4c",
               "file": "browser-smoke.spec.ts",
-              "line": 901,
+              "line": 1095,
               "column": 3
             },
             {
@@ -312,12 +346,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3401,
+                      "duration": 3894,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:10:57.402Z",
+                      "startTime": "2026-06-23T11:58:23.778Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -327,7 +361,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-bdf3e1744d96f461681c",
               "file": "browser-smoke.spec.ts",
-              "line": 1060,
+              "line": 1254,
               "column": 3
             },
             {
@@ -346,12 +380,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3520,
+                      "duration": 3627,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:00.810Z",
+                      "startTime": "2026-06-23T11:58:27.679Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -361,7 +395,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-b6204a8e98df1b5afee3",
               "file": "browser-smoke.spec.ts",
-              "line": 1234,
+              "line": 1428,
               "column": 3
             },
             {
@@ -380,12 +414,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2896,
+                      "duration": 2889,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:04.336Z",
+                      "startTime": "2026-06-23T11:58:31.312Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -395,7 +429,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-772baa6678b80d5b6453",
               "file": "browser-smoke.spec.ts",
-              "line": 1399,
+              "line": 1593,
               "column": 3
             },
             {
@@ -414,12 +448,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2733,
+                      "duration": 2724,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:07.237Z",
+                      "startTime": "2026-06-23T11:58:34.207Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -429,7 +463,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-972a9970228073980a39",
               "file": "browser-smoke.spec.ts",
-              "line": 1552,
+              "line": 1746,
               "column": 3
             },
             {
@@ -448,12 +482,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2786,
+                      "duration": 2832,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:09.976Z",
+                      "startTime": "2026-06-23T11:58:36.936Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -463,7 +497,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-5d839cbb55ba837504d8",
               "file": "browser-smoke.spec.ts",
-              "line": 1622,
+              "line": 1816,
               "column": 3
             },
             {
@@ -482,12 +516,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2175,
+                      "duration": 2229,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:12.767Z",
+                      "startTime": "2026-06-23T11:58:39.773Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -497,7 +531,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-8b19e61c4325347a5029",
               "file": "browser-smoke.spec.ts",
-              "line": 1690,
+              "line": 1884,
               "column": 3
             },
             {
@@ -516,12 +550,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2966,
+                      "duration": 3033,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:14.947Z",
+                      "startTime": "2026-06-23T11:58:42.007Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -531,7 +565,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-a3307d20e17590a01dcc",
               "file": "browser-smoke.spec.ts",
-              "line": 1774,
+              "line": 1968,
               "column": 3
             },
             {
@@ -550,12 +584,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1757,
+                      "duration": 1822,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:17.917Z",
+                      "startTime": "2026-06-23T11:58:45.045Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -565,7 +599,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-651a3405382f6ab65c07",
               "file": "browser-smoke.spec.ts",
-              "line": 1850,
+              "line": 2044,
               "column": 3
             },
             {
@@ -584,12 +618,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2962,
+                      "duration": 2967,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:19.680Z",
+                      "startTime": "2026-06-23T11:58:46.873Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -599,7 +633,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-1a0440d4dd245807a420",
               "file": "browser-smoke.spec.ts",
-              "line": 1942,
+              "line": 2136,
               "column": 3
             },
             {
@@ -618,12 +652,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2305,
+                      "duration": 2246,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:22.647Z",
+                      "startTime": "2026-06-23T11:58:49.845Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -633,7 +667,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-e101ecd08ec54ef14363",
               "file": "browser-smoke.spec.ts",
-              "line": 2047,
+              "line": 2241,
               "column": 3
             },
             {
@@ -652,12 +686,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2334,
+                      "duration": 2410,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:24.957Z",
+                      "startTime": "2026-06-23T11:58:52.096Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -667,7 +701,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-8b706b0b00720acc36c9",
               "file": "browser-smoke.spec.ts",
-              "line": 2137,
+              "line": 2331,
               "column": 3
             },
             {
@@ -686,12 +720,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 4002,
+                      "duration": 4110,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:27.296Z",
+                      "startTime": "2026-06-23T11:58:54.512Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -701,7 +735,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-4d2334d75f8867f657b5",
               "file": "browser-smoke.spec.ts",
-              "line": 2230,
+              "line": 2424,
               "column": 3
             },
             {
@@ -720,12 +754,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5112,
+                      "duration": 5320,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:31.304Z",
+                      "startTime": "2026-06-23T11:58:58.627Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -735,7 +769,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-ec204f12fdc0b0354c07",
               "file": "browser-smoke.spec.ts",
-              "line": 2352,
+              "line": 2546,
               "column": 3
             },
             {
@@ -754,12 +788,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 12209,
+                      "duration": 12181,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:36.421Z",
+                      "startTime": "2026-06-23T11:59:03.953Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -769,7 +803,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-a708450707c59ead7775",
               "file": "browser-smoke.spec.ts",
-              "line": 2448,
+              "line": 2642,
               "column": 3
             },
             {
@@ -788,12 +822,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2807,
+                      "duration": 2871,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:48.635Z",
+                      "startTime": "2026-06-23T11:59:16.139Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -803,7 +837,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-5e144c39020d35cac64c",
               "file": "browser-smoke.spec.ts",
-              "line": 2585,
+              "line": 2779,
               "column": 3
             },
             {
@@ -822,12 +856,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 4956,
+                      "duration": 5213,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:51.448Z",
+                      "startTime": "2026-06-23T11:59:19.015Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -837,7 +871,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-80e002b97269b324e6ef",
               "file": "browser-smoke.spec.ts",
-              "line": 2640,
+              "line": 2834,
               "column": 3
             },
             {
@@ -856,12 +890,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3596,
+                      "duration": 3670,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:11:56.409Z",
+                      "startTime": "2026-06-23T11:59:24.234Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -871,7 +905,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-5d1a97073af28b039a46",
               "file": "browser-smoke.spec.ts",
-              "line": 2785,
+              "line": 2979,
               "column": 3
             },
             {
@@ -890,12 +924,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3459,
+                      "duration": 3525,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:12:00.011Z",
+                      "startTime": "2026-06-23T11:59:27.909Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -905,7 +939,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-35cab1c74bf8c9d124c2",
               "file": "browser-smoke.spec.ts",
-              "line": 2883,
+              "line": 3077,
               "column": 3
             },
             {
@@ -924,12 +958,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1649,
+                      "duration": 1667,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:12:03.475Z",
+                      "startTime": "2026-06-23T11:59:31.440Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -939,7 +973,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-a87bd110807db0d33e96",
               "file": "browser-smoke.spec.ts",
-              "line": 2978,
+              "line": 3172,
               "column": 3
             },
             {
@@ -958,12 +992,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 7015,
+                      "duration": 7058,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:12:05.129Z",
+                      "startTime": "2026-06-23T11:59:33.112Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -973,7 +1007,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-2cc91b6665f8e431bd97",
               "file": "browser-smoke.spec.ts",
-              "line": 3089,
+              "line": 3283,
               "column": 3
             },
             {
@@ -992,12 +1026,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5342,
+                      "duration": 5363,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:12:12.150Z",
+                      "startTime": "2026-06-23T11:59:40.175Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1007,7 +1041,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-ae2763adf3ddf8de084e",
               "file": "browser-smoke.spec.ts",
-              "line": 3256,
+              "line": 3450,
               "column": 3
             },
             {
@@ -1026,12 +1060,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 32377,
+                      "duration": 32156,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:12:17.497Z",
+                      "startTime": "2026-06-23T11:59:45.543Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1041,7 +1075,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-e982e543af9213ddde17",
               "file": "browser-smoke.spec.ts",
-              "line": 3401,
+              "line": 3595,
               "column": 3
             },
             {
@@ -1060,12 +1094,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 15773,
+                      "duration": 15809,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:12:49.880Z",
+                      "startTime": "2026-06-23T12:00:17.705Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1075,7 +1109,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-d05a0faf5f199fe198ee",
               "file": "browser-smoke.spec.ts",
-              "line": 3408,
+              "line": 3602,
               "column": 3
             },
             {
@@ -1094,12 +1128,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3081,
+                      "duration": 3162,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-23T11:13:05.658Z",
+                      "startTime": "2026-06-23T12:00:33.520Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1109,7 +1143,7 @@
               ],
               "id": "5a831c70b3774ee84c9d-ebfd38f616fe9a7384f8",
               "file": "browser-smoke.spec.ts",
-              "line": 3415,
+              "line": 3609,
               "column": 3
             }
           ]
@@ -1119,9 +1153,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-06-23T11:10:22.675Z",
-    "duration": 166438.568,
-    "expected": 30,
+    "startTime": "2026-06-23T11:57:44.653Z",
+    "duration": 172423.49,
+    "expected": 31,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
