@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_after_face_provider_diagnostic_verification",
+    "working_tree": "dirty_after_face_provider_diagnostic_push",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "face_provider_diagnostic_pending_push",
-    "pushed_commit": "edeebfe chore: clarify labor legacy output value status marker",
-    "last_pushed_commit": "edeebfe"
+    "push_status": "face_provider_diagnostic_pushed",
+    "pushed_commit": "f0fc53d feat: add face provider diagnostic check",
+    "last_pushed_commit": "f0fc53d"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "face_provider_diagnostic_pending_push",
+    "push_status": "face_provider_diagnostic_pushed",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "edeebfe chore: clarify labor legacy output value status marker"
+    "pushed_commit": "f0fc53d feat: add face provider diagnostic check"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,13 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "face_provider_diagnostic_verified",
-  "updated_at": "2026-06-23T17:49:40Z",
-  "push_status": "face_provider_diagnostic_pending_push",
-  "last_pushed_commit": "edeebfe",
-  "current_commit": "edeebfe chore: clarify labor legacy output value status marker",
+  "status": "face_provider_diagnostic_pushed",
+  "updated_at": "2026-06-23T17:54:20Z",
+  "push_status": "face_provider_diagnostic_pushed",
+  "last_pushed_commit": "f0fc53d",
+  "current_commit": "f0fc53d feat: add face provider diagnostic check",
   "notes": [
-    "2026-06-24: S50 face provider diagnostic verified locally: backend diagnostic helper and authenticated attendance route added; labor attendance UI can detect HTTP/cloud gateway readiness without exposing endpoint or API key; real Chrome checks HTTP not_configured and stub ready states. Focused backend face-provider tests 12/12, frontend API tests 2/2, focused Chrome labor attendance diagnostic 1/1, verify backend 60 + frontend 38 + builds, full Chrome 36/36, code-review-graph risk 0.50 with integration coverage noted, Claude audit and final re-audit PASS. Pending commit/push.",
+    "2026-06-24: S50 face provider diagnostic pushed at f0fc53d: backend diagnostic helper and authenticated attendance route added; labor attendance UI can detect HTTP/cloud gateway readiness without exposing endpoint or API key; real Chrome checks HTTP not_configured and stub ready states. Focused backend face-provider tests 12/12, frontend API tests 2/2, focused Chrome labor attendance diagnostic 1/1, verify backend 60 + frontend 38 + builds, full Chrome 36/36, code-review-graph risk 0.50 with integration coverage noted, Claude audit and final re-audit PASS.",
     "2026-06-24: S49 labor legacy subcontract output-value/progress-payment API chain verified locally and pushed at e32fef9; status marker pushed at ad26360; frontend wrapper path fixed to /labor/output-value/payments, Vitest API wrapper 1/1, focused real Chrome API chain 1/1, verify backend 57 + frontend 37 + builds, full Chrome 36/36, code-review-graph risk 0.50 / 0 test gaps, Claude audit and re-audit PASS.",
     "2026-06-24: S48 labor report all frontend types verified locally and pushed at e0d146c; status marker pushed at 7b8420c; salary/social/payment/attendance each selected in real Chrome, xlsx sheet names parsed, UI downloads checked, focused 1/1, verify, full Chrome 35/35, code-review-graph risk 0.50, Claude audit PASS.",
     "2026-06-24: S47 labor report typed export pushed at eb8ee97; follow-up status marker pushed at e98e23a.",
@@ -81,8 +81,8 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S50_face_provider_diagnostic_verified",
-  "current_task": "Commit and push face provider diagnostic readiness check; continue production DNS/cert and real third-party face gateway credential validation after push.",
+  "current_phase": "S50_face_provider_diagnostic_pushed",
+  "current_task": "Continue production DNS/cert and real third-party face gateway credential validation or next historical deep CRUD/upload/download slice.",
   "last_verified_at": "2026-06-23T17:49:40Z",
   "last_verified_command": "backend face-provider focused 12/12; frontend API focused 2/2; focused Chrome labor attendance diagnostic 1/1; bash scripts/verify.sh backend 60 frontend 38 build; bash scripts/browser-smoke.sh 36/36; code-review-graph risk 0.50 with UI/helper gaps covered by backend/API/Chrome evidence; Claude CLI audit and final re-audit PASS",
   "history": [

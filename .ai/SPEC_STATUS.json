@@ -1,9 +1,9 @@
 {
-  "stage": "S50_face_provider_diagnostic_verified",
+  "stage": "S50_face_provider_diagnostic_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "S50 face provider diagnostic is verified: backend exposes an authenticated canManageAttendance diagnostic route for HTTP/cloud face-recognition readiness, returns only booleans and normalized tuning values without endpoint/API-key disclosure, and the labor attendance UI can click 检测人脸网关 to show HTTP not_configured versus stub ready states. Focused backend face-provider tests passed 12/12, frontend API wrapper tests passed 2/2, focused real Chrome labor attendance diagnostic passed 1/1, verify passed with backend 60 tests/build and frontend 38 tests/build, full Chrome smoke passed 36/36, code-review-graph risk 0.50 with UI/helper gaps covered by backend/API/Chrome evidence, Claude audit and final re-audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered.",
-  "updated_at": "2026-06-23T17:49:40Z"
+  "notes": "S50 face provider diagnostic is verified and pushed at f0fc53d: backend exposes an authenticated canManageAttendance diagnostic route for HTTP/cloud face-recognition readiness, returns only booleans and normalized tuning values without endpoint/API-key disclosure, and the labor attendance UI can click 检测人脸网关 to show HTTP not_configured versus stub ready states. Focused backend face-provider tests passed 12/12, frontend API wrapper tests passed 2/2, focused real Chrome labor attendance diagnostic passed 1/1, verify passed with backend 60 tests/build and frontend 38 tests/build, full Chrome smoke passed 36/36, code-review-graph risk 0.50 with UI/helper gaps covered by backend/API/Chrome evidence, Claude audit and final re-audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered.",
+  "updated_at": "2026-06-23T17:54:20Z"
 }
