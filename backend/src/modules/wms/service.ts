@@ -1172,7 +1172,7 @@ export interface ReturnListParams {
 export async function listReturnOrders(params: ReturnListParams) {
   const { tenantId, subProjectId, workTeamId, startDate, endDate, page, pageSize } = params;
   const skip = (page - 1) * pageSize;
-  const where: any = { tenantId };
+  const where: any = { tenantId, isActive: true };
   if (subProjectId) where.subProjectId = subProjectId;
   if (workTeamId) where.workTeamId = workTeamId;
   if (startDate || endDate) {

@@ -1083,6 +1083,12 @@ export const wmsApi = {
    */
   uploadReturnExcel: (formData: FormData) =>
     http.post('/wms/returns/excel', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+
+  /**
+   * 导出退库记录
+   */
+  exportReturns: (params?: any) =>
+    http.get('/wms/returns/export', params || {}, { responseType: 'blob' }),
 };
 
 /* ========================================

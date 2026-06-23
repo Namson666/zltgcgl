@@ -80,6 +80,7 @@ const Returns: React.FC = () => {
   const [remark, setRemark] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const loadData = async () => {
@@ -126,6 +127,19 @@ const Returns: React.FC = () => {
     } catch (err: any) {
       toast.error(err.response?.data?.message || '删除失败');
     } finally { setDeleting(false); }
+  };
+
+  const handleExportReturns = async () => {
+    setExporting(true);
+    try {
+      const res = await wmsApi.exportReturns();
+      downloadBlob(res.data as Blob, '退库记录.xlsx');
+      toast.success('退库记录已导出');
+    } catch {
+      toast.error('导出退库记录失败');
+    } finally {
+      setExporting(false);
+    }
   };
 
   // ── 打开退库操作 ──
@@ -212,9 +226,14 @@ const Returns: React.FC = () => {
           <h1 className="page-title">退库管理</h1>
           <p className="page-subtitle">物资退库登记与查询，支持从出库记录退库和 Excel 批量退库</p>
         </div>
-        <button className="btn-primary" onClick={openCreate}>
-          <Plus size={16} /> 新增退库
-        </button>
+        <div className="flex gap-2">
+          <button className="btn-secondary" onClick={handleExportReturns} disabled={exporting}>
+            <Download size={16} /> {exporting ? '导出中...' : '导出退库记录'}
+          </button>
+          <button className="btn-primary" onClick={openCreate}>
+            <Plus size={16} /> 新增退库
+          </button>
+        </div>
       </div>
 
       {/* 搜索 */}

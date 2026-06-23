@@ -1847,6 +1847,111 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can import and export wms return records with cascade delete preview', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+
+    const departmentsResponse = await page.request.get('/api/departments?pageSize=100', { headers: authHeaders });
+    expect(departmentsResponse.status()).toBe(200);
+    const departmentsBody = await readJson(departmentsResponse);
+    const department = (departmentsBody?.data || []).find((item: any) => item.name === '第一项目部') || (departmentsBody?.data || [])[0];
+    expect(department?.id).toBeTruthy();
+
+    const subProjectsResponse = await page.request.get(`/api/departments/${department.id}/sub-projects`, { headers: authHeaders });
+    expect(subProjectsResponse.status()).toBe(200);
+    const subProjectsBody = await readJson(subProjectsResponse);
+    let subProject = (subProjectsBody?.data || []).find((item: any) => item.name === '1号楼');
+    if (!subProject) {
+      const createSubProjectResponse = await page.request.post(`/api/departments/${department.id}/sub-projects`, {
+        headers: authHeaders,
+        data: { name: '1号楼', code: `RET-${Date.now()}`, description: '退库 Excel 浏览器验收子项目' },
+      });
+      expect(createSubProjectResponse.status()).toBe(201);
+      const createSubProjectBody = await readJson(createSubProjectResponse);
+      subProject = createSubProjectBody?.data;
+    }
+    expect(subProject?.id).toBeTruthy();
+
+    const materialName = '举例：水泥42.5';
+    const existingMaterialResponse = await page.request.get(`/api/wms/materials?name=${encodeURIComponent(materialName)}`, {
+      headers: authHeaders,
+    });
+    expect(existingMaterialResponse.status()).toBe(200);
+    const existingMaterialBody = await readJson(existingMaterialResponse);
+    if (!(existingMaterialBody?.data || []).some((item: any) => item.name === materialName)) {
+      const createMaterialResponse = await page.request.post('/api/wms/materials', {
+        headers: authHeaders,
+        data: { name: materialName, unit: '吨', unitPrice: 350, category: '退库测试材料' },
+      });
+      expect(createMaterialResponse.status()).toBe(201);
+    }
+
+    await page.goto('/wms/returns');
+    await expect(page.getByRole('heading', { name: '退库管理' })).toBeVisible();
+    await page.getByRole('button', { name: '新增退库' }).click();
+    await page.locator('select').filter({ hasText: '请选择子项目' }).selectOption(subProject.id);
+    await page.getByText('Excel 退库').click();
+    await page.locator('input[type="date"]').last().fill('2026-06-23');
+
+    const templateDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '下载退库模板' }).click();
+    const templateDownload = await templateDownloadPromise;
+    expect(templateDownload.suggestedFilename()).toMatch(/^(退库模板|return_template)\.xlsx$/);
+    const templatePath = await templateDownload.path();
+    expect(templatePath).toBeTruthy();
+
+    await page.locator('input[type="file"][accept=".xlsx,.xls"]').setInputFiles(templatePath!);
+    await expect(page.getByRole('button', { name: '开始退库' })).toBeEnabled();
+    await page.getByRole('button', { name: '开始退库' }).click();
+    await expectToast(page, 'Excel 退库成功！');
+
+    const importedResponse = await page.request.get(`/api/wms/returns?subProjectId=${subProject.id}&pageSize=10`, {
+      headers: authHeaders,
+    });
+    expect(importedResponse.status()).toBe(200);
+    const importedBody = await readJson(importedResponse);
+    const importedReturn = (importedBody?.data || []).find((order: any) =>
+      order.source === 'excel'
+      && order.subProjectId === subProject.id
+      && (order.items || []).some((item: any) => (item.material?.name || item.materialName) === materialName)
+    );
+    expect(importedReturn?.id).toBeTruthy();
+    expect(importedReturn?.orderNo).toBeTruthy();
+
+    await page.goto('/wms/returns');
+    await expect(page.locator('tr', { hasText: importedReturn.orderNo })).toBeVisible();
+    const returnExportPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出退库记录' }).click();
+    expect((await returnExportPromise).suggestedFilename()).toBe('退库记录.xlsx');
+    await expectToast(page, '退库记录已导出');
+
+    const rowForDelete = page.locator('tr', { hasText: importedReturn.orderNo });
+    await rowForDelete.getByTitle('删除').click();
+    await expect(page.getByRole('heading', { name: '确认删除退库单' })).toBeVisible();
+    const deleteDialog = page.locator('.fixed').filter({ hasText: '确认删除退库单' }).last();
+    await expect(deleteDialog.getByText(importedReturn.orderNo)).toBeVisible();
+    await expect(deleteDialog.getByText('库存影响（将扣回以下库存）')).toBeVisible();
+    await expect(deleteDialog.getByText(materialName)).toBeVisible();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expectToast(page, '退库单已删除，可在回收站恢复');
+    await expect(page.locator('tr', { hasText: importedReturn.orderNo })).toHaveCount(0);
+
+    const afterDeleteResponse = await page.request.get(`/api/wms/returns?subProjectId=${subProject.id}&pageSize=20`, {
+      headers: authHeaders,
+    });
+    expect(afterDeleteResponse.status()).toBe(200);
+    const afterDeleteBody = await readJson(afterDeleteResponse);
+    expect((afterDeleteBody?.data || []).some((order: any) => order.id === importedReturn.id)).toBe(false);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/退库导入导出删除预览.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can complete wms inbound outbound return transfer chain', async ({ page }) => {
     test.setTimeout(150_000);
     await loginEnterprise(page);

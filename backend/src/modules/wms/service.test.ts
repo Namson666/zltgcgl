@@ -26,6 +26,10 @@ const { prismaMock } = vi.hoisted(() => ({
       create: vi.fn(),
       update: vi.fn(),
     },
+    returnOrder: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -34,7 +38,7 @@ vi.mock('../../common/utils/prisma', () => ({
   prisma: prismaMock,
 }));
 
-import { createExcelInbound, deleteMaterial, listMaterials, updateMaterial } from './service';
+import { createExcelInbound, deleteMaterial, listMaterials, listReturnOrders, updateMaterial } from './service';
 
 describe('wms material service tenant safeguards', () => {
   beforeEach(() => {
@@ -146,6 +150,29 @@ describe('wms material service tenant safeguards', () => {
         projectName: '1号楼',
         quantity: 10,
       }),
+    });
+  });
+
+  it('lists only active return orders', async () => {
+    prismaMock.returnOrder.findMany.mockResolvedValue([]);
+    prismaMock.returnOrder.count.mockResolvedValue(0);
+
+    await listReturnOrders({
+      tenantId: 'tenant-1',
+      subProjectId: 'sub-project-1',
+      page: 1,
+      pageSize: 20,
+    });
+
+    expect(prismaMock.returnOrder.findMany).toHaveBeenCalledWith({
+      where: { tenantId: 'tenant-1', isActive: true, subProjectId: 'sub-project-1' },
+      skip: 0,
+      take: 20,
+      orderBy: { createdAt: 'desc' },
+      include: { subProject: true, items: { include: { material: true } } },
+    });
+    expect(prismaMock.returnOrder.count).toHaveBeenCalledWith({
+      where: { tenantId: 'tenant-1', isActive: true, subProjectId: 'sub-project-1' },
     });
   });
 });

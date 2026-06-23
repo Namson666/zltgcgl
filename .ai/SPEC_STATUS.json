@@ -1,9 +1,9 @@
 {
-  "stage": "S29_wms_inbound_import_export_pushed",
+  "stage": "S30_wms_return_import_export_verified_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "WMS inbound Excel import/export/delete-preview now has real Chrome API/UI coverage: the browser downloads the inbound template, uploads it back for Excel import, verifies supplier/department/sub-project/inventory association by API, exports inbound records, previews cascade inventory impact, deletes the inbound order, and verifies it is absent from the active API list. Full Chrome smoke is 25/25. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T10:00:00Z"
+  "notes": "WMS return Excel import/export/delete-preview now has real Chrome API/UI coverage: the browser downloads the return template, uploads it back for Excel import, verifies the return order by API, exports return records, previews cascade inventory impact, deletes the return order, and verifies it is absent from the active API list. Backend return list/export now filters active return orders only. Full Chrome smoke is 26/26. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T10:10:00Z"
 }
