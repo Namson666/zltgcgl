@@ -1,9 +1,9 @@
 {
-  "stage": "S27_contract_pnl_detail_verified_pending_push",
+  "stage": "S27_contract_pnl_detail_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
   "notes": "Contract P&L detail page now has real Chrome API/UI coverage: invoice and linked receipt are created, backend P&L totals are read, list and detail page UI amounts are checked, and import/export cleanup remains covered. Full Chrome smoke remains 23/23. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T09:20:00Z"
+  "updated_at": "2026-06-23T09:25:00Z"
 }
