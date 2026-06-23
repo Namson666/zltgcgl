@@ -1,0 +1,3 @@
+Compacted by Codex: original Claude worker diff snapshot was a large generated artifact (~13MB).
+The authoritative reviewed diff is the repository git diff for S47 labor report typed export after adding the no-type legacy compatibility assertion.
+See .ai/workers/20260623T165248Z-audit_worker.result.md and stdout.log for the final audit result.

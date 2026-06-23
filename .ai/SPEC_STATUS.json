@@ -1,9 +1,9 @@
 {
-  "stage": "S46_tenant_portal_logo_upload_verified",
+  "stage": "S47_labor_report_type_export_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Tenant independent login Logo upload is verified in real Chrome: developer-scoped portal logo upload now supports PNG/JPG/WebP only, 2MB max, returns /uploads/portal-logo-* and logs tenant_portal upload; developer UI uploads a real PNG, auto-fills logoUrl, shows preview, saves portal config, API reads back logoUrl, and the independent login page renders the uploaded image. Focused Chrome 1/1 passed, verify final run passed with backend 57 tests and frontend 36 tests/build, full Chrome smoke passed 35/35, code-review-graph risk 0.50, Claude re-audit PASS after SVG risk removal. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered.",
-  "updated_at": "2026-06-23T16:34:35Z"
+  "notes": "S47 labor report typed export is verified in real Chrome: /api/labor/reports/export now respects type=payment/attendance/social/salary/arrears/anomaly and returns a single matching worksheet, rejects unknown type with INVALID_REPORT_TYPE, and keeps no-type legacy four-sheet export compatible. Real Chrome validates payment and attendance UI preview/download filenames, parses backend xlsx sheet names for payment, attendance, invalid type, and no-type legacy export. Focused Chrome 1/1 passed, verify passed with backend 57 tests/build and frontend 36 tests/build, full Chrome smoke passed 35/35, code-review-graph risk 0.50, Claude final audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered.",
+  "updated_at": "2026-06-23T16:54:22Z"
 }

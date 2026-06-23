@@ -1,0 +1,40 @@
+Frontend `api/index.ts:1454` passes `type: reportType` to the export call, so the wire is wired up. I have everything I need for the audit.
+
+---
+
+# S47 Labor Report Export Type Audit
+
+**Verdict: PASS** (with one minor yellow follow-up)
+
+## Acceptance behavior — implementation check
+
+| Required behavior | Status | Evidence |
+|---|---|---|
+| 1. `type=payment` → single sheet `工资发放明细表` | Implemented & covered | `routes.ts:988-989` calls `getReportPreview({type:'payment'})` → `getPaymentData`, then `addJsonWorksheet(workbook, reportSheetLabels.payment)`. `browser-smoke.spec.ts:3500-3503` parses the response with ExcelJS and asserts `['工资发放明细表']`. |
+| 2. `type=attendance` → single sheet `月度考勤汇总表` | Implemented & covered | Symmetric to payment. `service.ts:1679` maps `attendance` → `getAttendanceReportData`. `routes.ts:989` resolves to `reportSheetLabels.attendance`. `browser-smoke.spec.ts:3510-3513` asserts `['月度考勤汇总表']`. |
+| 3. Unknown type → 400 `INVALID_REPORT_TYPE` | Implemented & covered | `routes.ts:984-986` returns the exact error code. `browser-smoke.spec.ts:3518-3522` exercises `type=unknown` and asserts status 400 + `error === 'INVALID_REPORT_TYPE'`. |
+| 4. Missing `type` → backward-compatible multi-sheet | Implemented (regression risk = low) | `routes.ts:990-996` keeps the original 4-sheet branch with the legacy `工资发放记录表` label preserved. Not explicitly re-tested in this diff, but verify.sh and browser-smoke 35/35 both pass, exercising other paths. |
+| 5. Auth + `canManageReport` unchanged | Confirmed | `routes.ts:968` middleware chain untouched. |
+| 6. Real Chrome parses xlsx with backend ExcelJS | Implemented & executed | `browser-smoke.spec.ts:4-7` resolves `backend/node_modules/exceljs`; `workbookSheetNames` helper at line 103-107 loads the response body and returns `worksheets.map(s => s.name)`. Verified ExcelJS is installed at the path the helper resolves to. |
+
+## Diff observations
+
+- `reportSheetLabels` table is defined once at the top of `routes.ts:28-35` and reused for both branches — single source of truth for sheet names.
+- `getReportPreview` in `service.ts:1675-1686` is the existing per-type dispatcher (already supports salary/attendance/payment/social/arrears/anomaly). The change simply routes the export endpoint through it when `type` is present.
+- Filename now appends `–<sheet label>` only when `type` is set, otherwise unchanged. Test asserts `suggestedFilename()` matches the new convention (`${month}-工资发放明细表.xlsx`).
+- Frontend `api/index.ts:1454` already passes `type: reportType`, so no frontend wiring gap.
+
+## Test gap from `code-review-graph` (resolved)
+
+The earlier risk noted `workbookSheetNames` was a new helper not yet exercised. The current diff **does** exercise it: lines 3503, 3513, and 3518 all call it on real Chrome downloads/API responses against the live backend. The risk 0.50 from `detect-changes` is now mitigated.
+
+## Yellow / follow-ups (non-blocking)
+
+1. **`type=payment` test asserts `recipientName` visible on preview, then proceeds** — fine, but note that `attendance` then asserts `recipientName` has count 0 (line 3512). This is a deliberate cross-check that the two report types render different rows. Solid.
+2. **Filename `encodeURIComponent` for headers with Chinese** — `routes.ts:1010` uses `encodeURIComponent`, which is correct for HTTP header values containing CJK. Confirmed compatible with the test's `suggestedFilename()` (Playwright decodes it back to the visible filename).
+3. **No explicit regression test for the missing-`type` path** in the new diff. The legacy 4-sheet branch is still reached only by callers that don't send `type`. Recommend adding one targeted assertion in a follow-up to lock down the backward-compat contract.
+4. **Sheet name typo risk for `payment`** — legacy branch at `routes.ts:995` still uses the old label `工资发放记录表` (not the new `工资发放明细表`). This is intentional for the no-type backward-compat path and matches the historical Excel; no action needed unless product wants full re-labeling.
+
+## Verdict
+
+The change is **correct, minimal, and covered by real-browser evidence**. The workbook-content/filename disagreement is eliminated for `payment` and `attendance`; the unknown-type guard and backward-compat path are both handled. No blockers; ship it.

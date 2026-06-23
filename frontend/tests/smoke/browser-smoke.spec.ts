@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const ExcelJS = require(path.resolve(process.cwd(), '../backend/node_modules/exceljs'));
 
 const enterpriseAccount = {
   tenantCode: 'demo',
@@ -94,6 +98,12 @@ async function readJson(response: any) {
 
 async function expectToast(page: any, text: string | RegExp) {
   await expect(page.locator('[role="status"]').filter({ hasText: text }).first()).toBeVisible();
+}
+
+async function workbookSheetNames(response: any): Promise<string[]> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await response.body());
+  return workbook.worksheets.map((sheet: any) => sheet.name);
 }
 
 const formatSmokeMoney = (value: number) => `¥${value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -3487,10 +3497,48 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await page.locator('select').nth(1).selectOption('payment');
     await expect(page.getByText(new RegExp(`${month} 工资发放明细表`))).toBeVisible();
     await expect(page.getByText(recipientName)).toBeVisible({ timeout: 10000 });
+    const paymentExportResponse = await page.request.get(`/api/labor/reports/export?months=${month}&type=payment`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(paymentExportResponse.status()).toBe(200);
+    expect(await workbookSheetNames(paymentExportResponse)).toEqual(['工资发放明细表']);
     const reportDownloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: /导出 Excel/ }).click();
     const reportDownload = await reportDownloadPromise;
     expect(reportDownload.suggestedFilename()).toBe(`${month}-工资发放明细表.xlsx`);
+    await expectToast(page, '报表导出成功');
+
+    await page.locator('select').nth(1).selectOption('attendance');
+    await expect(page.getByText(new RegExp(`${month} 月度考勤汇总表`))).toBeVisible();
+    await expect(page.getByText(recipientName)).toHaveCount(0);
+    const attendanceExportResponse = await page.request.get(`/api/labor/reports/export?months=${month}&type=attendance`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(attendanceExportResponse.status()).toBe(200);
+    expect(await workbookSheetNames(attendanceExportResponse)).toEqual(['月度考勤汇总表']);
+    const attendanceDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /导出 Excel/ }).click();
+    const attendanceDownload = await attendanceDownloadPromise;
+    expect(attendanceDownload.suggestedFilename()).toBe(`${month}-月度考勤汇总表.xlsx`);
+    await expectToast(page, '报表导出成功');
+
+    const invalidReportResponse = await page.request.get(`/api/labor/reports/export?months=${month}&type=unknown`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(invalidReportResponse.status()).toBe(400);
+    const invalidReportBody = await readJson(invalidReportResponse);
+    expect(invalidReportBody?.error).toBe('INVALID_REPORT_TYPE');
+
+    const legacyAllReportResponse = await page.request.get(`/api/labor/reports/export?months=${month}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(legacyAllReportResponse.status()).toBe(200);
+    expect(await workbookSheetNames(legacyAllReportResponse)).toEqual([
+      '月度工资汇总表',
+      '欠薪统计表',
+      '异常人员明细表',
+      '工资发放记录表',
+    ]);
 
     await page.screenshot({
       path: '../docs/smoke-evidence/劳资工资发放导出.png',

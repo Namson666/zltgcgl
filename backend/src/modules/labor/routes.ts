@@ -25,6 +25,15 @@ import * as laborService from './service';
 
 const router = Router();
 
+const reportSheetLabels: Record<string, string> = {
+  salary: '月度工资汇总表',
+  attendance: '月度考勤汇总表',
+  payment: '工资发放明细表',
+  social: '社保缴纳明细表',
+  arrears: '欠薪统计表',
+  anomaly: '异常人员明细表',
+};
+
 function addJsonWorksheet(workbook: ExcelJS.Workbook, name: string, rows: Record<string, any>[] = []) {
   const worksheet = workbook.addWorksheet(name);
   const keys = [...new Set(rows.flatMap(row => Object.keys(row || {})))];
@@ -959,7 +968,7 @@ reportRouter.get('/dashboard-stats', authenticate, requireUser, requirePermissio
 reportRouter.get('/export', authenticate, requireUser, requirePermission('canManageReport'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const tenantId = req.user!.tenantId!;
-    const { months, departmentId, filename } = req.query as any;
+    const { months, departmentId, filename, type } = req.query as any;
     const monthList: string[] = months ? months.split(',').filter(Boolean) : [];
 
     if (!monthList.length) {
@@ -967,23 +976,33 @@ reportRouter.get('/export', authenticate, requireUser, requirePermission('canMan
       return;
     }
 
-    const [salaryData, arrearsData, anomalyData, paymentData] = await laborService.getReportExportData(tenantId, monthList, departmentId);
-
     const workbook = new ExcelJS.Workbook();
     workbook.creator = '资料通工程管理系统';
     workbook.created = new Date();
-    addJsonWorksheet(workbook, '月度工资汇总表', salaryData);
-    addJsonWorksheet(workbook, '欠薪统计表', arrearsData);
-    addJsonWorksheet(workbook, '异常人员明细表', anomalyData);
-    addJsonWorksheet(workbook, '工资发放记录表', paymentData);
+
+    if (type) {
+      if (!reportSheetLabels[type]) {
+        res.status(400).json({ success: false, error: 'INVALID_REPORT_TYPE', message: '不支持的报表类型' } as ApiResponse);
+        return;
+      }
+      const rows = await laborService.getReportPreview({ tenantId, months: monthList, type, departmentId });
+      addJsonWorksheet(workbook, reportSheetLabels[type], rows);
+    } else {
+      const [salaryData, arrearsData, anomalyData, paymentData] = await laborService.getReportExportData(tenantId, monthList, departmentId);
+      addJsonWorksheet(workbook, reportSheetLabels.salary, salaryData);
+      addJsonWorksheet(workbook, reportSheetLabels.arrears, arrearsData);
+      addJsonWorksheet(workbook, reportSheetLabels.anomaly, anomalyData);
+      addJsonWorksheet(workbook, '工资发放记录表', paymentData);
+    }
 
     const sorted = [...monthList].sort();
     let exportName = filename;
     if (!exportName) {
       const fmtMonth = (m: string) => m.replace('-', '.').replace(/\.0/, '.');
-      exportName = sorted.length === 1
+      const monthName = sorted.length === 1
         ? `${fmtMonth(sorted[0])}劳资报表`
         : `${fmtMonth(sorted[0])}~${fmtMonth(sorted[sorted.length - 1])}劳资报表`;
+      exportName = type && reportSheetLabels[type] ? `${monthName}-${reportSheetLabels[type]}` : monthName;
     }
 
     const buf = await workbook.xlsx.writeBuffer();
