@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "github_actions_ci_verified_pending_push",
+  "stage": "ci_npm10_lockfile_fix_verified_pending_push",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -52,9 +52,9 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-23T22:21:40Z",
-  "current_phase": "S53_github_actions_ci_verified_pending_push",
-  "current_task": "Push verified GitHub Actions CI gate and inspect remote CI run.",
+  "updated_at": "2026-06-23T22:29:30Z",
+  "current_phase": "S54_ci_npm10_lockfile_fix_verified_pending_push",
+  "current_task": "Push npm10-compatible backend lockfile fix and inspect remote CI run.",
   "last_completed": "S51 production readiness self-check verified and pushed at 24db3cc: developer-only readiness API/UI, missing migration table warning, portal/mini-program/module/face gateway checks, verify.sh, full Chrome 36/36, code-review-graph, and Claude audit passed.",
-  "next_action": "Push S53; inspect GitHub Actions run. Product Green still requires running scripts/production-smoke.mjs against real production URL/DNS/cert and third-party face gateway credentials."
+  "next_action": "Push S54; inspect GitHub Actions run. Product Green still requires running scripts/production-smoke.mjs against real production URL/DNS/cert and third-party face gateway credentials."
 }

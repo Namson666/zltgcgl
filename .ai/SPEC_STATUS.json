@@ -1,9 +1,9 @@
 {
-  "stage": "S53_github_actions_ci_verified_pending_push",
+  "stage": "S54_ci_npm10_lockfile_fix_verified_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "S53 GitHub Actions CI gate is locally verified and pending push. .github/workflows/ci.yml has verify and browser-smoke jobs: npm ci for backend/frontend, production-smoke syntax and missing-target honesty check, scripts/verify.sh, sqlite3 + Chrome setup, scripts/browser-smoke.sh, and smoke-evidence artifact upload. Evidence: local YAML parse passed; verify.sh passed backend 61 + frontend 38 + builds; real Chrome browser-smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. CI Green remains not_verified until the pushed workflow runs successfully on GitHub. Inventory alert / 库存预警 remains out of scope and must not be restored. Product Green remains Yellow until real production DNS/reverse-proxy/certificates and real third-party face gateway credentials are verified.",
-  "updated_at": "2026-06-23T22:21:40Z"
+  "notes": "S54 fixes the first remote GitHub Actions run failure. Run 28061042978 failed in backend npm ci under npm 10.8.2 due backend package-lock metadata drift. The fix refreshes backend/package-lock.json with npx npm@10.8.2 install --package-lock-only. Evidence: clean temp npx npm@10.8.2 ci passed using refreshed lockfile; verify.sh passed backend 61 + frontend 38 + builds; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. CI Green remains not_verified until the pushed workflow runs successfully on GitHub. Inventory alert / 库存预警 remains out of scope and must not be restored. Product Green remains Yellow until real production DNS/reverse-proxy/certificates and real third-party face gateway credentials are verified.",
+  "updated_at": "2026-06-23T22:29:30Z"
 }
