@@ -1,9 +1,9 @@
 {
-  "stage": "S33_wms_inventory_ledger_export_pushed",
+  "stage": "S34_wms_delivery_ocr_export_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "WMS inventory/work-team ledger export and net-quantity coverage now has real Chrome API/UI evidence: browser creates inbound 10, outbound 4, return 1, verifies active inventory quantity 7, work-team ledger net quantity 3 and returned quantity 1, and downloads inventory summary, outbound inventory, and work-team ledger Excel files. Backend inventory export reuses active stock filters, inventory/outbound search uses SQLite-safe contains, work-team ledger list/export only count active outbound and active return orders. Full Chrome smoke is 29/29. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T11:05:00Z"
+  "notes": "WMS delivery-order export and OCR upload guard now have real Chrome API/UI evidence: browser creates a delivery order through the real API, verifies delivery list read-back, clicks the Inbound page 导出送货单 button to download 送货单.xlsx, and uploads a real PNG through the OCR file chooser to verify failure handling. Backend delivery export reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date; inbound order/material filters are SQLite-safe. Full Chrome smoke is 30/30. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Claude CLI audit was attempted twice but hung/no output and was interrupted; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T11:20:00Z"
 }

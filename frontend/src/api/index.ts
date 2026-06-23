@@ -863,6 +863,12 @@ export const wmsApi = {
     http.post('/wms/delivery-orders', data),
 
   /**
+   * 导出送货单记录
+   */
+  exportDeliveryOrders: (params?: any) =>
+    http.get('/wms/delivery-orders/export', params || {}, { responseType: 'blob' }),
+
+  /**
    * 获取入库记录列表
    * @param params - 分页参数
    * @returns 分页的入库记录

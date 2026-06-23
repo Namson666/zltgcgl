@@ -12,7 +12,14 @@ const { prismaMock } = vi.hoisted(() => ({
     },
     inboundOrder: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
       create: vi.fn(),
+    },
+    deliveryOrder: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
     },
     inboundItem: {
       findMany: vi.fn(),
@@ -62,7 +69,7 @@ vi.mock('../../common/utils/prisma', () => ({
   prisma: prismaMock,
 }));
 
-import { createExcelInbound, createTransfer, deleteMaterial, getInventoryExportData, getOutboundExportData, getTransferExportData, getWorkTeamLedgerExportData, listInventory, listMaterials, listReturnOrders, listTransferOrders, listWorkTeamLedger, updateMaterial } from './service';
+import { createExcelInbound, createTransfer, deleteMaterial, getDeliveryOrderExportData, getInventoryExportData, getOutboundExportData, getTransferExportData, getWorkTeamLedgerExportData, listDeliveryOrders, listInboundOrders, listInventory, listMaterials, listReturnOrders, listTransferOrders, listWorkTeamLedger, updateMaterial } from './service';
 
 describe('wms material service tenant safeguards', () => {
   beforeEach(() => {
@@ -175,6 +182,114 @@ describe('wms material service tenant safeguards', () => {
         quantity: 10,
       }),
     });
+  });
+
+  it('lists delivery orders with date and sub-project filters used by exports', async () => {
+    prismaMock.deliveryOrder.findMany.mockResolvedValue([]);
+    prismaMock.deliveryOrder.count.mockResolvedValue(0);
+
+    await listDeliveryOrders({
+      tenantId: 'tenant-1',
+      contractId: 'contract-1',
+      supplierId: 'supplier-1',
+      subProjectId: 'sub-project-1',
+      startDate: '2026-06-01',
+      endDate: '2026-06-30',
+      page: 1,
+      pageSize: 20,
+    });
+
+    expect(prismaMock.deliveryOrder.findMany).toHaveBeenCalledWith({
+      where: {
+        tenantId: 'tenant-1',
+        contractId: 'contract-1',
+        supplierId: 'supplier-1',
+        subProjectId: 'sub-project-1',
+        deliveryDate: {
+          gte: new Date('2026-06-01'),
+          lte: new Date('2026-06-30'),
+        },
+      },
+      skip: 0,
+      take: 20,
+      orderBy: { createdAt: 'desc' },
+      include: { contract: { select: { id: true, name: true } }, supplier: true, items: true },
+    });
+  });
+
+  it('exports delivery orders through the filtered delivery list', async () => {
+    prismaMock.deliveryOrder.findMany.mockResolvedValue([
+      {
+        orderNo: 'DO-20260623-0001',
+        deliveryDate: new Date('2026-06-23'),
+        contract: { name: '承包合同A' },
+        supplier: { name: '送货供应商' },
+        items: [
+          {
+            material: { name: '钢筋', spec: 'HRB400', unit: '吨' },
+            materialName: '钢筋',
+            spec: 'HRB400',
+            unit: '吨',
+            deliveryQty: 8,
+            actualQty: 7,
+            projectName: '1号楼',
+          },
+        ],
+      },
+    ]);
+    prismaMock.deliveryOrder.count.mockResolvedValue(1);
+
+    const result = await getDeliveryOrderExportData({
+      tenantId: 'tenant-1',
+      subProjectId: 'sub-project-1',
+      startDate: '2026-06-01',
+      endDate: '2026-06-30',
+    });
+
+    expect(prismaMock.deliveryOrder.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        tenantId: 'tenant-1',
+        subProjectId: 'sub-project-1',
+        deliveryDate: {
+          gte: new Date('2026-06-01'),
+          lte: new Date('2026-06-30'),
+        },
+      },
+      take: 100000,
+    }));
+    expect(result.rows).toEqual([
+      expect.objectContaining({
+        '送货单号': 'DO-20260623-0001',
+        '合同名称': '承包合同A',
+        '供应商': '送货供应商',
+        '物资名称': '钢筋',
+        '送货数量': 8,
+        '实收数量': 7,
+        '项目名称': '1号楼',
+      }),
+    ]);
+  });
+
+  it('lists inbound orders with sqlite-safe order and material filters', async () => {
+    prismaMock.inboundOrder.findMany.mockResolvedValue([]);
+    prismaMock.inboundOrder.count.mockResolvedValue(0);
+
+    await listInboundOrders({
+      tenantId: 'tenant-1',
+      orderNo: 'IN-001',
+      materialName: '水泥',
+      page: 1,
+      pageSize: 20,
+    });
+
+    expect(prismaMock.inboundOrder.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        tenantId: 'tenant-1',
+        isActive: true,
+        orderNo: { contains: 'IN-001' },
+        items: { some: { material: { name: { contains: '水泥' } } } },
+      },
+    }));
   });
 
   it('lists only active return orders', async () => {

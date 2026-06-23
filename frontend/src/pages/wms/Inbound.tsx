@@ -339,6 +339,19 @@ const Inbound: React.FC = () => {
     }
   };
 
+  const handleExportDeliveryOrders = async () => {
+    setExporting(true);
+    try {
+      const res = await wmsApi.exportDeliveryOrders();
+      downloadBlob(res.data as Blob, '送货单.xlsx');
+      toast.success('送货单已导出');
+    } catch {
+      toast.error('导出送货单失败');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const calcSubtotal = (item: FormItem) => (Number(item.deliveryQty) || 0) * (Number(item.unitPrice) || 0);
   const calcTotal = () => formItems.reduce((sum, item) => sum + calcSubtotal(item), 0);
 
@@ -350,6 +363,9 @@ const Inbound: React.FC = () => {
           <p className="page-subtitle">物资入库登记与查询，支持送货单 OCR 识别和 Excel 批量导入</p>
         </div>
         <div className="flex gap-2">
+          <button className="btn-secondary" onClick={handleExportDeliveryOrders} disabled={exporting}>
+            <Download size={16} /> {exporting ? '导出中...' : '导出送货单'}
+          </button>
           <button className="btn-secondary" onClick={handleExportInbound} disabled={exporting}>
             <Download size={16} /> {exporting ? '导出中...' : '导出入库记录'}
           </button>

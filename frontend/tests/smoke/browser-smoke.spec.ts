@@ -1847,6 +1847,98 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can export delivery orders and handle OCR upload failures', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+
+    const departmentsResponse = await page.request.get('/api/departments?pageSize=100', { headers: authHeaders });
+    expect(departmentsResponse.status()).toBe(200);
+    const departmentsBody = await readJson(departmentsResponse);
+    const department = (departmentsBody?.data || []).find((item: any) => item.name === '第一项目部') || (departmentsBody?.data || [])[0];
+    expect(department?.id).toBeTruthy();
+
+    const subProjectsResponse = await page.request.get(`/api/departments/${department.id}/sub-projects`, { headers: authHeaders });
+    expect(subProjectsResponse.status()).toBe(200);
+    const subProjectsBody = await readJson(subProjectsResponse);
+    let subProject = (subProjectsBody?.data || []).find((item: any) => item.name === '1号楼');
+    if (!subProject) {
+      const createSubProjectResponse = await page.request.post(`/api/departments/${department.id}/sub-projects`, {
+        headers: authHeaders,
+        data: { name: '1号楼', code: `DO-${Date.now()}`, description: '送货单导出浏览器验收子项目' },
+      });
+      expect(createSubProjectResponse.status()).toBe(201);
+      const createSubProjectBody = await readJson(createSubProjectResponse);
+      subProject = createSubProjectBody?.data;
+    }
+    expect(subProject?.id).toBeTruthy();
+
+    const stamp = Date.now();
+    const materialName = `送货单导出材料-${stamp}`;
+    const createDeliveryResponse = await page.request.post('/api/wms/delivery-orders', {
+      headers: authHeaders,
+      data: {
+        departmentId: department.id,
+        subProjectId: subProject.id,
+        deliveryDate: '2026-06-23',
+        remark: '浏览器验收送货单导出',
+        items: [
+          {
+            materialName,
+            spec: 'S34',
+            unit: '件',
+            deliveryQty: 8,
+            actualQty: 7,
+            unitPrice: 12,
+            projectName: subProject.name,
+          },
+        ],
+      },
+    });
+    expect(createDeliveryResponse.status()).toBe(201);
+    const createDeliveryBody = await readJson(createDeliveryResponse);
+    const deliveryOrder = createDeliveryBody?.data;
+    expect(deliveryOrder?.id).toBeTruthy();
+    expect(deliveryOrder?.orderNo).toBeTruthy();
+
+    const listDeliveryResponse = await page.request.get(`/api/wms/delivery-orders?subProjectId=${subProject.id}&pageSize=20`, {
+      headers: authHeaders,
+    });
+    expect(listDeliveryResponse.status()).toBe(200);
+    const listDeliveryBody = await readJson(listDeliveryResponse);
+    expect((listDeliveryBody?.data || []).some((order: any) =>
+      order.id === deliveryOrder.id
+      && (order.items || []).some((item: any) => item.materialName === materialName && Number(item.actualQty) === 7)
+    )).toBe(true);
+
+    await page.goto('/wms/inbound');
+    await expect(page.getByRole('heading', { name: '入库管理' })).toBeVisible();
+
+    const deliveryExportPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '导出送货单' }).click();
+    expect((await deliveryExportPromise).suggestedFilename()).toBe('送货单.xlsx');
+    await expectToast(page, '送货单已导出');
+
+    const fixturePath = path.join(process.cwd(), 'tmp-ocr-smoke.png');
+    fs.writeFileSync(
+      fixturePath,
+      Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=', 'base64'),
+    );
+    await page.getByRole('button', { name: '新增入库' }).click();
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'OCR 识别' }).click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(fixturePath);
+    await expectToast(page, /识别失败|OCR|配置|请先|失败/);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/送货单导出OCR上传保护.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can import and export wms return records with cascade delete preview', async ({ page }) => {
     test.setTimeout(120_000);
     await loginEnterprise(page);

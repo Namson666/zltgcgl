@@ -383,6 +383,23 @@ export async function getDeliveryOrderById(tenantId: string, id: string) {
   return order;
 }
 
+export async function getDeliveryOrderExportData(params: Omit<DeliveryOrderListParams, 'page' | 'pageSize'>) {
+  const result = await listDeliveryOrders({ ...params, page: 1, pageSize: 100000 });
+  const rows = result.orders.flatMap((o: any) => o.items.map((item: any) => ({
+    '送货单号': o.orderNo,
+    '送货日期': o.deliveryDate ? o.deliveryDate.toLocaleDateString('zh-CN') : '',
+    '合同名称': o.contract?.name || '',
+    '供应商': o.supplier?.name || '',
+    '物资名称': item.material?.name || item.materialName || '',
+    '规格': item.spec || item.material?.spec || '',
+    '单位': item.unit || item.material?.unit || '',
+    '送货数量': item.deliveryQty,
+    '实收数量': item.actualQty,
+    '项目名称': item.projectName || '',
+  })));
+  return { rows, total: result.total };
+}
+
 // ============================================
 // 四、入库管理
 // ============================================
@@ -408,8 +425,8 @@ export async function listInboundOrders(params: InboundListParams) {
   if (subProjectId) where.subProjectId = subProjectId;
   else if (contractId) where.subProject = { contractId };
   if (source) where.source = source;
-  if (orderNo) where.orderNo = { contains: orderNo, mode: 'insensitive' };
-  if (materialName) where.items = { some: { material: { name: { contains: materialName, mode: 'insensitive' } } } };
+  if (orderNo) where.orderNo = { contains: orderNo };
+  if (materialName) where.items = { some: { material: { name: { contains: materialName } } } };
   if (supplierId) where.supplierId = supplierId;
   if (startDate || endDate) {
     where.inboundDate = {};

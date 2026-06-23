@@ -700,16 +700,15 @@ deliveryOrdersRouter.post('/:id/create-inbound', requirePermission('canInbound')
 
 deliveryOrdersRouter.get('/export', requirePermission('canExport'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
-  const { supplierId, contractId } = req.query as any;
-  const orders = await prisma.deliveryOrder.findMany({
-    where: { tenantId, ...(supplierId ? { supplierId } : {}), ...(contractId ? { contractId } : {}) },
-    include: { supplier: true, items: true }, orderBy: { createdAt: 'desc' },
+  const q = req.query as any;
+  const { rows } = await wms.getDeliveryOrderExportData({
+    tenantId,
+    supplierId: q.supplierId,
+    contractId: q.contractId,
+    subProjectId: q.subProjectId,
+    startDate: q.startDate,
+    endDate: q.endDate,
   });
-  const rows = orders.flatMap(o => o.items.map(i => ({
-    '送货单号': o.orderNo, '送货日期': o.deliveryDate.toLocaleDateString('zh-CN'),
-    '供应商': o.supplier?.name || '', '物资名称': i.materialName,
-    '规格': i.spec, '单位': i.unit, '送货数量': i.deliveryQty, '实收数量': i.actualQty,
-  })));
   const buffer = await wms.exportToExcel(rows, '送货单');
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="delivery_orders_${Date.now()}.xlsx"`);
