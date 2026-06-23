@@ -1217,7 +1217,7 @@ export const laborApi = {
    * @returns 月度考勤汇总数据
    */
   getMonthlySummary: (month: string) =>
-    http.get('/labor/attendance/summary', { month }),
+    http.get('/labor/attendance/monthly', { month }),
 
   /* ---------- 工资核算 ---------- */
 

@@ -96,6 +96,10 @@ async function expectToast(page: any, text: string | RegExp) {
   await expect(page.locator('[role="status"]').filter({ hasText: text }).first()).toBeVisible();
 }
 
+const formatSmokeMoney = (value: number) => `¥${value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const paginatedTotal = (body: any) => Number(body?.pagination?.total ?? body?.meta?.total ?? body?.data?.total ?? body?.data?.recordCount ?? 0);
+
 function generateValidIdCard(stamp: number, birthDate = '19900301') {
   const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
   const checks = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
@@ -466,6 +470,70 @@ test.describe('browser smoke: authenticated core navigation', () => {
         fullPage: true,
       });
     }
+  });
+
+  test('enterprise user can verify main dashboard real summary data', async ({ page }) => {
+    await loginEnterprise(page);
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const [
+      contractsResponse,
+      departmentsResponse,
+      personnelResponse,
+      salarySummaryResponse,
+      inboundResponse,
+      outboundResponse,
+      inventoryResponse,
+      attendanceResponse,
+      anomalyResponse,
+    ] = await Promise.all([
+      page.request.get('/api/contracts?page=1&pageSize=1', { headers: authHeaders }),
+      page.request.get('/api/departments?page=1&pageSize=1', { headers: authHeaders }),
+      page.request.get('/api/labor/personnel?page=1&limit=1', { headers: authHeaders }),
+      page.request.get(`/api/labor/salary/summary?month=${month}`, { headers: authHeaders }),
+      page.request.get('/api/wms/inbound?page=1&pageSize=1', { headers: authHeaders }),
+      page.request.get('/api/wms/outbound?page=1&pageSize=1', { headers: authHeaders }),
+      page.request.get('/api/wms/inventory?page=1&pageSize=1', { headers: authHeaders }),
+      page.request.get(`/api/labor/attendance/monthly?month=${month}`, { headers: authHeaders }),
+      page.request.get('/api/labor/anomalies/stats', { headers: authHeaders }),
+    ]);
+    for (const response of [contractsResponse, departmentsResponse, personnelResponse, salarySummaryResponse, inboundResponse, outboundResponse, inventoryResponse, attendanceResponse, anomalyResponse]) {
+      expect(response.status()).toBe(200);
+    }
+
+    const contractsBody = await readJson(contractsResponse);
+    const departmentsBody = await readJson(departmentsResponse);
+    const personnelBody = await readJson(personnelResponse);
+    const salaryBody = await readJson(salarySummaryResponse);
+    const inboundBody = await readJson(inboundResponse);
+    const outboundBody = await readJson(outboundResponse);
+    const inventoryBody = await readJson(inventoryResponse);
+    const attendanceBody = await readJson(attendanceResponse);
+    const anomalyBody = await readJson(anomalyResponse);
+    const attendanceTotal = (attendanceBody?.data || []).reduce((sum: number, row: any) => sum + Number(row.attendanceDays || 0), 0);
+
+    await page.goto('/dashboard');
+    await expect(page.getByRole('heading', { name: '数据看板' })).toBeVisible();
+    await expect(page.getByTestId('dashboard-contract-count')).toContainText(String(paginatedTotal(contractsBody)));
+    await expect(page.getByTestId('dashboard-department-count')).toContainText(String(paginatedTotal(departmentsBody)));
+    await expect(page.getByTestId('dashboard-personnel-count')).toContainText(String(paginatedTotal(personnelBody)));
+    await expect(page.getByTestId('dashboard-monthly-payment')).toContainText(formatSmokeMoney(Number(salaryBody?.data?.totalPaid || 0)));
+    await expect(page.getByTestId('dashboard-total-inbound')).toContainText(String(paginatedTotal(inboundBody)));
+    await expect(page.getByTestId('dashboard-total-outbound')).toContainText(String(paginatedTotal(outboundBody)));
+    await expect(page.getByTestId('dashboard-current-stock')).toContainText(String(paginatedTotal(inventoryBody)));
+    await expect(page.getByTestId('dashboard-active-personnel')).toContainText(String(paginatedTotal(personnelBody)));
+    await expect(page.getByTestId('dashboard-monthly-attendance')).toContainText(String(attendanceTotal));
+    await expect(page.getByTestId('dashboard-monthly-salary')).toContainText(formatSmokeMoney(Number(salaryBody?.data?.totalPayable || 0)));
+    await expect(page.getByTestId('dashboard-anomaly-count')).toContainText(String(Number(anomalyBody?.data?.summary?.unresolvedCount || 0)));
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/企业首页数据看板真实汇总.png',
+      fullPage: true,
+    });
   });
 
   test('developer can login and open tenant management', async ({ page }) => {
@@ -3260,8 +3328,6 @@ test.describe('browser smoke: authenticated core navigation', () => {
     const rankingBody = await readJson(rankingResponse);
     const departmentSummary = (rankingBody?.data || []).find((item: any) => item.departmentId === firstDepartment.id);
     expect(Number(departmentSummary?.total || 0)).toBeGreaterThanOrEqual(amount);
-
-    const formatSmokeMoney = (value: number) => `¥${value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     await page.goto('/finance/dashboard');
     await expect(page.getByRole('heading', { name: '财务仪表盘' })).toBeVisible();

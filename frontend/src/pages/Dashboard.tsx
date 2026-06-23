@@ -57,10 +57,27 @@ interface WmsStats {
 /** 劳资管理统计接口 */
 interface LaborStats {
   activePersonnel: number;         /* 在册人员数 */
-  monthlyAttendance?: number;      /* 本月出勤天数 */
+  monthlyAttendance: number;       /* 本月出勤天数 */
   monthlySalary: number;           /* 本月工资总额 */
   anomalyCount: number;            /* 异常数 */
 }
+
+const unwrapApiData = (response: any) => response?.data?.data ?? response?.data ?? response;
+
+const getPaginatedTotal = (response: any): number => {
+  const body = response?.data ?? response;
+  const data = body?.data ?? body;
+  return Number(
+    body?.pagination?.total
+    ?? body?.meta?.total
+    ?? data?.total
+    ?? data?.recordCount
+    ?? 0
+  );
+};
+
+const sumAttendanceDays = (rows: any[]): number =>
+  rows.reduce((sum, row) => sum + Number(row?.attendanceDays ?? 0), 0);
 
 /* ========================================
  * Dashboard 数据看板组件
@@ -93,19 +110,16 @@ const Dashboard: React.FC = () => {
             contractApi.getList({ page: 1, pageSize: 1 }),
             departmentApi.getList({ page: 1, pageSize: 1 }),
           ]);
-          const contractData = contracts.data || contracts;
-          const deptData = departments.data || departments;
           return {
-            contractCount: contractData.total || 0,
-            departmentCount: deptData.total || 0,
+            contractCount: getPaginatedTotal(contracts),
+            departmentCount: getPaginatedTotal(departments),
           };
         })(),
 
         /* 人员统计 */
         (async () => {
           const res = await laborApi.getPersonnel({ page: 1, pageSize: 1 });
-          const data = res.data || res;
-          return { personnelCount: data.total || 0 };
+          return { personnelCount: getPaginatedTotal(res) };
         })(),
 
         /* 本月工资发放额 */
@@ -113,8 +127,8 @@ const Dashboard: React.FC = () => {
           const now = new Date();
           const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
           const res = await laborApi.getSalarySummary(month);
-          const data = res.data || res;
-          return { monthlyPayment: data.totalPaid || 0 };
+          const data = unwrapApiData(res);
+          return { monthlyPayment: Number(data?.totalPaid ?? 0) };
         })(),
 
         /* 物资管理统计 */
@@ -123,37 +137,36 @@ const Dashboard: React.FC = () => {
             wmsApi.getInbound({ page: 1, pageSize: 1 }),
             wmsApi.getOutbound({ page: 1, pageSize: 1 }),
           ]);
-          const inData = inbound.data || inbound;
-          const outData = outbound.data || outbound;
           return {
-            totalInbound: inData.total || 0,
-            totalOutbound: outData.total || 0,
+            totalInbound: getPaginatedTotal(inbound),
+            totalOutbound: getPaginatedTotal(outbound),
           };
         })(),
 
         /* 库存统计 */
         (async () => {
           const res = await wmsApi.getInventory({ page: 1, pageSize: 1 });
-          const data = res.data || res;
-          return { currentStock: data.total || 0 };
+          return { currentStock: getPaginatedTotal(res) };
         })(),
 
         /* 劳资管理统计 */
         (async () => {
           const now = new Date();
           const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-          const [personnel, salarySummary, anomalies] = await Promise.all([
+          const [personnel, attendanceSummary, salarySummary, anomalies] = await Promise.all([
             laborApi.getPersonnel({ page: 1, pageSize: 1 }),
+            laborApi.getMonthlySummary(month),
             laborApi.getSalarySummary(month),
             laborApi.getAnomalyStats(),
           ]);
-          const pData = personnel.data || personnel;
-          const sData = salarySummary.data || salarySummary;
-          const aData = anomalies.data || anomalies;
+          const attendanceRows = unwrapApiData(attendanceSummary) || [];
+          const sData = unwrapApiData(salarySummary);
+          const aData = unwrapApiData(anomalies);
           return {
-            activePersonnel: pData.total || 0,
-            monthlySalary: sData.totalAmount || 0,
-            anomalyCount: aData.unresolved || 0,
+            activePersonnel: getPaginatedTotal(personnel),
+            monthlyAttendance: Array.isArray(attendanceRows) ? sumAttendanceDays(attendanceRows) : 0,
+            monthlySalary: Number(sData?.totalPayable ?? sData?.totalAmount ?? 0),
+            anomalyCount: Number(aData?.summary?.unresolvedCount ?? aData?.unresolved ?? 0),
           };
         })(),
       ]);
@@ -236,6 +249,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* 合同数 */}
         <div className="stat-card cursor-pointer hover:shadow-md transition-shadow duration-200"
+          data-testid="dashboard-contract-count"
           onClick={() => navigate('/contracts')}
         >
           <div className="flex items-center justify-between">
@@ -257,6 +271,7 @@ const Dashboard: React.FC = () => {
 
         {/* 项目部数 */}
         <div className="stat-card cursor-pointer hover:shadow-md transition-shadow duration-200"
+          data-testid="dashboard-department-count"
           onClick={() => navigate('/departments')}
         >
           <div className="flex items-center justify-between">
@@ -278,6 +293,7 @@ const Dashboard: React.FC = () => {
 
         {/* 人员数 */}
         <div className="stat-card cursor-pointer hover:shadow-md transition-shadow duration-200"
+          data-testid="dashboard-personnel-count"
           onClick={() => navigate('/labor/personnel')}
         >
           <div className="flex items-center justify-between">
@@ -299,6 +315,7 @@ const Dashboard: React.FC = () => {
 
         {/* 本月工资发放额 */}
         <div className="stat-card cursor-pointer hover:shadow-md transition-shadow duration-200"
+          data-testid="dashboard-monthly-payment"
           onClick={() => navigate('/labor/payment')}
         >
           <div className="flex items-center justify-between">
@@ -342,7 +359,7 @@ const Dashboard: React.FC = () => {
           <div className="card-body">
             <div className="grid grid-cols-2 gap-4">
               {/* 总入库量 */}
-              <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--primary-bg)' }}>
+              <div className="p-4 rounded-xl" data-testid="dashboard-total-inbound" style={{ backgroundColor: 'var(--primary-bg)' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <PackagePlus size={16} style={{ color: 'var(--primary)' }} />
                   <span className="text-xs font-medium" style={{ color: 'var(--primary)' }}>总入库量</span>
@@ -353,7 +370,7 @@ const Dashboard: React.FC = () => {
                 <p className="text-xs mt-1" style={{ color: 'var(--primary-light)' }}>笔入库记录</p>
               </div>
               {/* 总出库量 */}
-              <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--success-bg)' }}>
+              <div className="p-4 rounded-xl" data-testid="dashboard-total-outbound" style={{ backgroundColor: 'var(--success-bg)' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <PackageMinus size={16} style={{ color: 'var(--success)' }} />
                   <span className="text-xs font-medium" style={{ color: 'var(--success)' }}>总出库量</span>
@@ -364,7 +381,7 @@ const Dashboard: React.FC = () => {
                 <p className="text-xs mt-1" style={{ color: 'oklch(0.60 0.12 145)' }}>笔出库记录</p>
               </div>
               {/* 当前库存量 */}
-              <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--accent)' }}>
+              <div className="p-4 rounded-xl" data-testid="dashboard-current-stock" style={{ backgroundColor: 'var(--accent)' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <PackageCheck size={16} style={{ color: 'var(--primary)' }} />
                   <span className="text-xs font-medium" style={{ color: 'var(--primary)' }}>当前库存量</span>
@@ -395,7 +412,7 @@ const Dashboard: React.FC = () => {
           <div className="card-body">
             <div className="grid grid-cols-2 gap-4">
               {/* 在册人员数 */}
-              <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--primary-bg)' }}>
+              <div className="p-4 rounded-xl" data-testid="dashboard-active-personnel" style={{ backgroundColor: 'var(--primary-bg)' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <Users size={16} style={{ color: 'var(--primary)' }} />
                   <span className="text-xs font-medium" style={{ color: 'var(--primary)' }}>在册人员</span>
@@ -406,22 +423,18 @@ const Dashboard: React.FC = () => {
                 <p className="text-xs mt-1" style={{ color: 'var(--primary-light)' }}>人</p>
               </div>
               {/* 本月出勤天数 */}
-              <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--success-bg)' }}>
+              <div className="p-4 rounded-xl" data-testid="dashboard-monthly-attendance" style={{ backgroundColor: 'var(--success-bg)' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <CalendarCheck size={16} style={{ color: 'var(--success)' }} />
                   <span className="text-xs font-medium" style={{ color: 'var(--success)' }}>本月出勤</span>
                 </div>
                 <p className="text-2xl font-bold" style={{ color: 'oklch(0.50 0.16 145)' }}>
-                  {loading ? (
-                    <span className="inline-block w-12 h-7 rounded animate-pulse" style={{ backgroundColor: 'var(--muted)' }} />
-                  ) : (
-                    new Date().getDate()
-                  )}
+                  {renderValue(laborStats?.monthlyAttendance)}
                 </p>
                 <p className="text-xs mt-1" style={{ color: 'oklch(0.60 0.12 145)' }}>天</p>
               </div>
               {/* 本月工资总额 */}
-              <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--accent)' }}>
+              <div className="p-4 rounded-xl" data-testid="dashboard-monthly-salary" style={{ backgroundColor: 'var(--accent)' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign size={16} style={{ color: 'var(--primary)' }} />
                   <span className="text-xs font-medium" style={{ color: 'var(--primary)' }}>本月工资总额</span>
@@ -432,7 +445,7 @@ const Dashboard: React.FC = () => {
                 <p className="text-xs mt-1" style={{ color: 'var(--primary-light)' }}>应发合计</p>
               </div>
               {/* 异常数 */}
-              <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--destructive-bg)' }}>
+              <div className="p-4 rounded-xl" data-testid="dashboard-anomaly-count" style={{ backgroundColor: 'var(--destructive-bg)' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle size={16} style={{ color: 'var(--destructive)' }} />
                   <span className="text-xs font-medium" style={{ color: 'var(--destructive)' }}>异常记录</span>

@@ -1,13 +1,25 @@
 {
-  "status": "developer_tenant_crud_users_recycle_bin_verified",
+  "status": "enterprise_main_dashboard_real_summary_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "enterprise_main_dashboard_real_summary_flow",
+      "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"main dashboard real summary\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/enterprise-dashboard-real-summary-audit.prompt.md --model sonnet --effort low --max-budget-usd 1.00",
+      "status": "verified_claude_timeout_yellow",
+      "result": "企业首页数据看板真实汇总切片已通过真实 Chrome：修复 Dashboard 对合同/项目部 pagination.total、WMS meta.total、劳资人员 data.total、工资汇总 data.totalPaid/totalPayable、异常统计 data.summary.unresolvedCount 的解包；修复本月出勤不再用当前日期假数据，改为调用真实 /labor/attendance/monthly 汇总 attendanceDays；修复 laborApi.getMonthlySummary 指向实际后端路由。浏览器测试登录企业账号后读取真实 API 值，再断言首页合同数、项目部数、人员数、本月工资发放额、总入库量、总出库量、当前库存量、在册人员、本月出勤、本月工资总额、异常记录全部与 API 一致。Focused Chrome 1/1 passed，verify backend 53 + frontend 36 + builds passed，full Chrome 32/32 passed，code-review-graph risk 0.50。Claude CLI invoked but timed out after 60s and is recorded as Yellow external-tool evidence, not PASS. 库存预警未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/企业首页数据看板真实汇总.png",
+        ".ai/workers/20260623T121251Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "developer_tenant_crud_users_recycle_bin_flow",
       "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"tenant CRUD users\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/developer-tenant-crud-audit.prompt.md --model sonnet --effort medium --max-budget-usd 1.00",

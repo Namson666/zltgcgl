@@ -1,9 +1,9 @@
 {
-  "stage": "S35_developer_tenant_crud_users_recycle_bin_verified",
+  "stage": "S36_enterprise_main_dashboard_real_summary_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Developer tenant management deep CRUD is verified in real Chrome: create/search/edit tenant, open detail, fetch tenant roles, create tenant user, reset tenant user password, login with reset password, soft-delete, restore from recycle bin, re-delete, permanent delete, and clear recycle bin. Fixes include developer-scoped tenant users/roles/password APIs, getTenants keyword/search compatibility, React confirm callback wrapping, and permanent delete / clear recycle bin dependency cleanup for SQLite FK chains. Full Chrome smoke is 31/31. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Claude CLI audit was invoked twice but timed out after 90s/60s and is recorded as Yellow external-tool evidence; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
-  "updated_at": "2026-06-23T11:55:00Z"
+  "notes": "Enterprise main dashboard real-summary data is verified in real Chrome: Dashboard now unwraps contract/department pagination totals, WMS meta totals, labor personnel totals, salary paid/payable totals, anomaly unresolved totals, and real monthly attendance summary. The previous fake monthly attendance display based on the current day-of-month is removed. Full Chrome smoke is 32/32. Inventory alert / 库存预警 remains explicitly out of scope and must not be restored. Claude CLI audit was invoked but timed out after 60s and is recorded as Yellow external-tool evidence; Product Green remains Yellow for production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and exhaustive historical-page CRUD/upload/download beyond current slices.",
+  "updated_at": "2026-06-23T12:15:00Z"
 }
