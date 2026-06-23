@@ -1,5 +1,5 @@
 {
-  "status": "developer_plans_lifecycle_browser_verified_pending_push",
+  "status": "developer_plans_lifecycle_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -996,5 +996,5 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "Developer platform plan lifecycle now has focused and full real Chrome coverage, including UI create/edit/delete, API read-back, invalid tier 400, subscribed-combination delete 409, cleanup delete after changing to an unreferenced combination, and enterprise 403 checks. Developer system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T05:47:00Z"
+  "updated_at": "2026-06-23T05:55:00Z"
 }
