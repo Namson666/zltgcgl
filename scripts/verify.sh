@@ -10,7 +10,7 @@ echo "== Backend Prisma generate =="
 )
 
 echo "== Backend test database =="
-bash "$ROOT_DIR/scripts/init-sqlite-db.sh" "$ROOT_DIR/backend/test.db"
+bash "$ROOT_DIR/scripts/init-sqlite-db.sh" "$ROOT_DIR/backend/prisma/test.db"
 
 echo "== Backend tests =="
 (

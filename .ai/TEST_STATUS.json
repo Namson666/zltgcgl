@@ -1,5 +1,5 @@
 {
-  "status": "ci_test_db_init_verified_pending_push",
+  "status": "ci_prisma_sqlite_path_fix_verified_pending_remote_ci",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -8,6 +8,18 @@
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "ci_prisma_sqlite_path_fix",
+      "command": "gh run watch 28061918118 --repo Namson666/zltgcgl --exit-status; fix scripts/verify.sh to initialize backend/prisma/test.db; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S56-ci-prisma-sqlite-path-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
+      "status": "verified_claude_pass_pending_remote_ci",
+      "result": "S56 responds to GitHub Actions run 28061918118. S55 initialized backend/test.db, but Prisma DATABASE_URL file:./test.db in backend/vitest.config.ts resolves relative to backend/prisma/schema.prisma, so clean CI tests read backend/prisma/test.db and failed with main.developers missing. verify.sh now initializes backend/prisma/test.db. Local verify passed backend 61 + frontend 38 + builds; real Chrome browser-smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS at .ai/workers/20260623T224717Z-audit_worker.result.md. CI Green remains not_verified until pushed remote CI rerun succeeds.",
+      "evidence_files": [
+        "scripts/verify.sh",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        ".ai/workers/20260623T224717Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "ci_test_db_init_fix",
       "command": "gh run watch 28061459724 --repo Namson666/zltgcgl --exit-status; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S55-ci-test-db-init-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
