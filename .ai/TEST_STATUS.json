@@ -1,5 +1,5 @@
 {
-  "status": "production_external_smoke_verified_pending_push",
+  "status": "production_external_smoke_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -11,8 +11,8 @@
     {
       "type": "production_external_smoke_gate",
       "command": "node --check scripts/production-smoke.mjs; node scripts/production-smoke.mjs without PRODUCTION_BASE_URL exits 2; ALLOW_INSECURE_PRODUCTION_HTTP=1 PRODUCTION_BASE_URL=http://127.0.0.1:5273 PRODUCTION_API_BASE_URL=http://127.0.0.1:4301 PRODUCTION_PORTAL_HOST=prod-smoke.localhost PRODUCTION_DEVELOPER_TOKEN=<local-dev-token> node scripts/production-smoke.mjs exits 3/yellow; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S52-production-external-smoke-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
-      "status": "verified_claude_pass_pending_push",
-      "result": "S52 production external smoke gate verified locally: scripts/production-smoke.mjs is non-mutating, requires real PRODUCTION_BASE_URL, enforces HTTPS by default, checks /login, /api/health, /api/v1/health, optional portal config, and optional developer readiness without leaking secrets. Missing production inputs produce Yellow or failure instead of Product Green. Local dry-run with portal+developer token passed base checks and returned Yellow because local face gateway is not production-ready. verify.sh passed backend 61 + frontend 38 + builds; real Chrome browser-smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. Product Green remains not_yet_full_production_green until this is run against real production DNS/certs and real third-party face gateway credentials.",
+      "status": "verified_pushed_claude_pass",
+      "result": "S52 production external smoke gate verified locally and pushed at 7a9cb09: scripts/production-smoke.mjs is non-mutating, requires real PRODUCTION_BASE_URL, enforces HTTPS by default, checks /login, /api/health, /api/v1/health, optional portal config, and optional developer readiness without leaking secrets. Missing production inputs produce Yellow or failure instead of Product Green. Local dry-run with portal+developer token passed base checks and returned Yellow because local face gateway is not production-ready. verify.sh passed backend 61 + frontend 38 + builds; real Chrome browser-smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. Product Green remains not_yet_full_production_green until this is run against real production DNS/certs and real third-party face gateway credentials.",
       "evidence_files": [
         "scripts/production-smoke.mjs",
         "docs/smoke-evidence/production-external-smoke-local-yellow.json",

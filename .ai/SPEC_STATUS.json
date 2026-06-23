@@ -1,9 +1,9 @@
 {
-  "stage": "S52_production_external_smoke_verified_pending_push",
+  "stage": "S52_production_external_smoke_pushed",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "S52 non-mutating production external smoke gate is verified locally and pending push. scripts/production-smoke.mjs requires a real PRODUCTION_BASE_URL, enforces https by default, checks frontend login, API health/v1 health, optional tenant portal host config, and optional developer-only /api/developer/readiness without leaking secrets; missing portal/developer/face-gateway inputs produce Yellow rather than Product Green. Evidence: node --check passed; no PRODUCTION_BASE_URL exits 2; local true frontend/backend dry-run with portal host and developer token exits 3/yellow because local face gateway is not production-ready; verify.sh passed backend 61 + frontend 38 + builds; real Chrome browser-smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow until this script is run against real production DNS/reverse-proxy/certificates and real third-party face gateway credentials.",
-  "updated_at": "2026-06-23T22:06:30Z"
+  "notes": "S52 non-mutating production external smoke gate is verified and pushed at 7a9cb09. scripts/production-smoke.mjs requires a real PRODUCTION_BASE_URL, enforces https by default, checks frontend login, API health/v1 health, optional tenant portal host config, and optional developer-only /api/developer/readiness without leaking secrets; missing portal/developer/face-gateway inputs produce Yellow rather than Product Green. Evidence: node --check passed; no PRODUCTION_BASE_URL exits 2; local true frontend/backend dry-run with portal host and developer token exits 3/yellow because local face gateway is not production-ready; verify.sh passed backend 61 + frontend 38 + builds; real Chrome browser-smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. Inventory alert / 库存预警 remains out of scope and was not restored. Product Green remains Yellow until this script is run against real production DNS/reverse-proxy/certificates and real third-party face gateway credentials.",
+  "updated_at": "2026-06-23T22:09:20Z"
 }
