@@ -96,6 +96,7 @@ const TenantView: React.FC = () => {
   const [entering, setEntering] = useState(false);
   const [savingModules, setSavingModules] = useState(false);
   const [savingPortal, setSavingPortal] = useState(false);
+  const [uploadingPortalLogo, setUploadingPortalLogo] = useState(false);
   const [miniProgramConfig, setMiniProgramConfig] = useState<MiniProgramConfig>({
     name: '',
     appId: '',
@@ -233,6 +234,28 @@ const TenantView: React.FC = () => {
       toast.error(error.message || '保存独立登录页配置失败');
     } finally {
       setSavingPortal(false);
+    }
+  };
+
+  const handlePortalLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!id) return;
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setUploadingPortalLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await developerApi.uploadTenantPortalLogo(id, formData);
+      const body = res.data || res;
+      const logoUrl = body.data?.logoUrl || body.logoUrl;
+      if (!logoUrl) throw new Error('上传成功但未返回 Logo 地址');
+      handlePortalChange('logoUrl', logoUrl);
+      toast.success('Logo 上传成功，保存配置后生效');
+    } catch (error: any) {
+      toast.error(error.message || '上传 Logo 失败');
+    } finally {
+      setUploadingPortalLogo(false);
     }
   };
 
@@ -546,17 +569,36 @@ const TenantView: React.FC = () => {
               </div>
               <div>
                 <label className="form-label">Logo URL</label>
-                <div className="relative">
-                  <ImageIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    data-testid="tenant-portal-logo-url"
-                    value={portalConfig.logoUrl || ''}
-                    onChange={(e) => handlePortalChange('logoUrl', e.target.value)}
-                    placeholder="/uploads/logo.png 或 https://..."
-                    className="input pl-9"
-                  />
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <ImageIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      data-testid="tenant-portal-logo-url"
+                      value={portalConfig.logoUrl || ''}
+                      onChange={(e) => handlePortalChange('logoUrl', e.target.value)}
+                      placeholder="/uploads/logo.png 或 https://..."
+                      className="input pl-9"
+                    />
+                  </div>
+                  <label className={`btn-secondary text-sm whitespace-nowrap cursor-pointer ${uploadingPortalLogo ? 'opacity-60 pointer-events-none' : ''}`}>
+                    {uploadingPortalLogo ? '上传中...' : '上传 Logo'}
+                    <input
+                      type="file"
+                      data-testid="tenant-portal-logo-upload"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={handlePortalLogoUpload}
+                      disabled={uploadingPortalLogo}
+                    />
+                  </label>
                 </div>
+                {portalConfig.logoUrl && (
+                  <div className="mt-2 flex items-center gap-2 text-xs text-gray-500" data-testid="tenant-portal-logo-preview">
+                    <img src={portalConfig.logoUrl} alt="独立登录页 Logo 预览" className="h-8 w-8 object-contain rounded border border-gray-200 bg-white" />
+                    <span className="truncate">{portalConfig.logoUrl}</span>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="form-label">主题色</label>

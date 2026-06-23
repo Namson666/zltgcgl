@@ -1,0 +1,7 @@
+Diff artifact intentionally compacted after Claude audit.
+
+Reason: the raw `git diff --binary` captured Playwright evidence screenshots,
+producing a multi-megabyte patch not suitable for repository history.
+
+This first S46 audit returned PASS but raised a non-blocking SVG upload risk.
+The final source of truth is the later resanitized S46 audit result.

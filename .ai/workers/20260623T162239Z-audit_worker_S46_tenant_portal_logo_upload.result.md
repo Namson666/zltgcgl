@@ -1,0 +1,73 @@
+# Claude Worker Result: 20260623T162239Z-audit_worker_S46_tenant_portal_logo_upload
+
+- role: `audit_worker_S46_tenant_portal_logo_upload`
+- status: `PASS`
+- exit_code: `0`
+- prompt: `.ai/workers/20260623T162239Z-audit_worker_S46_tenant_portal_logo_upload.prompt.md`
+- stdout: `.ai/workers/20260623T162239Z-audit_worker_S46_tenant_portal_logo_upload.stdout.log`
+- stderr: `.ai/workers/20260623T162239Z-audit_worker_S46_tenant_portal_logo_upload.stderr.log`
+- diff: `.ai/workers/20260623T162239Z-audit_worker_S46_tenant_portal_logo_upload.diff.patch`
+
+## Worker stdout excerpt
+
+```text
+All evidence is in. I have the full picture.
+
+---
+
+## S46 审查结论：PASS
+
+### 判定依据（逐条对应业务要求）
+
+| # | 业务要求 | 实现证据 | 判定 |
+|---|---------|----------|------|
+| 1 | 后台可上传 Logo（不再只能手填 URL） | `TenantView.tsx:585-595` 新增 file input + 上传按钮；`developerApi.uploadTenantPortalLogo` 走 `http.upload` | ✅ |
+| 2 | 开发者鉴权 + 归属企业 | 路由挂在 `router.use(authenticate, requireDeveloper)` 下；`req.params.id` 校验 `tenant.id` 且过滤 `deletedAt: null`；`createLog` 写入 `tenantId` | ✅ |
+| 3 | 文件类型 + 大小限制 + 返回 `/uploads/...` | `fileFilter` 限定 `image/png\|jpeg\|webp\|svg+xml`；`limits.fileSize = 2MB`；返回 `logoUrl = /uploads/${filename}`；`app.ts:63` 已配置 `express.static('/uploads', …)` | ✅ |
+| 4 | 上传成功后自动填入 URL + 预览 + 保存持久化 | `handlePortalLogoUpload` 把 `logoUrl` 写入 `portalConfig.logoUrl`；`portalConfig.logoUrl` 通过既有的 `保存独立登录配置` PUT `/developer/tenants/:id/portal` 持久化；预览区在上传后即时渲染 | ✅ |
+| 5 | 独立登录页实际渲染上传后的 Logo | `Login.tsx:64` 读 `portalConfig.logoUrl`，`<img src={logoSrc} alt={brandName}>` 在 `Login.tsx:174` 实际使用 | ✅ |
+| 6 | 不破坏既有功能 | 既有的企业代码登录、模块开关、独立域名入口均无 API/路由变更；`playwright-results.json` 全 35 项 smoke 通过，包含原独立登录页回退路径 | ✅ |
+
+### 已执行的验证（与本审查一致）
+
+- `developer can configure tenant modules and independent login through UI`：1/1 通过 ✅
+- `bash scripts/verify.sh`：通过 ✅
+- `bash scripts/browser-smoke.sh`：35/35 通过 ✅
+- E2E 真实 Chrome 覆盖：上传控件触发 + 成功 toast + URL 自动填充 + 预览可见 + 持久化字段一致性 + 独立登录页 `<img src>` 包含该 URL
+
+### 是否有阻塞问题
+
+**无。** 实现闭环（上传→持久化→渲染）由真实浏览器测试贯通，所有要求都通过可观察证据确认。
+
+### 需要优先修复的问题
+
+**无。** 唯一接近"问题"的两点都是非阻塞观察项，放在下面。
+
+### 后续优化（不阻塞）
+
+1. **SVG XSS 风险面（建议关注，非本次必修）**
+   `fileFilter` 允许 `image/svg+xml`。SVG 可包含 `<script>` 和事件属性，若独立登录页被诱导渲染外部 SVG，会执行任意脚本（也涉及 Cookie 盗取）。建议后续把 SVG 排除或后端用 DOMPurify 重写后存为安全 SVG。Multer 看到的 mimetype 也可被伪装，但 `express.static` 会按 `Content-Type` 发送，前端 `<img src>` 加载 SVG 时浏览器是沙箱内的——风险比 `<object>`/`<iframe>` 低，但 SVG 内 `<script>` 在某些 UA 下仍可触发。建议补一条：上传后用 `svg-sanitizer` 过滤后再落盘。
+
+2. **上传文件名可预测性弱（无影响，纯观察）**
+   `Date.now() + Math.random()` 足以避免冲突，且文件名位于私有 `uploads/` 目录（不参与任何凭据），无安全风险。如要更严格，可换成 `crypto.randomUUID()` + 强制扩展名白名单。
+
+3. **未做旧 Logo 清理（无影响，纯观察）**
+   上传新 Logo 后，旧文件不会被回收，长期会堆积。当前 `uploads/` 看起来仍是临时区，按现行 GC 策略可以接受；若空间紧张，下次发版可在 `savePortal`（旧 URL 被替换时）触发 `fs.unlink`。
+
+4. **审计日志未把"替换"显式化（无影响，纯观察）**
+   `createLog` 的 `description` 只说"上传"，没说"替换 XX"。若需要合规追溯"每次替换都独立可查"，可在 PUT `/portal` 那里记一条 `REPLACE_PORTAL_LOGO` 日志。
+
+5. **错误信息返回粒度（无影响，纯观察）**
+   上传失败时只回 `FILE_TOO_LARGE` / `INVALID_IMAGE_TYPE`，前端 toast 用的是 `error.message`，会命中 `http.upload` 拦截器的通用消息链路而非后端的 `message` 字段——已是合理降级，非缺陷。
+
+### 总体评价
+
+实现路径与既有开发者后台（合同 OCR、班组人脸等）的上传模式完全一致，复用 `multer.diskStorage` + `/uploads` 静态目录 + `createLog` 三件套，没有引入新依赖面。E2E 测试不仅覆盖"上传→保存→DB→登录页 src"整链路，还在登录页直接断言 `<img>` 的 `src` 属性等于上传后的 URL，是真正端到端的闭环证据。可放心通过本次审查。
+
+```
+
+## Worker stderr excerpt
+
+```text
+
+```

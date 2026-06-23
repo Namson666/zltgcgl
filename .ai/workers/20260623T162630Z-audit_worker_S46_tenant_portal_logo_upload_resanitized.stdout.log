@@ -1,0 +1,86 @@
+All checks complete. I have a full picture. Here is the audit verdict.
+
+---
+
+## 审查结论：**PASS**
+
+实现已完成 SVG 移除，符合本轮修正目标，业务闭环可用，无阻塞问题。
+
+---
+
+### 业务要求逐项核验
+
+| # | 要求 | 状态 | 证据 |
+|---|------|------|------|
+| 1 | 开发者后台能给企业独立登录页上传 Logo | ✅ | `TenantView.tsx:582-588` 文件 input + 上传按钮，触发 `developerApi.uploadTenantPortalLogo` |
+| 2 | 开发者鉴权 + 归属于目标企业配置 | ✅ | `routes.ts:17-18` `router.use(authenticate, requireDeveloper)`；`routes.ts:315` `prisma.tenant.findFirst({ where: { id: req.params.id, deletedAt: null } })`；日志 `module: 'tenant_portal'` + `tenantId` |
+| 3 | 文件类型限制 PNG/JPG/WebP + 大小限制 + 返回 `/uploads/...` | ✅ | `routes.ts:32-39` fileFilter 仅允许 `image/png / image/jpeg / image/webp`；`routes.ts:31` `limits: { fileSize: 2 * 1024 * 1024 }`；`routes.ts:322` `/uploads/${req.file.filename}`；与已有 `contract/mobile/finance/labor` 模块一致 |
+| 4 | 上传成功后自动填入 URL 并预览，保存后持久化 | ✅ | `TenantView.tsx:248-249` `handlePortalChange('logoUrl', logoUrl)`；`TenantView.tsx:594-599` 预览图块；保存走原有 `PUT /tenants/:id/portal` 路径，已被测试 `lines 1297-1310` 验证 `logoUrl === uploadedPortalLogoUrl` |
+| 5 | 独立登录页使用上传后 Logo 渲染 | ✅ | `Login.tsx:64` `logoSrc = portalConfig?.logoUrl || '/icon.png'`；`Login.tsx:174` `<img src={logoSrc} alt={brandName}>`；测试 `lines 1352-1356` 断言 `portalLogoSrc` 包含上传后的 URL |
+| 6 | 统一登录、模块开关、独立域名登录不被破坏 | ✅ | 测试 `lines 1264-1272` 模块切换；`lines 1319-1326` 企业代码登录；`lines 1328-1333` 模块拒绝（labor 403、finance 403、wms 200）；`lines 1351-1364` 独立登录入口行为正确 |
+
+---
+
+### 修正点核验（SVG 移除）
+
+| 检查 | 状态 |
+|------|------|
+| 后端 `fileFilter` 不含 `image/svg+xml` | ✅（`routes.ts:33` 仅 png/jpeg/webp） |
+| 前端 `accept` 不含 `.svg` / `image/svg+xml` | ✅（`TenantView.tsx:583` 仅 `image/png,image/jpeg,image/webp`） |
+| 文件名拼接只用 `path.extname()`，攻击者无法通过重命名 svg 绕过滤 | ✅（`ext = path.extname(file.originalname || '').toLowerCase()`，最终文件 mime 由 multer 处理后再判 fileFilter） |
+| Chrome 测试使用 PNG 真文件 `frontend/public/icon.png` | ✅（`browser-smoke.spec.ts:1248` `path.resolve(process.cwd(), 'public/icon.png')`） |
+
+注：`fileFilter` 只看 `mimetype`（浏览器声明的），不看扩展名。对 PNG/JPG/WebP 这是行业标准做法，扩展名仅用于文件命名。攻击者无法声明 `image/svg+xml` 来通过 `image/png` 过滤——后端 multer 会拒。
+
+---
+
+### 与已有模式的一致性
+
+| 模块 | uploadDir 模式 | fileFilter 模式 | 操作日志 | 错误处理 |
+|------|----------------|----------------|----------|----------|
+| `contract/routes.ts` | `process.env.UPLOAD_DIR` \|\| `cwd/uploads` | ✅ 允许列表 | ✅ | ✅ |
+| `mobile/routes.ts` | 同上 | — | ✅ | ✅ |
+| `finance/routes.ts` | 同上 | — | ✅ | ✅ |
+| `labor/routes.ts` | 同上 | — | ✅ | ✅ |
+| `developer/routes.ts` (新) | 同上 | ✅ 允许列表 | ✅ `createLog` | ✅ 失败 unlink |
+
+新代码完全沿用了项目已建立的"4 个兄弟模块"模式，没有引入新的依赖或风格漂移。
+
+---
+
+### 无需阻塞的问题
+
+下面这些点都是 **可后续优化、不影响本次发布** 的轻微观察，附上说明：
+
+1. **`uploadDir` 与 `app.ts` 的静态路径存在轻微不一致（pre-existing）**
+   `routes.ts:20` 使用 `process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads')`
+   `app.ts:63` 使用 `path.join(__dirname, '../uploads')`
+   在 dev 模式下 `__dirname` = `backend/src`（或编译后 `backend/dist`），`__dirname/../uploads` = `backend/uploads`，恰好与 `cwd/uploads`（项目根 `uploads`）不同。开发态 dev server 从 `backend/` 启动时是同一个目录，但 `npm start` 从项目根跑就分裂。
+   - **不影响本次功能**：所有兄弟模块都同样有这个偏差，且既有的合同附件/移动端拍照路径也都在用，没出过事故。
+   - **建议**：跨所有上传路由一起统一（提取 `getUploadDir()` 到 `common/utils/uploads.ts`），但属独立优化任务。
+
+2. **没有验证 PNG 文件实际是 PNG（仅看 mimetype）**
+   `fileFilter` 只检查 `file.mimetype`，没有读 magic bytes 校验真实格式。攻击者可以构造一个伪装成 `image/png` 的可执行文件。
+   - **风险极低**：开发者后台本身已经鉴权 (`requireDeveloper`)，攻击者须先拿到开发者账号；且最终 `express.static` 直接 serve 文件（不执行），无法触发 XSS。但若 `Login.tsx:174` 后续改成 innerHTML 或 dangerouslySetInnerHTML 就会暴露。
+   - **建议**：未来加 `file-type` 库做 magic bytes 校验；本轮不阻塞。
+
+3. **前端 Logo 预览 `<img src={portalConfig.logoUrl}>` 未做 URL 白名单**
+   用户（开发者）填入的 `logoUrl` 是受信任的，但若未来产品允许租户自己填，仍可能被填入 `javascript:` URL。React 会拦截 `<img src="javascript:">` 但不阻止 `data:` URL。
+   - **本轮**：仅开发者后台使用，且 `logoUrl` 通过 `/uploads/...` 或手动 URL，已隐式保证安全。
+   - **建议**：未来面向租户自服务时，加 `safeUrl()` 校验。
+
+4. **`req.file.mimetype` 直接写入日志 `detail`**
+   `routes.ts:328` 写入 `detail` JSON。可控范围之内（开发者提交），无安全风险。
+
+5. **`uploadingPortalLogo` 状态没有 race condition 防护（用户连点两次）**
+   `disabled` 已加，但 label 的 `pointer-events-none` 是 CSS class，需要 CSS 支持。Chromium 支持，其他浏览器可能漏。问题不大——`http.upload` 本身不会触发重复提交。
+
+---
+
+### 总结
+
+- **PASS**。修正目标已完成，SVG 脚本风险已被消除。
+- **没有阻塞问题**。
+- 5 条观察全部是"未来可优化"级别，与本次"Logo 上传闭环"主题无直接因果。
+- 已执行验证覆盖了所有业务要求 + SVG 移除后的 PNG 真文件路径。
+- code-review-graph 的 risk 0.50 + "前端函数级 test gap" 是预期内的——`handlePortalLogoUpload` 函数本身没有单测，但 Playwright 已通过真实 Chrome 覆盖了上传控件、提示、URL 自动填充、预览、保存、API 持久化、独立登录页图片路径全部环节，覆盖等价。

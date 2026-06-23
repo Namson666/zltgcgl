@@ -1245,6 +1245,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
     const tenant = await createSmokeTenant(page, stamp);
     const portalCompanyName = `UI独立门户企业${stamp}`;
     const portalTitle = `UI独立门户登录${stamp}`;
+    const portalLogoPath = path.resolve(process.cwd(), 'public/icon.png');
 
     await loginDeveloper(page);
     await page.goto('/dev/tenants');
@@ -1287,7 +1288,11 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await page.getByTestId('tenant-portal-domain').fill('localhost');
     await page.getByTestId('tenant-portal-company-name').fill(portalCompanyName);
     await page.getByTestId('tenant-portal-login-title').fill(portalTitle);
-    await page.getByTestId('tenant-portal-logo-url').fill('/uploads/ui-portal-logo.png');
+    await page.getByTestId('tenant-portal-logo-upload').setInputFiles(portalLogoPath);
+    await expect(page.getByText('Logo 上传成功，保存配置后生效')).toBeVisible();
+    await expect(page.getByTestId('tenant-portal-logo-url')).toHaveValue(/\/uploads\/portal-logo-/);
+    await expect(page.getByTestId('tenant-portal-logo-preview').getByRole('img', { name: '独立登录页 Logo 预览' })).toBeVisible();
+    const uploadedPortalLogoUrl = await page.getByTestId('tenant-portal-logo-url').inputValue();
     await page.getByTestId('tenant-portal-theme-color').fill('#16A34A');
     await portal.getByRole('button', { name: '保存独立登录配置' }).click();
     await expect(page.getByText('独立登录页配置已保存')).toBeVisible();
@@ -1300,6 +1305,7 @@ test.describe('browser smoke: authenticated core navigation', () => {
     expect(portalBody?.data?.domain).toBe('localhost');
     expect(portalBody?.data?.companyName).toBe(portalCompanyName);
     expect(portalBody?.data?.loginTitle).toBe(portalTitle);
+    expect(portalBody?.data?.logoUrl).toBe(uploadedPortalLogoUrl);
     expect(portalBody?.data?.themeColor).toBe('#16A34A');
     expect(portalBody?.data?.isEnabled).toBe(true);
 
@@ -1346,6 +1352,8 @@ test.describe('browser smoke: authenticated core navigation', () => {
     await page.goto('http://localhost:5173/login');
     await expect(page.getByText(portalTitle)).toBeVisible();
     await expect(page.getByText(`${portalCompanyName} · 独立登录入口`)).toBeVisible();
+    const portalLogoSrc = await page.getByRole('img', { name: portalCompanyName }).getAttribute('src');
+    expect(portalLogoSrc).toContain(uploadedPortalLogoUrl);
     await expect(page.getByPlaceholder('请输入企业代码')).toHaveCount(0);
     await page.getByPlaceholder('请输入用户名').fill(tenant.username);
     await page.getByPlaceholder('请输入密码').fill(tenant.password);

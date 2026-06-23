@@ -5,6 +5,9 @@
 // 业务逻辑全部在 service.ts 中
 // OCR/AI/Integration 配置管理保留在本文件（含 fetch 调用）
 
+import fs from 'fs';
+import path from 'path';
+import multer from 'multer';
 import { Router, Response } from 'express';
 import { prisma } from '../../common/utils/prisma';
 import { authenticate, requireDeveloper } from '../../common/middleware/auth';
@@ -13,6 +16,28 @@ import * as devService from './service';
 
 const router = Router();
 router.use(authenticate, requireDeveloper);
+
+const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const portalLogoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname || '').toLowerCase() || '.png';
+      cb(null, `portal-logo-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
+    if (!allowedTypes.has(file.mimetype)) {
+      cb(new Error('INVALID_IMAGE_TYPE'));
+      return;
+    }
+    cb(null, true);
+  },
+});
 
 // ============================================
 // 操作日志（开发者专用，带 developerId）
@@ -267,6 +292,50 @@ router.put('/tenants/:id/portal', async (req: AuthenticatedRequest, res: Respons
     const status = error.status || 500;
     res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '服务器错误' } as ApiResponse);
   }
+});
+
+router.post('/tenants/:id/portal/logo', (req: AuthenticatedRequest, res: Response): void => {
+  portalLogoUpload.single('file')(req, res, async (error: any) => {
+    try {
+      if (error) {
+        const isSizeLimit = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE';
+        const isInvalidType = error.message === 'INVALID_IMAGE_TYPE';
+        res.status(400).json({
+          success: false,
+          error: isSizeLimit ? 'FILE_TOO_LARGE' : isInvalidType ? 'INVALID_IMAGE_TYPE' : 'UPLOAD_FAILED',
+          message: isSizeLimit ? 'Logo 文件不能超过 2MB' : isInvalidType ? '仅支持 PNG、JPG、WebP 图片' : 'Logo 上传失败',
+        } as ApiResponse);
+        return;
+      }
+      if (!req.file) {
+        res.status(400).json({ success: false, error: 'MISSING_FILE', message: '请选择 Logo 图片' } as ApiResponse);
+        return;
+      }
+
+      const tenant = await prisma.tenant.findFirst({ where: { id: req.params.id, deletedAt: null }, select: { id: true, name: true } });
+      if (!tenant) {
+        fs.unlink(path.join(uploadDir, req.file.filename), () => undefined);
+        res.status(404).json({ success: false, error: 'TENANT_NOT_FOUND', message: '企业不存在' } as ApiResponse);
+        return;
+      }
+
+      const logoUrl = `/uploads/${req.file.filename}`;
+      await createLog(req.user!.id, {
+        tenantId: tenant.id,
+        action: 'UPLOAD',
+        module: 'tenant_portal',
+        description: `上传企业独立登录页 Logo「${tenant.name}」`,
+        detail: { logoUrl, fileName: req.file.originalname, mimeType: req.file.mimetype, size: req.file.size },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      res.status(201).json({ success: true, data: { logoUrl }, message: 'Logo 上传成功' } as ApiResponse);
+    } catch (err: any) {
+      if (req.file) fs.unlink(path.join(uploadDir, req.file.filename), () => undefined);
+      console.error('上传企业独立登录页 Logo 失败:', err);
+      res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);
+    }
+  });
 });
 
 // ============================================

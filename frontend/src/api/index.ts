@@ -237,6 +237,9 @@ export const developerApi = {
   }) =>
     http.put(`/developer/tenants/${tenantId}/portal`, data),
 
+  uploadTenantPortalLogo: (tenantId: string, formData: FormData) =>
+    http.upload(`/developer/tenants/${tenantId}/portal/logo`, formData),
+
   getDefaultMiniProgram: () =>
     http.get('/developer/mini-program/default'),
 

@@ -1,13 +1,26 @@
 {
-  "status": "mini_program_phone_prebinding_toggle_safety_verified",
+  "status": "tenant_portal_logo_upload_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "tenant_portal_logo_upload_flow",
+      "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"developer can configure tenant modules and independent login through UI\"; bash scripts/verify.sh (first run hit unrelated auth test instability, later rerun passed); bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker_S46_tenant_portal_logo_upload_resanitized --prompt-file .ai/workers/S46-tenant-portal-logo-upload-resanitized-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
+      "status": "verified_claude_pass_svg_risk_fixed",
+      "result": "企业独立登录页 Logo 上传闭环已通过真实 Chrome：开发者后台新增 /api/developer/tenants/:id/portal/logo 上传接口，开发者鉴权、目标企业存在校验、2MB 限制、仅允许 PNG/JPG/WebP，返回 /uploads/... 并记录 tenant_portal 上传日志；前端企业视角新增上传 Logo 控件，上传成功自动填入 logoUrl 并显示预览，保存独立登录配置后持久化。真实 Chrome 使用 frontend/public/icon.png 实传，断言成功 toast、logoUrl /uploads/portal-logo-*、预览 img、API 回读 logoUrl、独立登录页 img src 使用上传 URL，同时保留原企业代码登录、模块开关、独立登录无企业代码。Focused Chrome 1/1 passed；verify 最终 backend 57 + frontend 36 + builds passed；full Chrome 35/35 passed；code-review-graph risk 0.50。Claude 第一轮 PASS 但提示 SVG 风险，已移除 SVG，第二轮 PASS。库存预警未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/开发者UI模块开通独立登录.png",
+        ".ai/workers/20260623T162630Z-audit_worker_S46_tenant_portal_logo_upload_resanitized.result.md",
+        ".ai/workers/20260623T162239Z-audit_worker_S46_tenant_portal_logo_upload.result.md"
+      ]
+    },
     {
       "type": "mini_program_phone_prebinding_toggle_safety_flow",
       "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"mini-program check-in does not silently route\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker_S45_mini_program_prebinding_toggle_safety_retry --prompt-file .ai/workers/S45-mini-program-prebinding-toggle-safety-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
@@ -1319,5 +1332,8 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "WMS transfer create/export/delete-preview now has focused and full real Chrome coverage, including real UI transfer creation, transfer PDF download, transfer ledger export download, cascade preview, and delete verification. Transfer list/export now filters active records only, department-scoped transfer IDs are persisted, and transfer preview/delete rollback supports department-scoped inventory. Enterprise subscription lifecycle, developer payments/invoices/storage, integrations/security/monitoring/logs, AI/OCR, plans, system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T16:12:46Z"
+  "updated_at": "2026-06-23T16:34:35Z",
+  "yellow_notes": [
+    "S46 first verify run hit an unrelated auth test instability (malformed JWT response/valid-token timeout observed in retries) but final verify passed all backend 57 + frontend 36 + builds; monitor auth test flake if it reappears."
+  ]
 }
