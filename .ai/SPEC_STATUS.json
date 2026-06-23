@@ -1,9 +1,9 @@
 {
-  "stage": "S14_finance_category_recycle_lifecycle_pushed",
+  "stage": "S15_finance_department_reimbursement_review_verified",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "Finance category settings and recycle-bin lifecycle are verified in real Chrome: main/sub category create-edit-delete, backend category read-back, contract soft-delete, recycle-bin keyword/search API compatibility, restore, re-delete, and permanent delete. Full Chrome smoke now passes 13/13. Inventory alert / 库存预警 remains removed from active WMS product requirements, docs, routes, menus, API client, backend API surface, browser matrix, historical Prisma schema, and initialization SQL. Deep CRUD/upload/download for every remaining historical page, production DNS/logo polish, and real third-party face gateway credentials remain Yellow.",
-  "updated_at": "2026-06-23T03:31:00Z"
+  "notes": "Finance project department reimbursement review is verified in real Chrome: submit reimbursement with receipt upload, pending API state/source/payer/receiptPath, approve through UI, approved API state, approved-delete guard, reject through UI, delete rejected record, and final API absence. Backend unit tests guard project-department payer fallback and tenant-scoped approve/reject. Full Chrome smoke now passes 14/14. Finance category/recycle-bin, WMS main chain, labor deep slice, and finance voucher/invoice/import/export slices remain verified. Deep CRUD/upload/download for every remaining historical page, production DNS/logo polish, and real third-party face gateway credentials remain Yellow.",
+  "updated_at": "2026-06-23T03:43:10Z"
 }

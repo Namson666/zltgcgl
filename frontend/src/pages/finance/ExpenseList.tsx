@@ -181,6 +181,20 @@ const ExpenseList: React.FC = () => {
     }
   };
 
+  const handleReject = async (id: string) => {
+    setApproving(id);
+    try {
+      await financeApi.rejectExpense(id);
+      toast.success('已驳回');
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '驳回失败');
+      console.error(err);
+    } finally {
+      setApproving(null);
+    }
+  };
+
   /* ---------- 删除操作 ---------- */
 
   const openDeleteConfirm = (id: string) => {
@@ -415,14 +429,24 @@ const ExpenseList: React.FC = () => {
                       <td className="table-td">
                         <div className="flex items-center gap-1">
                           {r.status === 'pending' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleApprove(r.id); }}
-                              disabled={approving === r.id}
-                              className="p-1 text-gray-400 hover:text-green-600 transition-colors"
-                              title="审核通过"
-                            >
-                              <CheckCircle size={14} />
-                            </button>
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleApprove(r.id); }}
+                                disabled={approving === r.id}
+                                className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                                title="审核通过"
+                              >
+                                <CheckCircle size={14} />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleReject(r.id); }}
+                                disabled={approving === r.id}
+                                className="p-1 text-gray-400 hover:text-orange-600 transition-colors"
+                                title="审核驳回"
+                              >
+                                <X size={14} />
+                              </button>
+                            </>
                           )}
                           <button
                             onClick={(e) => { e.stopPropagation(); openEdit(r); }}

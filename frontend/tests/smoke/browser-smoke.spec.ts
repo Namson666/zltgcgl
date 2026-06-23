@@ -984,6 +984,104 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can submit department reimbursement and approve or reject it', async ({ page }) => {
+    test.setTimeout(120_000);
+    await loginEnterprise(page);
+    const stamp = Date.now();
+    const approveHandler = `项目部报账经办-${stamp}`;
+    const rejectHandler = `项目部驳回经办-${stamp}`;
+    const approveDetail = `真实浏览器项目部报账审核-${stamp}`;
+    const rejectDetail = `真实浏览器项目部报账驳回-${stamp}`;
+    const receiptPath = path.resolve(process.cwd(), 'tests/fixtures/checkin-face.svg');
+
+    async function submitDepartmentExpense(handler: string, detail: string, amount: string) {
+      await page.goto('/finance/dept-entry');
+      await expect(page.getByRole('heading', { name: '项目部报账' })).toBeVisible();
+      await page.locator('select').filter({ hasText: '请选择合同' }).selectOption({ label: 'XX市政道路改造工程' });
+      await page.locator('select').filter({ hasText: '请选择项目部' }).selectOption({ label: '第一项目部' });
+      await page.getByPlaceholder('请输入经办人姓名').fill(handler);
+      await page.locator('select').filter({ hasText: '请选择类别' }).selectOption({ label: '材料费' });
+      await page.getByPlaceholder('0.00').fill(amount);
+      await page.getByPlaceholder('请详细描述费用用途和内容...').fill(detail);
+      await page.locator('input[type="file"]').setInputFiles(receiptPath);
+      await page.getByRole('button', { name: '提交报账申请' }).click();
+      await expect(page.getByText('费用报账提交成功')).toBeVisible();
+    }
+
+    await submitDepartmentExpense(approveHandler, approveDetail, '321.09');
+    await submitDepartmentExpense(rejectHandler, rejectDetail, '98.76');
+
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+    const createdResponse = await page.request.get(`/api/finance/expenses?keyword=${encodeURIComponent(approveDetail)}&pageSize=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(createdResponse.status()).toBe(200);
+    const createdBody = await readJson(createdResponse);
+    const createdExpense = (createdBody?.data || []).find((item: any) => item.detail === approveDetail);
+    expect(createdExpense?.status).toBe('pending');
+    expect(createdExpense?.source).toBe('project_department');
+    expect(createdExpense?.payer).toBe(approveHandler);
+    expect(createdExpense?.receiptPath).toMatch(/^\/uploads\/finance-/);
+
+    await page.goto('/finance/expenses');
+    await expect(page.getByRole('heading', { name: '费用列表', exact: true })).toBeVisible();
+    await page.getByPlaceholder('经办人/明细...').fill(approveDetail);
+    const approveRow = page.locator('tr', { hasText: approveHandler });
+    await expect(approveRow).toBeVisible();
+    await expect(approveRow).toContainText('待审核');
+    await approveRow.locator('button[title="审核通过"]').click();
+    await expect(page.getByText('审核通过')).toBeVisible();
+    await expect(approveRow).toContainText('已审核');
+
+    const approvedResponse = await page.request.get(`/api/finance/expenses?keyword=${encodeURIComponent(approveDetail)}&pageSize=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(approvedResponse.status()).toBe(200);
+    const approvedBody = await readJson(approvedResponse);
+    const approvedExpense = (approvedBody?.data || []).find((item: any) => item.detail === approveDetail);
+    expect(approvedExpense?.status).toBe('approved');
+    const approvedDeleteResponse = await page.request.delete(`/api/finance/expenses/${approvedExpense.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(approvedDeleteResponse.status()).toBe(400);
+    const approvedDeleteBody = await readJson(approvedDeleteResponse);
+    expect(approvedDeleteBody?.code || approvedDeleteBody?.error).toBe('EXPENSE_ALREADY_APPROVED');
+
+    await page.getByPlaceholder('经办人/明细...').fill(rejectDetail);
+    const rejectRow = page.locator('tr', { hasText: rejectHandler });
+    await expect(rejectRow).toBeVisible();
+    await expect(rejectRow).toContainText('待审核');
+    await rejectRow.locator('button[title="审核驳回"]').click();
+    await expect(page.getByText('已驳回')).toBeVisible();
+    await expect(rejectRow).toContainText('已拒绝');
+
+    const rejectedResponse = await page.request.get(`/api/finance/expenses?keyword=${encodeURIComponent(rejectDetail)}&pageSize=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(rejectedResponse.status()).toBe(200);
+    const rejectedBody = await readJson(rejectedResponse);
+    const rejectedExpense = (rejectedBody?.data || []).find((item: any) => item.detail === rejectDetail);
+    expect(rejectedExpense?.status).toBe('rejected');
+
+    await rejectRow.locator('button[title="删除"]').click();
+    await page.getByRole('button', { name: '确认删除' }).click();
+    await expect(page.getByText('删除成功')).toBeVisible();
+    await expect(page.locator('tr', { hasText: rejectHandler })).toHaveCount(0);
+
+    const afterDeleteResponse = await page.request.get(`/api/finance/expenses?keyword=${encodeURIComponent(rejectDetail)}&pageSize=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(afterDeleteResponse.status()).toBe(200);
+    const afterDeleteBody = await readJson(afterDeleteResponse);
+    expect((afterDeleteBody?.data || []).some((item: any) => item.detail === rejectDetail)).toBe(false);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/项目部报账审核驳回CRUD.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can complete finance petty cash and expense voucher CRUD', async ({ page }) => {
     test.setTimeout(120_000);
     await loginEnterprise(page);

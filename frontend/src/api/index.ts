@@ -1497,6 +1497,10 @@ export const financeApi = {
   approveExpense: (id: string) =>
     http.put(`/finance/expenses/${id}/approve`),
 
+  /** 驳回费用记录 */
+  rejectExpense: (id: string) =>
+    http.put(`/finance/expenses/${id}/reject`),
+
   /* ---------- 汇总查询 ---------- */
 
   /** 获取费用汇总 */

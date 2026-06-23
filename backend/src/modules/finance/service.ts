@@ -270,7 +270,7 @@ export async function createExpense(data: CreateExpenseData) {
       amount: data.amount,
       paymentMethod: data.paymentMethod,
       pettyCashAccountId: data.pettyCashAccountId ?? null,
-      payer: data.payer,
+      payer: data.source === 'project_department' ? (data.payer || data.handler) : data.payer,
       expenseDate: data.expenseDate,
       detail: data.detail ?? null,
       vehiclePlate: data.vehiclePlate ?? null,
@@ -337,8 +337,8 @@ export async function deleteExpense(tenantId: string, id: string) {
   return prisma.finExpense.delete({ where: { id } });
 }
 
-export async function approveExpense(id: string, userId: string) {
-  const expense = await prisma.finExpense.findUnique({ where: { id } });
+export async function approveExpense(tenantId: string, id: string, userId: string) {
+  const expense = await prisma.finExpense.findFirst({ where: { id, tenantId } });
   if (!expense) {
     throw { status: 404, code: 'EXPENSE_NOT_FOUND', message: '费用记录不存在' };
   }
@@ -360,8 +360,8 @@ export async function approveExpense(id: string, userId: string) {
   });
 }
 
-export async function rejectExpense(id: string, userId: string) {
-  const expense = await prisma.finExpense.findUnique({ where: { id } });
+export async function rejectExpense(tenantId: string, id: string, userId: string) {
+  const expense = await prisma.finExpense.findFirst({ where: { id, tenantId } });
   if (!expense) {
     throw { status: 404, code: 'EXPENSE_NOT_FOUND', message: '费用记录不存在' };
   }

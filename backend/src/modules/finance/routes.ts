@@ -472,7 +472,7 @@ expenseRouter.delete('/:id', requireExpenseWritePermission, wrapHandler(async (r
 expenseRouter.put('/:id/approve', requirePermission('canFinanceApprove'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
   const userId = getEffectiveUserId(req) ?? 'system';
-  const expense = await finance.approveExpense(req.params.id, userId);
+  const expense = await finance.approveExpense(tenantId, req.params.id, userId);
   await createLog({
     tenantId,
     userId: getEffectiveUserId(req),
@@ -489,7 +489,7 @@ expenseRouter.put('/:id/approve', requirePermission('canFinanceApprove'), wrapHa
 expenseRouter.put('/:id/reject', requirePermission('canFinanceApprove'), wrapHandler(async (req, res) => {
   const tenantId = getTenantId(req);
   const userId = getEffectiveUserId(req) ?? 'system';
-  const expense = await finance.rejectExpense(req.params.id, userId);
+  const expense = await finance.rejectExpense(tenantId, req.params.id, userId);
   await createLog({
     tenantId,
     userId: getEffectiveUserId(req),
