@@ -136,8 +136,9 @@ const Storage: React.FC = () => {
       const body = res.data || res;
       const items = body.data || [];
       const pagination = body.pagination || {};
-      const totalSize = items.reduce((sum: number, t: TenantStorage) => sum + (t.totalSize || 0), 0);
-      const totalFiles = items.reduce((sum: number, t: TenantStorage) => sum + (t.fileCount || 0), 0);
+      const summary = body.summary || {};
+      const totalSize = summary.totalSize ?? items.reduce((sum: number, t: TenantStorage) => sum + (t.totalSize || 0), 0);
+      const totalFiles = summary.totalFiles ?? items.reduce((sum: number, t: TenantStorage) => sum + (t.fileCount || 0), 0);
       setStats({ totalSize, totalFiles, tenantStats: items });
       setTenantData(items);
       setTenantTotal(pagination.total || 0);
@@ -222,6 +223,7 @@ const Storage: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleRefresh}
+            data-testid="developer-storage-refresh"
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             style={{ color: '#8899AA' }}
             title="刷新数据"
@@ -240,7 +242,7 @@ const Storage: React.FC = () => {
        * ========================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         {/* 总存储空间 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm" data-testid="developer-storage-total-size">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-500 mb-1">总存储空间</p>
@@ -260,7 +262,7 @@ const Storage: React.FC = () => {
         </div>
 
         {/* 总文件数 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm" data-testid="developer-storage-total-files">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-500 mb-1">总文件数</p>
@@ -288,6 +290,7 @@ const Storage: React.FC = () => {
         <div className="flex items-center border-b border-gray-200">
           <button
             onClick={() => handleTabChange('tenants')}
+            data-testid="developer-storage-tab-tenants"
             className={`px-6 py-3.5 text-sm font-medium transition-colors relative ${
               activeTab === 'tenants'
                 ? 'text-blue-600'
@@ -304,6 +307,7 @@ const Storage: React.FC = () => {
           </button>
           <button
             onClick={() => handleTabChange('files')}
+            data-testid="developer-storage-tab-files"
             className={`px-6 py-3.5 text-sm font-medium transition-colors relative ${
               activeTab === 'files'
                 ? 'text-blue-600'
@@ -372,7 +376,7 @@ const Storage: React.FC = () => {
                 ) : (
                   /* 企业存储数据行 */
                   tenantData.map((tenant) => (
-                    <tr key={tenant.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={tenant.id} data-testid={`developer-storage-tenant-row-${tenant.id}`} className="hover:bg-gray-50 transition-colors">
                       {/* 企业名称 */}
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2">
@@ -455,7 +459,7 @@ const Storage: React.FC = () => {
                 ) : (
                   /* 文件排行数据行 */
                   files.map((file) => (
-                    <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={file.id} data-testid={`developer-storage-file-row-${file.id}`} className="hover:bg-gray-50 transition-colors">
                       {/* 文件名 */}
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2 max-w-[300px]">

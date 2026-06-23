@@ -690,6 +690,7 @@ router.get('/payments', async (req: AuthenticatedRequest, res: Response): Promis
       page, pageSize,
       tenantId: req.query.tenantId as string | undefined,
       status: req.query.status as string | undefined,
+      keyword: req.query.keyword as string | undefined,
     });
     res.json({ success: true, data: payments, pagination: { page, pageSize, total, totalPages } } as any);
   } catch (error: any) {
@@ -862,8 +863,8 @@ router.get('/storage/stats', async (req: AuthenticatedRequest, res: Response): P
   try {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 20));
-    const { stats, total, totalPages } = await devService.getStorageStats(page, pageSize);
-    res.json({ success: true, data: stats, pagination: { page, pageSize, total, totalPages } } as any);
+    const { stats, total, totalPages, totalSize, totalFiles } = await devService.getStorageStats(page, pageSize);
+    res.json({ success: true, data: stats, summary: { totalSize, totalFiles }, pagination: { page, pageSize, total, totalPages } } as any);
   } catch (error: any) {
     console.error('获取存储统计失败:', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '服务器错误' } as ApiResponse);

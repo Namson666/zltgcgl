@@ -1385,6 +1385,159 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('developer can manage payments invoices and storage observability', async ({ page }) => {
+    test.setTimeout(90_000);
+    const stamp = Date.now();
+    const invoiceTitle = `开发者验收发票抬头-${stamp}`;
+    const taxId = `TAX${stamp}`;
+    const attachmentName = `developer-storage-${stamp}.pdf`;
+
+    await loginDeveloper(page);
+    const developerToken = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(developerToken).toBeTruthy();
+
+    const enterpriseLogin = await page.request.post('/api/auth/user/login', {
+      data: enterpriseAccount,
+    });
+    expect(enterpriseLogin.status()).toBe(200);
+    const enterpriseLoginBody = await readJson(enterpriseLogin);
+    const enterpriseToken = enterpriseLoginBody?.data?.token;
+    expect(enterpriseToken).toBeTruthy();
+
+    const tenantResponse = await page.request.get('/api/developer/tenants?page=1&pageSize=100', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+    });
+    expect(tenantResponse.status()).toBe(200);
+    const tenantBody = await readJson(tenantResponse);
+    const demoTenant = (tenantBody?.data || []).find((item: any) => item.code === enterpriseAccount.tenantCode);
+    expect(demoTenant?.id).toBeTruthy();
+
+    await page.goto('/dev/payments');
+    await expect(page.getByRole('heading', { name: '支付记录' })).toBeVisible();
+    await page.getByPlaceholder('搜索企业名称...').fill('演示建筑');
+    await page.keyboard.press('Enter');
+    await page.getByTestId('developer-payments-status-filter').selectOption('completed');
+    await expect(page.locator('tbody tr', { hasText: '演示建筑工程有限公司' }).first()).toBeVisible();
+    await expect(page.locator('tbody tr', { hasText: '已完成' }).first()).toBeVisible();
+
+    const paymentsResponse = await page.request.get('/api/developer/payments', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+      params: { keyword: '演示建筑', status: 'completed', pageSize: 10 },
+    });
+    expect(paymentsResponse.status()).toBe(200);
+    const paymentsBody = await readJson(paymentsResponse);
+    const seedPayment = (paymentsBody?.data || []).find((item: any) => item.transactionId === 'DEMO-PAY-20260623');
+    expect(seedPayment?.tenantName).toBe('演示建筑工程有限公司');
+    expect(seedPayment?.status).toBe('completed');
+
+    for (const pathName of ['/api/developer/payments', '/api/developer/invoices', '/api/developer/storage/stats', '/api/developer/storage/files']) {
+      const forbiddenRead = await page.request.get(pathName, {
+        headers: { Authorization: `Bearer ${enterpriseToken}` },
+      });
+      expect(forbiddenRead.status()).toBe(403);
+    }
+    const forbiddenInvoiceCreate = await page.request.post('/api/developer/invoices', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      data: { tenantId: demoTenant.id, title: `非法发票-${stamp}`, amount: 1 },
+    });
+    expect(forbiddenInvoiceCreate.status()).toBe(403);
+
+    await page.goto('/dev/invoices');
+    await expect(page.getByRole('heading', { name: '发票管理' })).toBeVisible();
+    await page.getByTestId('developer-invoice-new').click();
+    await page.getByTestId('developer-invoice-tenant').selectOption(demoTenant.id);
+    await page.getByTestId('developer-invoice-title').fill(invoiceTitle);
+    await page.getByTestId('developer-invoice-tax-id').fill(taxId);
+    await page.getByTestId('developer-invoice-amount').fill('321.45');
+    await page.getByTestId('developer-invoice-create').click();
+    await expectToast(page, '发票创建成功');
+
+    let invoicesResponse = await page.request.get('/api/developer/invoices', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+      params: { pageSize: 20 },
+    });
+    expect(invoicesResponse.status()).toBe(200);
+    let invoicesBody = await readJson(invoicesResponse);
+    let invoice = (invoicesBody?.data || []).find((item: any) => item.title === invoiceTitle);
+    expect(invoice?.id).toBeTruthy();
+    expect(invoice?.tenantId).toBe(demoTenant.id);
+    expect(invoice?.tenantName).toBe('演示建筑工程有限公司');
+    expect(invoice?.taxId).toBe(taxId);
+    expect(invoice?.status).toBe('pending');
+    await expect(page.getByTestId(`developer-invoice-row-${invoice.id}`)).toContainText(invoiceTitle);
+    await expect(page.getByTestId(`developer-invoice-row-${invoice.id}`)).toContainText('待开具');
+
+    await page.getByTestId(`developer-invoice-issue-${invoice.id}`).click();
+    await expectToast(page, '发票已开具');
+    invoicesResponse = await page.request.get('/api/developer/invoices', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+      params: { pageSize: 20 },
+    });
+    invoicesBody = await readJson(invoicesResponse);
+    invoice = (invoicesBody?.data || []).find((item: any) => item.id === invoice.id);
+    expect(invoice?.status).toBe('issued');
+    expect(invoice?.issuedAt).toBeTruthy();
+    await expect(page.getByTestId(`developer-invoice-row-${invoice.id}`)).toContainText('已开具');
+
+    const forbiddenIssue = await page.request.post(`/api/developer/invoices/${invoice.id}/issue`, {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(forbiddenIssue.status()).toBe(403);
+
+    const fixtureBuffer = fs.readFileSync(path.resolve(process.cwd(), 'tests/fixtures/contract-attachment.pdf'));
+    const uploadResponse = await page.request.post('/api/labor/attachment/upload', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+      multipart: {
+        entityType: 'developer_storage_smoke',
+        entityId: `developer-storage-${stamp}`,
+        category: 'storage-smoke',
+        files: {
+          name: attachmentName,
+          mimeType: 'application/pdf',
+          buffer: fixtureBuffer,
+        },
+      },
+    });
+    expect(uploadResponse.status()).toBe(201);
+    const uploadBody = await readJson(uploadResponse);
+    const uploadedAttachment = uploadBody?.data?.[0];
+    expect(uploadedAttachment?.id).toBeTruthy();
+    expect(uploadedAttachment?.fileName).toBe(attachmentName);
+
+    await page.goto('/dev/storage');
+    await expect(page.getByRole('heading', { name: '存储管理' })).toBeVisible();
+    await expect(page.getByTestId('developer-storage-total-files')).toContainText(/[1-9]/);
+    await expect(page.locator('tbody tr', { hasText: '演示建筑工程有限公司' }).first()).toBeVisible();
+    await page.getByTestId('developer-storage-tab-files').click();
+    await expect(page.locator('tbody tr', { hasText: attachmentName }).first()).toBeVisible();
+    await expect(page.locator('tbody tr', { hasText: attachmentName }).first()).toContainText('演示建筑工程有限公司');
+
+    const storageStatsResponse = await page.request.get('/api/developer/storage/stats', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+      params: { pageSize: 100 },
+    });
+    expect(storageStatsResponse.status()).toBe(200);
+    const storageStatsBody = await readJson(storageStatsResponse);
+    expect(storageStatsBody?.summary?.totalFiles).toBeGreaterThanOrEqual(1);
+    const demoStorage = (storageStatsBody?.data || []).find((item: any) => item.id === demoTenant.id);
+    expect(demoStorage?.fileCount).toBeGreaterThanOrEqual(1);
+
+    const storageFilesResponse = await page.request.get('/api/developer/storage/files', {
+      headers: { Authorization: `Bearer ${developerToken}` },
+      params: { pageSize: 50 },
+    });
+    expect(storageFilesResponse.status()).toBe(200);
+    const storageFilesBody = await readJson(storageFilesResponse);
+    const storageFile = (storageFilesBody?.data || []).find((item: any) => item.id === uploadedAttachment.id);
+    expect(storageFile?.tenantName).toBe('演示建筑工程有限公司');
+    expect(storageFile?.fileName).toBe(attachmentName);
+
+    await page.screenshot({
+      path: '../docs/smoke-evidence/开发者支付发票存储CRUD.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can create edit and delete supplier and work team', async ({ page }) => {
     await loginEnterprise(page);
     const stamp = Date.now();

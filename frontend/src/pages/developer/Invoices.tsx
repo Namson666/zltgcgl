@@ -52,9 +52,15 @@ interface Invoice {
   issuedAt?: string;                 /* 开具时间 */
 }
 
+interface TenantOption {
+  id: string;
+  name: string;
+  code: string;
+}
+
 /** 创建发票表单数据接口 */
 interface InvoiceFormData {
-  tenantName: string;               /* 企业名称 */
+  tenantId: string;                 /* 企业 ID */
   title: string;                    /* 发票抬头 */
   taxId: string;                    /* 税号 */
   amount: string;                   /* 金额（字符串，方便输入） */
@@ -104,11 +110,12 @@ const Invoices: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);                  /* 总页数 */
   const [page, setPage] = useState(1);                              /* 当前页码 */
   const [pageSize] = useState(20);                                  /* 每页条数 */
+  const [tenantOptions, setTenantOptions] = useState<TenantOption[]>([]); /* 企业选项 */
 
   /* ---------- 创建发票状态 ---------- */
   const [showForm, setShowForm] = useState(false);                  /* 是否显示创建表单 */
   const [formData, setFormData] = useState<InvoiceFormData>({       /* 创建表单数据 */
-    tenantName: '',
+    tenantId: '',
     title: '',
     taxId: '',
     amount: '',
@@ -140,10 +147,25 @@ const Invoices: React.FC = () => {
     }
   }, [page, pageSize]);
 
+  const fetchTenantOptions = useCallback(async () => {
+    try {
+      const res = await developerApi.getTenants({ page: 1, pageSize: 100 });
+      const body = res.data || res;
+      setTenantOptions(body.data || []);
+    } catch (error) {
+      console.error('加载企业选项失败:', error);
+      toast.error('加载企业选项失败');
+    }
+  }, []);
+
   /* 页码变化时重新加载数据 */
   useEffect(() => {
     fetchInvoices();
   }, [fetchInvoices]);
+
+  useEffect(() => {
+    fetchTenantOptions();
+  }, [fetchTenantOptions]);
 
   /* ---------- 创建发票 ---------- */
 
@@ -151,7 +173,7 @@ const Invoices: React.FC = () => {
    * 重置创建表单
    */
   const resetForm = () => {
-    setFormData({ tenantName: '', title: '', taxId: '', amount: '' });
+    setFormData({ tenantId: '', title: '', taxId: '', amount: '' });
   };
 
   /**
@@ -168,8 +190,8 @@ const Invoices: React.FC = () => {
    */
   const handleCreate = async () => {
     /* 表单验证 */
-    if (!formData.tenantName.trim()) {
-      toast.error('请输入企业名称');
+    if (!formData.tenantId.trim()) {
+      toast.error('请选择企业');
       return;
     }
     if (!formData.title.trim()) {
@@ -188,7 +210,7 @@ const Invoices: React.FC = () => {
     try {
       setCreating(true);
       await developerApi.createInvoice({
-        tenantName: formData.tenantName.trim(),
+        tenantId: formData.tenantId.trim(),
         title: formData.title.trim(),
         taxId: formData.taxId.trim(),
         amount: Number(formData.amount),
@@ -238,13 +260,14 @@ const Invoices: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => { fetchInvoices(); }}
+            data-testid="developer-invoices-refresh"
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             style={{ color: '#8899AA' }}
             title="刷新数据"
           >
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
-          <button onClick={toggleForm} className="btn-primary flex items-center gap-2">
+          <button onClick={toggleForm} data-testid="developer-invoice-new" className="btn-primary flex items-center gap-2">
             <Plus size={18} />
             创建发票
           </button>
@@ -269,13 +292,19 @@ const Invoices: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   企业名称 <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={formData.tenantName}
-                  onChange={(e) => setFormData({ ...formData, tenantName: e.target.value })}
+                <select
+                  data-testid="developer-invoice-tenant"
+                  value={formData.tenantId}
+                  onChange={(e) => setFormData({ ...formData, tenantId: e.target.value })}
                   className="input"
-                  placeholder="请输入企业名称"
-                />
+                >
+                  <option value="">请选择企业</option>
+                  {tenantOptions.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>
+                      {tenant.name}（{tenant.code}）
+                    </option>
+                  ))}
+                </select>
               </div>
               {/* 发票抬头 */}
               <div>
@@ -284,6 +313,7 @@ const Invoices: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                  data-testid="developer-invoice-title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="input"
@@ -297,6 +327,7 @@ const Invoices: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                  data-testid="developer-invoice-tax-id"
                   value={formData.taxId}
                   onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
                   className="input"
@@ -310,6 +341,7 @@ const Invoices: React.FC = () => {
                 </label>
                 <input
                   type="number"
+                  data-testid="developer-invoice-amount"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   className="input"
@@ -323,6 +355,7 @@ const Invoices: React.FC = () => {
             <div className="flex items-center gap-3 mt-5 pt-4 border-t border-gray-100">
               <button
                 onClick={handleCreate}
+                data-testid="developer-invoice-create"
                 disabled={creating}
                 className="btn-primary flex items-center gap-2"
               >
@@ -390,7 +423,7 @@ const Invoices: React.FC = () => {
               ) : (
                 /* 发票数据行 */
                 invoices.map((invoice) => (
-                  <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={invoice.id} data-testid={`developer-invoice-row-${invoice.id}`} className="hover:bg-gray-50 transition-colors">
                     {/* 发票号 */}
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
@@ -428,6 +461,7 @@ const Invoices: React.FC = () => {
                       {invoice.status === 'pending' ? (
                         <button
                           onClick={() => handleIssue(invoice.id)}
+                          data-testid={`developer-invoice-issue-${invoice.id}`}
                           disabled={issuingId === invoice.id}
                           className="btn-primary btn-sm flex items-center gap-1.5 mx-auto"
                         >

@@ -572,12 +572,23 @@ export async function updateTenantSubscription(tenantId: string, data: any) {
 // ============================================
 
 export interface DevPaymentListParams {
-  page: number; pageSize: number; tenantId?: string; status?: string;
+  page: number; pageSize: number; tenantId?: string; status?: string; keyword?: string;
 }
 export async function listDeveloperPayments(params: DevPaymentListParams) {
-  const { page, pageSize, tenantId, status } = params;
+  const { page, pageSize, tenantId, status, keyword } = params;
   const where: any = {};
-  if (tenantId) where.subscription = { tenantId };
+  if (tenantId || keyword) {
+    where.subscription = {};
+    if (tenantId) where.subscription.tenantId = tenantId;
+    if (keyword) {
+      where.subscription.tenant = {
+        OR: [
+          { name: { contains: keyword } },
+          { code: { contains: keyword } },
+        ],
+      };
+    }
+  }
   if (status) where.status = status;
   const [total, payments] = await Promise.all([
     prisma.subscriptionPayment.count({ where }),
@@ -586,7 +597,20 @@ export async function listDeveloperPayments(params: DevPaymentListParams) {
       include: { subscription: { select: { tenant: { select: { id: true, name: true, code: true } } } } },
     }),
   ]);
-  return { payments, total, totalPages: Math.ceil(total / pageSize) };
+  const formatted = payments.map((payment) => ({
+    id: payment.id,
+    subscriptionId: payment.subscriptionId,
+    tenantId: payment.subscription?.tenant?.id,
+    tenantName: payment.subscription?.tenant?.name || '-',
+    tenantCode: payment.subscription?.tenant?.code || '',
+    amount: payment.amount,
+    paymentMethod: payment.paymentMethod,
+    transactionId: payment.transactionId,
+    status: payment.status,
+    paidAt: payment.paidAt,
+    createdAt: payment.createdAt,
+  }));
+  return { payments: formatted, total, totalPages: Math.ceil(total / pageSize) };
 }
 
 // ============================================
@@ -603,7 +627,23 @@ export async function listInvoices(params: InvoiceListParams) {
       include: { tenant: { select: { id: true, name: true, code: true } } },
     }),
   ]);
-  return { invoices, total, totalPages: Math.ceil(total / pageSize) };
+  const formatted = invoices.map((invoice) => ({
+    id: invoice.id,
+    tenantId: invoice.tenantId,
+    tenantName: invoice.tenant?.name || '-',
+    tenantCode: invoice.tenant?.code || '',
+    paymentId: invoice.paymentId,
+    invoiceNo: invoice.invoiceNo,
+    title: invoice.title,
+    taxId: invoice.taxId,
+    amount: invoice.amount,
+    status: invoice.status,
+    fileUrl: invoice.fileUrl,
+    issuedAt: invoice.issuedAt,
+    createdAt: invoice.createdAt,
+    updatedAt: invoice.updatedAt,
+  }));
+  return { invoices: formatted, total, totalPages: Math.ceil(total / pageSize) };
 }
 
 export async function createInvoice(data: { tenantId: string; paymentId?: string; title: string; taxId?: string; amount: number }) {
@@ -630,17 +670,34 @@ export async function getStorageStats(page: number, pageSize: number) {
   const attachmentGroups = await prisma.attachment.groupBy({ by: ['tenantId'], where: { tenantId: { in: tenantIds } }, _sum: { fileSize: true }, _count: { id: true } });
   const storageMap = new Map(attachmentGroups.map((g) => [g.tenantId, { size: g._sum.fileSize || 0, count: g._count.id }]));
   const total = tenants.length;
+  const totalSize = attachmentGroups.reduce((sum, g) => sum + (g._sum.fileSize || 0), 0);
+  const totalFiles = attachmentGroups.reduce((sum, g) => sum + g._count.id, 0);
   const paginated = tenants.slice((page - 1) * pageSize, page * pageSize);
   const stats = paginated.map((t) => ({ ...t, totalSize: storageMap.get(t.id)?.size || 0, fileCount: storageMap.get(t.id)?.count || 0 }));
-  return { stats, total, totalPages: Math.ceil(total / pageSize) };
+  return { stats, total, totalPages: Math.ceil(total / pageSize), totalSize, totalFiles };
 }
 
 export async function getStorageFiles(page: number, pageSize: number) {
   const [total, files] = await Promise.all([
     prisma.attachment.count(),
-    prisma.attachment.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { fileSize: 'desc' }, include: { tenant: { select: { name: true } } } }),
+    prisma.attachment.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { fileSize: 'desc' }, include: { tenant: { select: { id: true, name: true, code: true } } } }),
   ]);
-  return { files, total, totalPages: Math.ceil(total / pageSize) };
+  const formatted = files.map((file) => ({
+    id: file.id,
+    tenantId: file.tenantId,
+    tenantName: file.tenant?.name || '-',
+    tenantCode: file.tenant?.code || '',
+    entityType: file.entityType,
+    entityId: file.entityId,
+    category: file.category,
+    fileName: file.fileName,
+    storedName: file.storedName,
+    filePath: file.filePath,
+    fileSize: file.fileSize || 0,
+    mimeType: file.mimeType,
+    createdAt: file.createdAt,
+  }));
+  return { files: formatted, total, totalPages: Math.ceil(total / pageSize) };
 }
 
 // ============================================

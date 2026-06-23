@@ -99,6 +99,28 @@ async function main() {
   });
   console.log(`  ✓ 订阅创建成功: ${subscription.plan} / ${subscription.tier}`);
 
+  await prisma.subscriptionPayment.upsert({
+    where: { id: 'seed-demo-subscription-payment-001' },
+    update: {
+      subscriptionId: subscription.id,
+      amount: 1288,
+      paymentMethod: 'bank_transfer',
+      transactionId: 'DEMO-PAY-20260623',
+      status: 'completed',
+      paidAt: new Date('2026-06-01T10:00:00.000Z'),
+    },
+    create: {
+      id: 'seed-demo-subscription-payment-001',
+      subscriptionId: subscription.id,
+      amount: 1288,
+      paymentMethod: 'bank_transfer',
+      transactionId: 'DEMO-PAY-20260623',
+      status: 'completed',
+      paidAt: new Date('2026-06-01T10:00:00.000Z'),
+    },
+  });
+  console.log('  ✓ 订阅支付记录创建成功: DEMO-PAY-20260623');
+
   // ============================================
   // 4. 创建默认角色和权限
   // ============================================

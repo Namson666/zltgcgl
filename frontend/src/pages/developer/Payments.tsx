@@ -16,7 +16,7 @@ import {
   Banknote, Search, RefreshCw,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { developerApi, PaginationParams } from '../../api';
+import { developerApi } from '../../api';
 import {
   Pagination,
   EmptyState,
@@ -72,6 +72,7 @@ const Payments: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [keyword, setKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   /* ---------- 数据加载 ---------- */
 
@@ -81,10 +82,16 @@ const Payments: React.FC = () => {
   const fetchPayments = useCallback(async () => {
     setLoading(true);
     try {
-      const params: PaginationParams = {
+      const params: {
+        page: number;
+        pageSize: number;
+        keyword?: string;
+        status?: string;
+      } = {
         page,
         pageSize,
         keyword: keyword || undefined,
+        status: statusFilter || undefined,
       };
       const res = await developerApi.getPayments(params);
       const body = res.data || res;
@@ -97,7 +104,7 @@ const Payments: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, keyword]);
+  }, [page, pageSize, keyword, statusFilter]);
 
   useEffect(() => {
     fetchPayments();
@@ -131,6 +138,7 @@ const Payments: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchPayments}
+            data-testid="developer-payments-refresh"
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             style={{ color: '#8899AA' }}
             title="刷新"
@@ -153,6 +161,20 @@ const Payments: React.FC = () => {
               placeholder="搜索企业名称..."
             />
           </div>
+          <select
+            data-testid="developer-payments-status-filter"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            className="input text-sm max-w-[160px]"
+          >
+            <option value="">全部状态</option>
+            <option value="pending">待支付</option>
+            <option value="completed">已完成</option>
+            <option value="failed">支付失败</option>
+          </select>
           <span className="text-sm" style={{ color: '#8899AA' }}>
             共 {total} 条记录
           </span>
@@ -203,7 +225,7 @@ const Payments: React.FC = () => {
               ) : (
                 /* 支付记录数据行 */
                 payments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={payment.id} data-testid={`developer-payment-row-${payment.id}`} className="hover:bg-gray-50 transition-colors">
                     {/* 企业名称 */}
                     <td className="px-5 py-3">
                       <span className="text-sm font-medium text-gray-800">{payment.tenantName}</span>
