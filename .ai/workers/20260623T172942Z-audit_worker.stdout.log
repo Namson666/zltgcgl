@@ -1,0 +1,11 @@
+`vi.hoisted` + `vi.mock` pattern matches Vitest best practice for hoisting. No blocker. Audit complete.
+
+**Audit summary:**
+
+- **Route mismatch**: None. `laborApi.createSubProgressPayment` → `POST /labor/output-value/payments` is mounted at `backend/src/modules/labor/routes.ts:813` (outputValueRouter) and re-mounted at line 831 via `router.use('/output-value', outputValueRouter)` under the labor router.
+- **Tenant-scope**: Single enterprise login (`tenantCode: demo`, admin user) creates resources and cleans them in the same tenant; no cross-tenant exposure. All three DELETE handlers (`/labor/sub-contract/:id`, `/labor/subcontractor/:id`, `/contracts/:id`) respond `res.json(...)` with 200 on success.
+- **Cleanup/flakiness**: All three DELETE assertions on lines 3651, 3653, 3655 are deterministic — they target IDs returned by the same test flow earlier in the sequence, and the backend uses soft-delete with a 200 + `success: true` body. The previous omission of status assertions meant any 4xx/5xx went unnoticed.
+- **False positive**: Unit test mocks `../api/client` via `vi.hoisted` + `vi.mock`, which is the correct Vitest pattern; the wrapper is verified to call exactly `/labor/output-value/payments` with the full payload.
+- **Inventory alert**: No inventory-related code was touched (git diff shows only screenshot PNGs from re-runs).
+
+**PASS**

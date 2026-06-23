@@ -1364,7 +1364,7 @@ export const laborApi = {
    * @param data - 进度款信息
    */
   createSubProgressPayment: (data: any) =>
-    http.post('/labor/sub-progress-payments', data),
+    http.post('/labor/output-value/payments', data),
 
   /* ---------- 风控管理 ---------- */
 

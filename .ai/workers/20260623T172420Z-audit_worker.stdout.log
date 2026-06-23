@@ -1,0 +1,23 @@
+All checks complete. Summary of audit:
+
+**1. Frontend wrapper vs backend route:** ✅ Match. Backend `outputValueRouter.post('/payments')` mounted at `router.use('/output-value', outputValueRouter)` inside the labor module → full path `/labor/output-value/payments`. Frontend `laborApi.createSubProgressPayment` now POSTs to `/labor/output-value/payments`. Old `/labor/sub-progress-payments` path is gone from the wrapper.
+
+**2. Smoke test coverage:** ✅ Real authenticated chain. Test uses `loginEnterprise(page)` + Bearer token from `localStorage.getItem('zlt_token')`, exercises create→create→create→create→create→list→list under a real session, asserts `message === '进度款支付记录创建成功'` (matches backend response at routes.ts:823) and `data.subContractId` / `data.totalAmount` round-trip. Screenshot saved as `劳资分包产值旧API链路.png`.
+
+**3. Tenant/cleanup/flakiness blockers:**
+- **Tenant scope:** ✅ Backend uses `req.user!.tenantId!` (routes.ts:815) — all creates are auto-scoped to the logged-in enterprise user's tenant.
+- **Cleanup:** Fire-and-forget `page.request.delete(...)` calls without `expect` — cleanup failure won't fail the test, but data persists if cleanup fails. Non-blocking.
+- **False positive:** Cleanup deletes sub-contract, subcontractor, contract in reverse order. If the contract delete fails, subcontractor and sub-contract are left orphaned. Non-blocking.
+- **Flakiness:** `Date.now()` stamp + `name`/`code` are unique per run → no collision. `month = '2026-06'` is hardcoded — fine for a one-off smoke run.
+
+**4. Inventory alert / 库存预警:** ✅ Confirmed not restored. `grep` for `库存预警|inventoryAlert` returned no results in frontend or backend.
+
+---
+
+## PASS
+
+No blockers. The frontend wrapper fix is correct, the smoke test proves the legacy chain under a real session with proper tenant isolation, and inventory alert code remains absent.
+
+Yellow notes (non-blocking):
+- Cleanup uses fire-and-forget deletes without status assertions — a cleanup failure leaves orphaned rows. Consider adding `expect(deleteResponse.status()).toBe(200)` for production hygiene, but this won't cause flaky test failures.
+- The smoke test asserts on `progressPaymentBody?.message === '进度款支付记录创建成功'` — coupling to a Chinese i18n string. Brittle if the message is ever localized, but the test scope is a Chinese enterprise system, so acceptable.

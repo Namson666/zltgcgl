@@ -1,13 +1,26 @@
 {
-  "status": "labor_report_all_types_verified",
+  "status": "labor_legacy_output_value_api_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_labor_report_type_export_labor_report_all_frontend_types_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_labor_report_type_export_labor_report_all_frontend_types_labor_legacy_output_value_api_chain_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "labor_legacy_output_value_api_chain",
+      "command": "cd frontend && npm test -- --run src/__tests__/api.test.ts; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"legacy labor subcontract output value API chain\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S49-labor-output-value-api-reaudit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
+      "status": "verified_claude_pass",
+      "result": "劳资旧分包产值链路已通过真实登录会话验证：前端 laborApi.createSubProgressPayment 修正为 /labor/output-value/payments，并由 Vitest 单测断言；真实 Chrome Playwright 登录企业后调用真实后端，创建承包合同、legacy labor 分包商、legacy labor 分包合同、产值记录和分包进度款，断言进度款响应、产值列表、分包合同列表，并断言分包合同/分包商/合同清理 DELETE 均返回 200。Focused unit 1/1 passed；focused Chrome 1/1 passed；verify backend 57 + frontend 37 + builds passed；full Chrome 36/36 passed；code-review-graph risk 0.50 / 0 test gaps；Claude audit and re-audit PASS。库存预警未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/劳资分包产值旧API链路.png",
+        ".ai/workers/20260623T172420Z-audit_worker.result.md",
+        ".ai/workers/20260623T172942Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "labor_report_all_frontend_types_flow",
       "command": "cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"enterprise user can download labor salary payment and report exports\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S48-labor-report-all-types-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",

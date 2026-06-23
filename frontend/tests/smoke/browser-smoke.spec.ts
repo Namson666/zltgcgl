@@ -3547,6 +3547,121 @@ test.describe('browser smoke: authenticated core navigation', () => {
     });
   });
 
+  test('enterprise user can exercise legacy labor subcontract output value API chain', async ({ page }) => {
+    await loginEnterprise(page);
+    const token = await page.evaluate(() => localStorage.getItem('zlt_token'));
+    expect(token).toBeTruthy();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+    const stamp = Date.now();
+    const month = '2026-06';
+
+    const contractResponse = await page.request.post('/api/contracts', {
+      headers: authHeaders,
+      data: {
+        type: 'CONSTRUCTION',
+        name: `浏览器劳资旧产值承包合同-${stamp}`,
+        code: `LAB-OUTPUT-${stamp}`,
+        totalAmount: 50000,
+      },
+    });
+    expect(contractResponse.status()).toBe(201);
+    const contractBody = await readJson(contractResponse);
+    const contractId = contractBody?.data?.id;
+    expect(contractId).toBeTruthy();
+
+    const subcontractorResponse = await page.request.post('/api/labor/subcontractor', {
+      headers: authHeaders,
+      data: {
+        type: 'company',
+        companyName: `浏览器劳资旧产值分包商-${stamp}`,
+        contactName: `旧产值联系人-${stamp}`,
+        contactPhone: `136${String(stamp).slice(-8)}`,
+        bankAccount: '6222020202020202099',
+        bankName: '浏览器验收银行',
+        remark: '真实登录会话验证劳资旧分包商 API',
+      },
+    });
+    expect(subcontractorResponse.status()).toBe(201);
+    const subcontractorBody = await readJson(subcontractorResponse);
+    const subcontractorId = subcontractorBody?.data?.id;
+    expect(subcontractorId).toBeTruthy();
+
+    const subContractResponse = await page.request.post('/api/labor/sub-contract', {
+      headers: authHeaders,
+      data: {
+        contractId,
+        subcontractorId,
+        name: `浏览器劳资旧产值分包合同-${stamp}`,
+        totalAmount: 30000,
+      },
+    });
+    expect(subContractResponse.status()).toBe(201);
+    const subContractBody = await readJson(subContractResponse);
+    const subContractId = subContractBody?.data?.id;
+    expect(subContractId).toBeTruthy();
+
+    const outputValueResponse = await page.request.post('/api/labor/output-value', {
+      headers: authHeaders,
+      data: {
+        subContractId,
+        month,
+        amount: 12000,
+        payableRatio: 0.8,
+        remark: '真实登录会话验证劳资产值录入',
+      },
+    });
+    expect(outputValueResponse.status()).toBe(201);
+    const outputValueBody = await readJson(outputValueResponse);
+    const outputValueId = outputValueBody?.data?.id;
+    expect(outputValueId).toBeTruthy();
+
+    const progressPaymentResponse = await page.request.post('/api/labor/output-value/payments', {
+      headers: authHeaders,
+      data: {
+        subContractId,
+        totalAmount: 9600,
+        outputValueIds: [outputValueId],
+        paidAt: '2026-06-24',
+        remark: '真实登录会话验证分包进度款',
+      },
+    });
+    expect(progressPaymentResponse.status()).toBe(201);
+    const progressPaymentBody = await readJson(progressPaymentResponse);
+    expect(progressPaymentBody?.message).toBe('进度款支付记录创建成功');
+    expect(progressPaymentBody?.data?.subContractId).toBe(subContractId);
+    expect(Number(progressPaymentBody?.data?.totalAmount)).toBe(9600);
+
+    const outputListResponse = await page.request.get(`/api/labor/output-value?subContractId=${subContractId}&month=${month}`, {
+      headers: authHeaders,
+    });
+    expect(outputListResponse.status()).toBe(200);
+    const outputListBody = await readJson(outputListResponse);
+    const outputRecord = (outputListBody?.data || []).find((item: any) => item.id === outputValueId);
+    expect(outputRecord?.subContractId).toBe(subContractId);
+    expect(Number(outputRecord?.amount)).toBe(12000);
+
+    const subContractListResponse = await page.request.get(`/api/labor/sub-contract?contractId=${contractId}&subcontractorId=${subcontractorId}`, {
+      headers: authHeaders,
+    });
+    expect(subContractListResponse.status()).toBe(200);
+    const subContractListBody = await readJson(subContractListResponse);
+    expect((subContractListBody?.data?.contracts || []).some((item: any) => item.id === subContractId)).toBe(true);
+
+    const deleteSubContractResponse = await page.request.delete(`/api/labor/sub-contract/${subContractId}`, { headers: authHeaders });
+    expect(deleteSubContractResponse.status()).toBe(200);
+    const deleteSubcontractorResponse = await page.request.delete(`/api/labor/subcontractor/${subcontractorId}`, { headers: authHeaders });
+    expect(deleteSubcontractorResponse.status()).toBe(200);
+    const deleteContractResponse = await page.request.delete(`/api/contracts/${contractId}`, { headers: authHeaders });
+    expect(deleteContractResponse.status()).toBe(200);
+
+    await page.goto('/labor/payment');
+    await expect(page.getByRole('heading', { name: '工资发放' })).toBeVisible();
+    await page.screenshot({
+      path: '../docs/smoke-evidence/劳资分包产值旧API链路.png',
+      fullPage: true,
+    });
+  });
+
   test('enterprise user can complete labor personnel attendance salary and risk CRUD', async ({ page }) => {
     test.setTimeout(120_000);
     await loginEnterprise(page);
