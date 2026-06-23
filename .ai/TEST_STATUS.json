@@ -1,18 +1,18 @@
 {
-  "status": "wms_return_import_export_browser_verified_pending_push",
+  "status": "wms_return_import_export_browser_verified_pushed",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_return_import_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_pending_push",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_return_import_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_developer_announcements_lifecycle_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_pushed",
   "product_green": "not_yet_full_deep_crud_regression",
   "user_green": "not_verified",
   "evidence": [
     {
       "type": "wms_return_import_export_flow",
       "command": "BROWSER_SMOKE_DB_PATH=/private/tmp/zlt_browser_smoke_wms_return_import_export.db npx playwright test --config playwright.config.ts -g \"import and export wms return records\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/20260623T100300Z-wms-return-import-export-audit.prompt.md --model sonnet --effort low --max-budget-usd 3.00",
-      "status": "verified_pending_push",
-      "result": "WMS 退库 Excel 导入/导出/删除预览切片已通过真实 Chrome：退库页新增导出退库记录按钮；后端退库列表/导出修复为只返回 isActive=true，解决软删除后仍显示问题；真实 Chrome 完成子项目/物资准备、退库模板下载、模板文件上传导入、API 回读 Excel 退库单、退库记录导出下载、删除级联预览库存影响、确认删除和 API 删除后回读。Focused Chrome 1/1 passed，verify backend 7/42 + frontend 2/36 + build，full Chrome 26/26 passed，code-review-graph risk 0.50 with function-level gaps covered by backend unit + focused/full Chrome，Claude PASS。库存预警未恢复.",
+      "status": "verified_pushed",
+      "result": "WMS 退库 Excel 导入/导出/删除预览切片已通过真实 Chrome：退库页新增导出退库记录按钮；后端退库列表/导出修复为只返回 isActive=true，解决软删除后仍显示问题；真实 Chrome 完成子项目/物资准备、退库模板下载、模板文件上传导入、API 回读 Excel 退库单、退库记录导出下载、删除级联预览库存影响、确认删除和 API 删除后回读。Focused Chrome 1/1 passed，verify backend 7/42 + frontend 2/36 + build，full Chrome 26/26 passed，code-review-graph risk 0.50 with function-level gaps covered by backend unit + focused/full Chrome，Claude PASS。库存预警未恢复. Implementation pushed at 157fefa to origin public-main and main.",
       "evidence_files": [
         "docs/smoke-evidence/playwright-results.json",
         "docs/smoke-evidence/playwright-report/index.html",
@@ -1132,5 +1132,5 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "WMS return Excel import/export/delete-preview now has focused and full real Chrome coverage, including template download, real upload import, backend API read-back, return ledger export download, cascade preview, and delete verification. Return list/export now filters active records only so soft-deleted return orders do not remain visible. Enterprise subscription lifecycle, developer payments/invoices/storage, integrations/security/monitoring/logs, AI/OCR, plans, system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T10:10:00Z"
+  "updated_at": "2026-06-23T10:15:00Z"
 }
