@@ -85,8 +85,8 @@
 - Latest pushed implementation commit: `bbb943a feat: cover wms delivery export ocr guard`
 - Latest pushed implementation commit: `e31544b feat: cover enterprise dashboard summary`
 - Latest pushed implementation commit: `b812fca feat: cover developer dashboard summary`
-- Latest verified implementation pending push: public register tenant-code login coverage
-- Updated at: 2026-06-23T12:45:00Z
+- Latest pushed implementation commit: `7311a49 feat: cover public registration login`
+- Updated at: 2026-06-23T12:55:00Z
 
 ## 项目概览
 
