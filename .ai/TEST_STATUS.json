@@ -1,13 +1,26 @@
 {
-  "status": "labor_legacy_output_value_api_verified",
+  "status": "face_provider_diagnostic_verified",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_labor_report_type_export_labor_report_all_frontend_types_labor_legacy_output_value_api_chain_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
+  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_labor_report_type_export_labor_report_all_frontend_types_labor_legacy_output_value_api_chain_face_provider_diagnostic_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_ai_ocr_config_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "face_provider_diagnostic_flow",
+      "command": "cd backend && npm test -- --run src/modules/labor/face-provider.test.ts; cd frontend && npm test -- --run src/__tests__/api.test.ts; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"enterprise user can complete labor personnel attendance salary and risk CRUD\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S50-face-provider-diagnostic-reaudit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
+      "status": "verified_claude_pass",
+      "result": "人脸识别网关诊断已通过真实 Chrome：后端新增 getFaceProviderDiagnostic 和受 canManageAttendance 保护的 /labor/attendance/mobile/face-provider/status 路由，只返回 endpointConfigured/apiKeyConfigured 等布尔值和 timeout/threshold，不泄露 endpoint/API key；前端劳资考勤页新增 检测人脸网关 按钮和状态卡，真实 Chrome 验证 HTTP/cloud 未配置时显示 未就绪 与 FACE_RECOGNITION_HTTP_ENDPOINT 提示，切回 stub 时显示 已就绪。Focused backend face-provider 12/12 passed；frontend API 2/2 passed；focused Chrome labor attendance diagnostic 1/1 passed；verify backend 60 + frontend 38 + builds passed；full Chrome 36/36 passed；code-review-graph risk 0.50，UI/helper 静态 gap 由 backend/API/Chrome 证据覆盖；Claude audit and final re-audit PASS。库存预警未恢复。",
+      "evidence_files": [
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        "docs/smoke-evidence/劳资人员考勤工资风控CRUD.png",
+        ".ai/workers/20260623T174648Z-audit_worker.result.md",
+        ".ai/workers/20260623T174909Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "labor_legacy_output_value_api_chain",
       "command": "cd frontend && npm test -- --run src/__tests__/api.test.ts; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"legacy labor subcontract output value API chain\"; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S49-labor-output-value-api-reaudit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
@@ -1370,7 +1383,7 @@
     "Labor personnel/attendance/salary/risk deep flow now has real Chrome CRUD/upload/download/state-change coverage; function-level unit gaps from code-review-graph remain Yellow but are backed by browser product-flow and backend API evidence."
   ],
   "notes": "WMS transfer create/export/delete-preview now has focused and full real Chrome coverage, including real UI transfer creation, transfer PDF download, transfer ledger export download, cascade preview, and delete verification. Transfer list/export now filters active records only, department-scoped transfer IDs are persisted, and transfer preview/delete rollback supports department-scoped inventory. Enterprise subscription lifecycle, developer payments/invoices/storage, integrations/security/monitoring/logs, AI/OCR, plans, system config/API Key, announcements, module/portal, WMS, finance, labor, and admin evidence remain green. Inventory alert / 库存预警 is out of WMS product scope and must not be restored. Product Green remains Yellow until deep CRUD/upload/download coverage is complete for every remaining historical page, production DNS/logo polish is finished, and real third-party face gateway credentials are configured.",
-  "updated_at": "2026-06-23T16:34:35Z",
+  "updated_at": "2026-06-23T17:49:40Z",
   "yellow_notes": [
     "S46 first verify run hit an unrelated auth test instability (malformed JWT response/valid-token timeout observed in retries) but final verify passed all backend 57 + frontend 36 + builds; monitor auth test flake if it reappears."
   ]

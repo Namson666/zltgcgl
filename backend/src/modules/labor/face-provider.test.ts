@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getFaceRecognitionProvider } from './face-provider';
+import { getFaceProviderDiagnostic, getFaceRecognitionProvider } from './face-provider';
 
 const originalEnv = { ...process.env };
 
@@ -37,6 +37,61 @@ describe('face-provider', () => {
 
     expect(result.status).toBe('verified');
     expect(result.score).toBe(1);
+  });
+
+  it('reports stub provider as development-ready but not production configured', () => {
+    const diagnostic = getFaceProviderDiagnostic('stub');
+
+    expect(diagnostic).toMatchObject({
+      provider: 'stub',
+      mode: 'stub',
+      ready: true,
+      status: 'ready',
+      endpointConfigured: false,
+      apiKeyConfigured: false,
+    });
+    expect(diagnostic.message).toContain('Stub');
+  });
+
+  it('reports http provider as not configured when endpoint is missing without exposing secrets', () => {
+    delete process.env.FACE_RECOGNITION_HTTP_ENDPOINT;
+    process.env.FACE_RECOGNITION_HTTP_API_KEY = 'secret-token';
+
+    const diagnostic = getFaceProviderDiagnostic('tencent');
+
+    expect(diagnostic).toMatchObject({
+      provider: 'tencent',
+      mode: 'http',
+      ready: false,
+      status: 'not_configured',
+      endpointConfigured: false,
+      apiKeyConfigured: true,
+      timeoutMs: 8000,
+      threshold: 0.8,
+    });
+    expect(JSON.stringify(diagnostic)).not.toContain('secret-token');
+  });
+
+  it('reports http provider as ready when endpoint is configured without exposing endpoint or secret', () => {
+    process.env.FACE_RECOGNITION_HTTP_ENDPOINT = 'https://face.example.test/verify';
+    process.env.FACE_RECOGNITION_HTTP_API_KEY = 'secret-token';
+    process.env.FACE_RECOGNITION_TIMEOUT_MS = '5000';
+    process.env.FACE_RECOGNITION_THRESHOLD = '0.76';
+
+    const diagnostic = getFaceProviderDiagnostic('cloud');
+
+    expect(diagnostic).toMatchObject({
+      provider: 'cloud',
+      mode: 'http',
+      ready: true,
+      status: 'ready',
+      endpointConfigured: true,
+      apiKeyConfigured: true,
+      timeoutMs: 5000,
+      threshold: 0.76,
+    });
+    expect(JSON.stringify(diagnostic)).not.toContain('face.example.test');
+    expect(JSON.stringify(diagnostic)).not.toContain('secret-token');
   });
 
   it('returns not_configured when production http endpoint is missing', async () => {

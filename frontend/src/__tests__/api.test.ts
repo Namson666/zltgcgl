@@ -38,4 +38,10 @@ describe('laborApi legacy subcontract output-value endpoints', () => {
 
     expect(httpMock.post).toHaveBeenCalledWith('/labor/output-value/payments', payload);
   });
+
+  it('requests face provider diagnostics without exposing provider secrets in the frontend', () => {
+    laborApi.getFaceProviderStatus('http');
+
+    expect(httpMock.get).toHaveBeenCalledWith('/labor/attendance/mobile/face-provider/status', { provider: 'http' });
+  });
 });

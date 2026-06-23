@@ -1211,6 +1211,9 @@ export const laborApi = {
   updateAttendanceSetting: (data: any) =>
     http.put('/labor/attendance/mobile/settings', data),
 
+  getFaceProviderStatus: (provider: string) =>
+    http.get('/labor/attendance/mobile/face-provider/status', { provider }),
+
   getMobileCheckIns: (params?: any) =>
     http.get('/labor/attendance/mobile/check-ins', params),
 

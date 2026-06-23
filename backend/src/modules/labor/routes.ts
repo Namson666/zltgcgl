@@ -22,6 +22,7 @@ import { requirePermission } from '../../common/middleware/permission';
 import { AuthenticatedRequest, ApiResponse, PaginatedResponse } from '../../common/types';
 import { createLog } from '../../common/services/log.service';
 import * as laborService from './service';
+import { getFaceProviderDiagnostic } from './face-provider';
 
 const router = Router();
 
@@ -281,6 +282,16 @@ attendanceRouter.put('/mobile/settings', authenticate, requireUser, requirePermi
     console.error('保存打卡规则失败:', error);
     const status = error.status || 500;
     res.status(status).json({ success: false, error: error.code || 'INTERNAL_ERROR', message: error.message || '保存打卡规则失败' } as ApiResponse);
+  }
+});
+
+attendanceRouter.get('/mobile/face-provider/status', authenticate, requireUser, requirePermission('canManageAttendance'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const data = getFaceProviderDiagnostic(req.query.provider as string | undefined);
+    res.json({ success: true, data } as ApiResponse);
+  } catch (error: any) {
+    console.error('检测人脸识别网关失败:', error);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '检测人脸识别网关失败' } as ApiResponse);
   }
 });
 

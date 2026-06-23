@@ -3735,6 +3735,14 @@ test.describe('browser smoke: authenticated core navigation', () => {
 
     await page.goto('/labor/attendance');
     await expect(page.getByRole('heading', { name: '考勤管理' })).toBeVisible();
+    await page.locator('select').filter({ hasText: '本地测试 / Stub' }).selectOption('http');
+    await page.getByRole('button', { name: '检测人脸网关' }).click();
+    const faceProviderStatusCard = page.locator('.rounded-lg', { hasText: '人脸网关状态' }).last();
+    await expect(faceProviderStatusCard.getByText(/人脸网关状态：未就绪/)).toBeVisible();
+    await expect(faceProviderStatusCard.getByText(/FACE_RECOGNITION_HTTP_ENDPOINT/)).toBeVisible();
+    await page.locator('select').filter({ hasText: '本地测试 / Stub' }).selectOption('stub');
+    await page.getByRole('button', { name: '检测人脸网关' }).click();
+    await expect(faceProviderStatusCard.getByText(/人脸网关状态：已就绪/)).toBeVisible();
     await page.getByPlaceholder('搜索姓名').fill(editedPersonName);
     await expect(page.getByText(editedPersonName).first()).toBeVisible();
     await page.getByText(editedPersonName).first().click();

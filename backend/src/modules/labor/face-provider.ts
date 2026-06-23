@@ -73,6 +73,56 @@ function parseScore(value: unknown) {
   return undefined;
 }
 
+export interface FaceProviderDiagnostic {
+  provider: string;
+  mode: 'stub' | 'http';
+  ready: boolean;
+  status: 'ready' | 'not_configured';
+  endpointConfigured: boolean;
+  apiKeyConfigured: boolean;
+  timeoutMs: number;
+  threshold: number;
+  message: string;
+}
+
+export function getFaceProviderDiagnostic(provider?: string | null): FaceProviderDiagnostic {
+  const normalized = normalizeProvider(provider);
+  const timeoutRaw = Number(process.env.FACE_RECOGNITION_TIMEOUT_MS || '8000');
+  const thresholdRaw = Number(process.env.FACE_RECOGNITION_THRESHOLD || '0.8');
+  const timeoutMs = Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? timeoutRaw : 8000;
+  const threshold = Number.isFinite(thresholdRaw) ? thresholdRaw : 0.8;
+
+  if (!HTTP_PROVIDER_ALIASES.has(normalized)) {
+    return {
+      provider: normalized,
+      mode: 'stub',
+      ready: true,
+      status: 'ready',
+      endpointConfigured: false,
+      apiKeyConfigured: false,
+      timeoutMs,
+      threshold,
+      message: '当前使用本地 Stub 人脸识别，仅适合开发/测试；生产环境请配置 HTTP 网关',
+    };
+  }
+
+  const endpointConfigured = Boolean(process.env.FACE_RECOGNITION_HTTP_ENDPOINT);
+  const apiKeyConfigured = Boolean(process.env.FACE_RECOGNITION_HTTP_API_KEY);
+  return {
+    provider: normalized,
+    mode: 'http',
+    ready: endpointConfigured,
+    status: endpointConfigured ? 'ready' : 'not_configured',
+    endpointConfigured,
+    apiKeyConfigured,
+    timeoutMs,
+    threshold,
+    message: endpointConfigured
+      ? '生产人脸识别 HTTP 网关已配置；可在小程序打卡时调用'
+      : '未配置 FACE_RECOGNITION_HTTP_ENDPOINT；生产人脸识别网关尚不可用',
+  };
+}
+
 function parseFaceResponse(provider: string, body: any, threshold: number): FaceVerifyResult {
   const data = body?.data ?? body?.result ?? body;
   const score = parseScore(data?.score ?? data?.similarity ?? body?.score ?? body?.similarity);

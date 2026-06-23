@@ -59,6 +59,18 @@ interface TrustedLocation {
   personnel?: { id: string; name: string; phone?: string };
 }
 
+interface FaceProviderDiagnostic {
+  provider: string;
+  mode: 'stub' | 'http';
+  ready: boolean;
+  status: 'ready' | 'not_configured';
+  endpointConfigured: boolean;
+  apiKeyConfigured: boolean;
+  timeoutMs: number;
+  threshold: number;
+  message: string;
+}
+
 /* 日历组件 */
 function CalendarPicker({ year, month, selectedDates, onToggle, existingDates }: {
   year: number; month: number;
@@ -129,6 +141,8 @@ const Attendance: React.FC = () => {
   const [loadingMobile, setLoadingMobile] = useState(false);
   const [checkInsPerDay, setCheckInsPerDay] = useState(1);
   const [faceProvider, setFaceProvider] = useState('stub');
+  const [faceProviderStatus, setFaceProviderStatus] = useState<FaceProviderDiagnostic | null>(null);
+  const [checkingFaceProvider, setCheckingFaceProvider] = useState(false);
   const [savingRule, setSavingRule] = useState(false);
   const [selectedMobileIds, setSelectedMobileIds] = useState<Set<string>>(new Set());
   const [trustedLocations, setTrustedLocations] = useState<TrustedLocation[]>([]);
@@ -177,6 +191,19 @@ const Attendance: React.FC = () => {
     } catch (err: any) {
       toast.error(err.response?.data?.message || '保存规则失败');
     } finally { setSavingRule(false); }
+  };
+
+  const checkFaceProvider = async () => {
+    setCheckingFaceProvider(true);
+    try {
+      const res = await laborApi.getFaceProviderStatus(faceProvider);
+      const data = (res.data as { data?: FaceProviderDiagnostic })?.data || null;
+      setFaceProviderStatus(data);
+      if (data?.ready) toast.success('人脸识别网关检测通过');
+      else toast.error(data?.message || '人脸识别网关未配置');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '检测人脸识别网关失败');
+    } finally { setCheckingFaceProvider(false); }
   };
 
   const toggleMobile = (id: string) => {
@@ -356,10 +383,25 @@ const Attendance: React.FC = () => {
           <button className="btn-primary btn-sm" onClick={saveMobileRule} disabled={savingRule}>
             {savingRule ? '保存中...' : '保存打卡规则'}
           </button>
+          <button className="btn-secondary btn-sm" onClick={checkFaceProvider} disabled={checkingFaceProvider}>
+            {checkingFaceProvider ? '检测中...' : '检测人脸网关'}
+          </button>
           <button className="btn-secondary btn-sm" onClick={batchResolveMobile} disabled={!selectedMobileIds.size}>
             批量处理异常
           </button>
         </div>
+        {faceProviderStatus && (
+          <div className={`rounded-lg border px-3 py-2 text-xs ${faceProviderStatus.ready ? 'border-green-100 bg-green-50 text-green-700' : 'border-yellow-100 bg-yellow-50 text-yellow-700'}`}>
+            <div className="font-medium">
+              人脸网关状态：{faceProviderStatus.ready ? '已就绪' : '未就绪'}（{faceProviderStatus.provider}）
+            </div>
+            <div className="mt-1">
+              {faceProviderStatus.message}；Endpoint：{faceProviderStatus.endpointConfigured ? '已配置' : '未配置'}；
+              API Key：{faceProviderStatus.apiKeyConfigured ? '已配置' : '未配置'}；
+              阈值：{faceProviderStatus.threshold}；超时：{faceProviderStatus.timeoutMs}ms
+            </div>
+          </div>
+        )}
         <div className="overflow-x-auto border border-gray-100 rounded-lg">
           <table className="w-full">
             <thead><tr className="border-b border-gray-100 bg-gray-50">
