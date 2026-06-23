@@ -9,6 +9,9 @@ echo "== Backend Prisma generate =="
   npm run prisma:generate
 )
 
+echo "== Backend test database =="
+bash "$ROOT_DIR/scripts/init-sqlite-db.sh" "$ROOT_DIR/backend/test.db"
+
 echo "== Backend tests =="
 (
   cd "$ROOT_DIR/backend"

@@ -1,5 +1,5 @@
 {
-  "status": "ci_npm10_lockfile_fix_verified_pending_push",
+  "status": "ci_test_db_init_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "not_verified",
@@ -8,6 +8,21 @@
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "ci_test_db_init_fix",
+      "command": "gh run watch 28061459724 --repo Namson666/zltgcgl --exit-status; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S55-ci-test-db-init-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
+      "status": "verified_claude_pass_pending_remote_ci",
+      "result": "S55 fixes remote CI verify.sh missing-table failure from GitHub Actions run 28061459724. Added scripts/init-sqlite-db.sh, made verify.sh rebuild backend/test.db before backend tests, made browser-smoke reuse the same initializer, and installed sqlite3 in the CI verify job. verify.sh passed with explicit Backend test database init; real Chrome browser-smoke passed 36/36 after refactor; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. CI Green remains not_verified until pushed workflow rerun succeeds.",
+      "evidence_files": [
+        "scripts/init-sqlite-db.sh",
+        "scripts/verify.sh",
+        "scripts/start-browser-smoke-server.sh",
+        ".github/workflows/ci.yml",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        ".ai/workers/20260623T223550Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "ci_npm10_lockfile_fix",
       "command": "gh run watch 28061042978 --repo Namson666/zltgcgl --exit-status; npx npm@10.8.2 install --package-lock-only in backend; clean temp npx npm@10.8.2 ci; bash scripts/verify.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S54-ci-lockfile-fix-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",

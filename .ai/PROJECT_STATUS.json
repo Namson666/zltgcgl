@@ -34,12 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "ci_npm10_lockfile_fix_verified_pending_push",
-  "updated_at": "2026-06-23T22:29:30Z",
+  "status": "ci_test_db_init_verified_pending_push",
+  "updated_at": "2026-06-23T22:39:00Z",
   "push_status": "production_external_smoke_pushed",
   "last_pushed_commit": "7a9cb09",
   "current_commit": "7a9cb09 chore: add production external smoke gate",
   "notes": [
+    "2026-06-24: S55 CI test database initialization verified pending push. Remote GitHub Actions run 28061459724 passed npm ci but failed in verify.sh because clean runner had no backend/test.db schema (developers table missing). Added scripts/init-sqlite-db.sh, made verify.sh rebuild backend/test.db before backend tests, made browser-smoke reuse the same initializer, and installed sqlite3 in the CI verify job. verify.sh passed with explicit Backend test database init, full real Chrome 36/36 passed after refactor, code-review-graph risk 0.00 / 0 gaps, Claude audit PASS. Push and remote CI rerun still required before CI Green can move from not_verified.",
     "2026-06-24: S54 CI npm10 lockfile fix verified pending push. Remote GitHub Actions run 28061042978 failed in backend npm ci with npm 10.8.2 reporting package-lock drift. Reproduced locally with npx npm@10.8.2 ci; refreshed backend/package-lock.json with npx npm@10.8.2 install --package-lock-only; clean temp npx npm@10.8.2 ci passed; verify.sh passed backend 61 + frontend 38 + builds; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. Push and remote CI rerun still required before CI Green can move from not_verified.",
     "2026-06-24: S53 GitHub Actions CI gate locally verified and pending push: added .github/workflows/ci.yml with verify and browser-smoke jobs. It installs backend/frontend dependencies with npm ci, checks production-smoke syntax and missing-target honesty, runs scripts/verify.sh, installs sqlite3 and Chrome, runs scripts/browser-smoke.sh, and uploads smoke evidence. Local Ruby YAML parse passed; verify.sh passed backend 61 + frontend 38 + builds; full real Chrome 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. Remote GitHub Actions run still required before CI Green can move from not_verified.",
     "2026-06-24: S52 production external smoke gate verified locally and pushed at 7a9cb09: added scripts/production-smoke.mjs for non-mutating production checks. It requires PRODUCTION_BASE_URL, enforces https by default, checks frontend /login, /api/health, /api/v1/health, optional PRODUCTION_PORTAL_HOST portal config, and optional PRODUCTION_DEVELOPER_TOKEN developer readiness without leaking secrets. Missing external portal/token/face gateway configuration remains Yellow and does not claim Product Green. node --check passed; missing URL exits 2; local true frontend/backend dry-run with portal+developer token exits 3/yellow due local face gateway not production-ready; verify.sh passed backend 61 + frontend 38 + builds; full real Chrome 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS.",
@@ -85,10 +86,10 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S54_ci_npm10_lockfile_fix_verified_pending_push",
-  "current_task": "Push npm10-compatible backend lockfile fix, then inspect remote CI run before claiming CI Green.",
-  "last_verified_at": "2026-06-23T22:29:30Z",
-  "last_verified_command": "npx npm@10.8.2 install --package-lock-only in backend; clean temp npx npm@10.8.2 ci passed; bash scripts/verify.sh backend 61 frontend 38 builds; code-review-graph risk 0.00 / 0 gaps; Claude CLI audit PASS at .ai/workers/20260623T222302Z-audit_worker.result.md",
+  "current_phase": "S55_ci_test_db_init_verified_pending_push",
+  "current_task": "Push deterministic test DB initialization for CI, then inspect remote CI run before claiming CI Green.",
+  "last_verified_at": "2026-06-23T22:39:00Z",
+  "last_verified_command": "bash scripts/verify.sh with explicit Backend test database init passed backend 61 frontend 38 builds; bash scripts/browser-smoke.sh 36/36 after DB init refactor; code-review-graph risk 0.00 / 0 gaps; Claude CLI audit PASS at .ai/workers/20260623T223550Z-audit_worker.result.md",
   "history": [
     {
       "date": "2026-06-23T15:59:33Z",

@@ -12,16 +12,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-rm -f "$DB_PATH"
-sqlite3 "$DB_PATH" \
-  ".read $ROOT/backend/prisma/migrations/20260424_init/migration.sql" \
-	  ".read $ROOT/backend/prisma/migrations/20260622_add_tenant_module_entitlements/migration.sql" \
-		  ".read $ROOT/backend/prisma/migrations/20260622_add_tenant_portal_configs/migration.sql" \
-		  ".read $ROOT/backend/prisma/migrations/20260622_add_procurement_contract_flows/migration.sql" \
-		  ".read $ROOT/backend/prisma/migrations/20260622_add_subcontract_work_team_flows/migration.sql" \
-		  ".read $ROOT/backend/prisma/migrations/20260622_add_mobile_check_in_foundation/migration.sql" \
-		  ".read $ROOT/backend/prisma/migrations/20260623_add_labor_payment_bank_account/migration.sql" \
-		  ".read $ROOT/backend/prisma/migrations/20260623_add_mini_program_phone_bindings/migration.sql"
+bash "$ROOT/scripts/init-sqlite-db.sh" "$DB_PATH"
 
 cd "$ROOT/backend"
 DATABASE_URL="file:$DB_PATH" npx ts-node prisma/seed.ts >/dev/null

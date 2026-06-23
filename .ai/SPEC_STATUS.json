@@ -1,9 +1,9 @@
 {
-  "stage": "S54_ci_npm10_lockfile_fix_verified_pending_push",
+  "stage": "S55_ci_test_db_init_verified_pending_push",
   "spec_frozen": true,
   "design_approved_by_user": true,
   "architecture_contract_present": true,
   "architecture_contract_path": "docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md",
-  "notes": "S54 fixes the first remote GitHub Actions run failure. Run 28061042978 failed in backend npm ci under npm 10.8.2 due backend package-lock metadata drift. The fix refreshes backend/package-lock.json with npx npm@10.8.2 install --package-lock-only. Evidence: clean temp npx npm@10.8.2 ci passed using refreshed lockfile; verify.sh passed backend 61 + frontend 38 + builds; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. CI Green remains not_verified until the pushed workflow runs successfully on GitHub. Inventory alert / 库存预警 remains out of scope and must not be restored. Product Green remains Yellow until real production DNS/reverse-proxy/certificates and real third-party face gateway credentials are verified.",
-  "updated_at": "2026-06-23T22:29:30Z"
+  "notes": "S55 fixes the second remote GitHub Actions run failure. Run 28061459724 passed npm ci but failed in verify.sh because the clean runner had no backend/test.db schema. Added scripts/init-sqlite-db.sh, made verify.sh rebuild backend/test.db before backend tests, made browser-smoke reuse the same initializer, and installed sqlite3 in the CI verify job. Evidence: verify.sh passed with explicit Backend test database init; real Chrome browser-smoke passed 36/36 after the refactor; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS. CI Green remains not_verified until the pushed workflow runs successfully on GitHub. Inventory alert / 库存预警 remains out of scope and must not be restored. Product Green remains Yellow until real production DNS/reverse-proxy/certificates and real third-party face gateway credentials are verified.",
+  "updated_at": "2026-06-23T22:39:00Z"
 }
