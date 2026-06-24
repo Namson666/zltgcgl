@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_s61_smoke_route_matrix_coverage_gate",
+    "working_tree": "dirty_s62_ci_date_determinism_fix",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "ci_green_status_marker_pushed_s61_pending_push",
-    "pushed_commit": "b72a38f chore: mark ci green",
-    "last_pushed_commit": "b72a38f"
+    "push_status": "s61_pushed_s62_pending_push",
+    "pushed_commit": "ccb129e test: guard smoke route matrix coverage",
+    "last_pushed_commit": "ccb129e"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "ci_green_status_marker_pushed_s61_pending_push",
+    "push_status": "s61_pushed_s62_pending_push",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "b72a38f chore: mark ci green"
+    "pushed_commit": "ccb129e test: guard smoke route matrix coverage"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,12 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "smoke_route_matrix_coverage_gate_verified_pending_push",
-  "updated_at": "2026-06-24T00:02:28Z",
-  "push_status": "ci_green_status_marker_pushed_s61_pending_push",
-  "last_pushed_commit": "b72a38f",
-  "current_commit": "b72a38f chore: mark ci green",
+  "status": "ci_date_determinism_fix_verified_pending_push",
+  "updated_at": "2026-06-24T00:10:10Z",
+  "push_status": "s61_pushed_s62_pending_push",
+  "last_pushed_commit": "ccb129e",
+  "current_commit": "ccb129e test: guard smoke route matrix coverage",
   "notes": [
+    "2026-06-24: S62 CI date determinism fix verified pending push. GitHub Actions run 28065717480 failed in Build/Test because WMS service tests expected generated order numbers with 20260623 while the runner date was 20260624. Fixed backend/src/modules/wms/service.test.ts to use Vitest fake timers and set system time to 2026-06-23T00:00:00.000Z for deterministic order-number assertions, restoring real timers after each test. Verification: focused WMS service test passed 17/17; bash scripts/verify.sh passed backend 61 + frontend 38 + builds + route matrix check; code-review-graph risk 0.40 with script helper gaps covered by verify/Claude/browser-smoke evidence. Push and remote CI rerun are required before CI Green returns to verified for S62.",
     "2026-06-24: S61 smoke route matrix coverage gate verified pending push. Added scripts/check-smoke-route-matrix.mjs and wired it into scripts/verify.sh so Layout sidebar menu routes must stay synchronized with the real Chrome enterprise/developer route matrices; /subscription is explicitly allowed as a non-sidebar enterprise route, and inventory alert / 库存预警 residue in Layout or smoke matrix fails the check. Verification: node scripts/check-smoke-route-matrix.mjs passed 31 enterprise routes + 16 developer routes; bash scripts/verify.sh passed backend 61 + frontend 38 + builds + route matrix check; bash scripts/browser-smoke.sh passed real Chrome 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS at .ai/workers/20260624T000001Z-audit_worker.result.md. Product Green remains Yellow until production HTTPS/DNS/cert and real face gateway credentials are externally verified.",
     "2026-06-24: S60 status marker pushed at b72a38f and GitHub Actions run 28064814971 completed successfully: Build and test job success in 1m3s and Real browser smoke job success in 5m27s. The earlier S60 note at run 28064450215 remains valid for commit 1808638; b72a38f confirms the status-marker commit itself is also CI Green.",
     "2026-06-24: S60 CI Green verified. GitHub Actions run 28064450215 on public-main at head 1808638 completed successfully: Build and test job success in 1m0s, Real browser smoke job success in 5m12s, and smoke evidence upload succeeded. CI Green can be marked verified for the pushed branch. Product Green remains Yellow/not_yet_full_production_green until scripts/production-smoke.mjs is run against real production HTTPS/DNS/cert and real third-party face gateway credentials/configuration are verified.",

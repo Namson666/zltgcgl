@@ -1,5 +1,5 @@
 {
-  "status": "smoke_route_matrix_coverage_gate_verified_pending_push",
+  "status": "ci_date_determinism_fix_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "verified",
@@ -8,6 +8,17 @@
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "ci_date_determinism_fix",
+      "command": "gh run watch 28065717480 --repo Namson666/zltgcgl --exit-status; cd backend && npm test -- --run src/modules/wms/service.test.ts; bash scripts/verify.sh; code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_pending_remote_ci_rerun",
+      "result": "S62 fixes the Build/Test failure from GitHub Actions run 28065717480. The remote runner date was 2026-06-24, but WMS tests expected generated order numbers with 20260623. backend/src/modules/wms/service.test.ts now uses Vitest fake timers and sets system time to 2026-06-23T00:00:00.000Z before each test, then restores real timers after each test. Focused WMS service test passed 17/17; verify.sh passed backend 61 + frontend 38 + builds + route matrix check; code-review-graph risk 0.40 with route-matrix script helper gaps covered by verify/Claude/browser-smoke evidence. Remote CI rerun is still required.",
+      "evidence_files": [
+        "backend/src/modules/wms/service.test.ts",
+        "scripts/check-smoke-route-matrix.mjs",
+        "scripts/verify.sh"
+      ]
+    },
     {
       "type": "smoke_route_matrix_coverage_gate",
       "command": "node scripts/check-smoke-route-matrix.mjs; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S61-smoke-route-matrix-coverage-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",

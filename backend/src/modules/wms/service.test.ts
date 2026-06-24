@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { prismaMock } = vi.hoisted(() => ({
   prismaMock: {
@@ -73,8 +73,14 @@ import { createExcelInbound, createTransfer, deleteMaterial, getDeliveryOrderExp
 
 describe('wms material service tenant safeguards', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-23T00:00:00.000Z'));
     vi.clearAllMocks();
     prismaMock.$transaction.mockImplementation(async (callback: any) => callback(prismaMock));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('lists materials with sqlite-safe contains filters', async () => {

@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "smoke_route_matrix_coverage_gate_verified_pending_push",
+  "stage": "ci_date_determinism_fix_verified_pending_push",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -42,7 +42,7 @@
   ],
   "completion_promise": "ZLTGCGL_REFACTOR_PREP_READY",
   "allow_skip": false,
-  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, developer system announcement lifecycle, enterprise announcement dashboard visibility, mini-program same-phone multi-tenant conflict protection, selected-tenant check-in after conflict with appId validation, developer-managed phone prebinding for default mini-program, tenant-owned mini-program direct routing, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, third-party integration/security/monitoring/logs lifecycle, payments/invoices/storage observability, tenant CRUD/users/password/recycle-bin lifecycle, enterprise main dashboard real-summary lifecycle, enterprise subscription plan lifecycle, finance dashboard real-summary data, contract construction progress receipt, contract P&L detail API/UI coverage, WMS material catalog CRUD/export, WMS inbound Excel import/export/delete-preview, WMS delivery order export/OCR upload guard, WMS return Excel import/export/delete-preview, WMS outbound create/export/delete-preview, WMS transfer create/export/delete-preview, WMS inventory/work-team ledger export net-quantity coverage, public registration tenant-code login, labor payment lifecycle, labor legacy output-value API chain, S50 face provider diagnostic readiness check, S51 developer production readiness page, and S61 smoke route matrix coverage gate are covered by real Chrome and route-matrix verification. S61 adds scripts/check-smoke-route-matrix.mjs to force Layout sidebar routes to remain synchronized with browser-smoke enterprise/developer matrices and to fail on inventory alert / 库存预警 residue. Per the user confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered are complete.",
+  "notes": "Developer backend UI module entitlement, independent login configuration, true Host portal login, developer system announcement lifecycle, enterprise announcement dashboard visibility, mini-program same-phone multi-tenant conflict protection, selected-tenant check-in after conflict with appId validation, developer-managed phone prebinding for default mini-program, tenant-owned mini-program direct routing, system config/API Key lifecycle, platform plan lifecycle, AI/OCR configuration lifecycle, third-party integration/security/monitoring/logs lifecycle, payments/invoices/storage observability, tenant CRUD/users/password/recycle-bin lifecycle, enterprise main dashboard real-summary lifecycle, enterprise subscription plan lifecycle, finance dashboard real-summary data, contract construction progress receipt, contract P&L detail API/UI coverage, WMS material catalog CRUD/export, WMS inbound Excel import/export/delete-preview, WMS delivery order OCR upload guard, WMS return Excel import/export/delete-preview, WMS outbound create/export/delete-preview, WMS transfer create/export/delete-preview, WMS inventory/work-team ledger export net-quantity coverage, public registration tenant-code login, labor payment lifecycle, labor legacy output-value API chain, S50 face provider diagnostic readiness check, S51 developer production readiness page, and S61 smoke route matrix coverage gate are covered by real Chrome and route-matrix verification. S62 fixes a GitHub Actions date determinism failure in WMS tests by freezing Vitest system time for generated order-number assertions. S61 adds scripts/check-smoke-route-matrix.mjs to force Layout sidebar routes to remain synchronized with browser-smoke enterprise/developer matrices and to fail on inventory alert / 库存预警 residue. Per the user confirmation, WMS inventory alert / 库存预警 is out of product scope and must not be restored or included in future acceptance matrices. Product Green remains Yellow until production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials, and any additional historical-page CRUD/upload/download slices not yet expressly covered are complete.",
   "phase_1_required_gates": [
     "backend npm test",
     "backend npm run build",
@@ -52,9 +52,9 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-24T00:02:28Z",
-  "current_phase": "S61_smoke_route_matrix_coverage_gate_verified_pending_push",
-  "current_task": "Commit and push route matrix coverage gate; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
+  "updated_at": "2026-06-24T00:10:10Z",
+  "current_phase": "S62_ci_date_determinism_fix_verified_pending_push",
+  "current_task": "Commit and push WMS test date determinism fix; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
   "last_completed": "S51 production readiness self-check verified and pushed at 24db3cc: developer-only readiness API/UI, missing migration table warning, portal/mini-program/module/face gateway checks, verify.sh, full Chrome 36/36, code-review-graph, and Claude audit passed.",
-  "next_action": "Push S61 and inspect GitHub Actions. Product Green still requires running scripts/production-smoke.mjs against real production URL/DNS/cert and third-party face gateway credentials."
+  "next_action": "Push S62 and inspect GitHub Actions. Product Green still requires running scripts/production-smoke.mjs against real production URL/DNS/cert and third-party face gateway credentials."
 }
