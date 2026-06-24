@@ -36,4 +36,7 @@ echo "== Frontend build =="
   npm run build
 )
 
+echo "== Smoke route matrix coverage =="
+node "$ROOT_DIR/scripts/check-smoke-route-matrix.mjs"
+
 echo "== Verify complete =="

@@ -1,13 +1,37 @@
 {
-  "status": "ci_green_verified_product_green_yellow",
+  "status": "smoke_route_matrix_coverage_gate_verified_pending_push",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "verified",
   "runtime_smoke_green": "verified",
-  "browser_regression_green": "verified_route_matrix_supplier_workteam_admin_crud_labor_deep_exports_labor_report_type_export_labor_report_all_frontend_types_labor_legacy_output_value_api_chain_face_provider_diagnostic_production_readiness_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
+  "browser_regression_green": "verified_route_matrix_coverage_gate_supplier_workteam_admin_crud_labor_deep_exports_labor_report_type_export_labor_report_all_frontend_types_labor_legacy_output_value_api_chain_face_provider_diagnostic_production_readiness_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "smoke_route_matrix_coverage_gate",
+      "command": "node scripts/check-smoke-route-matrix.mjs; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S61-smoke-route-matrix-coverage-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
+      "status": "verified_claude_pass_pending_remote_ci",
+      "result": "S61 adds a route-matrix coverage gate: Layout sidebar menu items must be represented in the Playwright enterprise/developer route matrices, /subscription is explicitly allowed as a non-sidebar enterprise route, and inventory alert / 库存预警 residue in Layout or smoke matrix fails verification. Local route-matrix check passed 31 enterprise routes + 16 developer routes; verify.sh passed backend 61 + frontend 38 + builds + route matrix check; full real Chrome browser-smoke passed 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS at .ai/workers/20260624T000001Z-audit_worker.result.md. Remote CI remains pending until pushed.",
+      "evidence_files": [
+        "scripts/check-smoke-route-matrix.mjs",
+        "scripts/verify.sh",
+        "frontend/src/components/layout/Layout.tsx",
+        "frontend/tests/smoke/browser-smoke.spec.ts",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        ".ai/workers/20260624T000001Z-audit_worker.result.md"
+      ]
+    },
+    {
+      "type": "github_actions_ci_green_status_marker",
+      "command": "gh run watch 28064814971 --repo Namson666/zltgcgl --exit-status",
+      "status": "verified_remote_ci_success",
+      "result": "The S60 status-marker commit b72a38f also passed remote CI: GitHub Actions run 28064814971 completed successfully with Build and test in 1m3s and Real browser smoke in 5m27s.",
+      "evidence_files": [
+        ".github/workflows/ci.yml"
+      ]
+    },
     {
       "type": "github_actions_ci_green",
       "command": "git push origin public-main && git push origin public-main:main; gh run watch 28064450215 --repo Namson666/zltgcgl --exit-status; gh run view 28064450215 --repo Namson666/zltgcgl --json status,conclusion,name,headBranch,headSha,jobs",

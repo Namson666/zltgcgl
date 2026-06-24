@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "dirty_s60_ci_green_status_marker",
+    "working_tree": "dirty_s61_smoke_route_matrix_coverage_gate",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "ci_green_verified_status_marker_pending_push",
-    "pushed_commit": "1808638 test: tighten finance delete toast selector",
-    "last_pushed_commit": "1808638"
+    "push_status": "ci_green_status_marker_pushed_s61_pending_push",
+    "pushed_commit": "b72a38f chore: mark ci green",
+    "last_pushed_commit": "b72a38f"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "ci_green_verified_status_marker_pending_push",
+    "push_status": "ci_green_status_marker_pushed_s61_pending_push",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "1808638 test: tighten finance delete toast selector"
+    "pushed_commit": "b72a38f chore: mark ci green"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,12 +34,14 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "ci_green_verified_product_green_yellow",
-  "updated_at": "2026-06-23T23:42:35Z",
-  "push_status": "ci_green_verified_status_marker_pending_push",
-  "last_pushed_commit": "1808638",
-  "current_commit": "1808638 test: tighten finance delete toast selector",
+  "status": "smoke_route_matrix_coverage_gate_verified_pending_push",
+  "updated_at": "2026-06-24T00:02:28Z",
+  "push_status": "ci_green_status_marker_pushed_s61_pending_push",
+  "last_pushed_commit": "b72a38f",
+  "current_commit": "b72a38f chore: mark ci green",
   "notes": [
+    "2026-06-24: S61 smoke route matrix coverage gate verified pending push. Added scripts/check-smoke-route-matrix.mjs and wired it into scripts/verify.sh so Layout sidebar menu routes must stay synchronized with the real Chrome enterprise/developer route matrices; /subscription is explicitly allowed as a non-sidebar enterprise route, and inventory alert / 库存预警 residue in Layout or smoke matrix fails the check. Verification: node scripts/check-smoke-route-matrix.mjs passed 31 enterprise routes + 16 developer routes; bash scripts/verify.sh passed backend 61 + frontend 38 + builds + route matrix check; bash scripts/browser-smoke.sh passed real Chrome 36/36; code-review-graph risk 0.00 / 0 gaps; Claude audit PASS at .ai/workers/20260624T000001Z-audit_worker.result.md. Product Green remains Yellow until production HTTPS/DNS/cert and real face gateway credentials are externally verified.",
+    "2026-06-24: S60 status marker pushed at b72a38f and GitHub Actions run 28064814971 completed successfully: Build and test job success in 1m3s and Real browser smoke job success in 5m27s. The earlier S60 note at run 28064450215 remains valid for commit 1808638; b72a38f confirms the status-marker commit itself is also CI Green.",
     "2026-06-24: S60 CI Green verified. GitHub Actions run 28064450215 on public-main at head 1808638 completed successfully: Build and test job success in 1m0s, Real browser smoke job success in 5m12s, and smoke evidence upload succeeded. CI Green can be marked verified for the pushed branch. Product Green remains Yellow/not_yet_full_production_green until scripts/production-smoke.mjs is run against real production HTTPS/DNS/cert and real third-party face gateway credentials/configuration are verified.",
     "2026-06-24: S59 CI browser smoke delete-toast selector fix verified pending remote CI. Remote GitHub Actions run 28063684577 passed Build/Test and ran all 36 real browser smoke tests; 35 passed and 1 failed due Playwright strict text ambiguity where 类别已删除 also matched 子类别已删除. Tightened the finance category delete assertion to exact text. Focused Chrome rerun of the failed finance category test passed 1/1; final local full real Chrome browser smoke passed 36/36; code-review-graph risk 0.50 / 0 gaps; Claude audit PASS at .ai/workers/20260623T233334Z-audit_worker.result.md. Push and remote CI rerun are still required before CI Green can move from not_verified. 库存预警 remains deleted and out of scope.",
     "2026-06-24: S58 CI browser smoke selector fix verified pending remote CI. Remote GitHub Actions run 28062934787 passed Build/Test and launched browser smoke successfully after S57; browser smoke ran all 36 tests with 34 passed and 2 failed due Playwright strict selector ambiguity, not product/API failures. Narrowed the duplicate toast assertion to first() and the finance subcategory button to exact name. Focused Chrome rerun of the two failed tests passed 2/2; final local full real Chrome browser smoke passed 36/36; code-review-graph 0 gaps; Claude audit PASS. Push and remote CI rerun are still required before CI Green can move from not_verified.",
@@ -91,10 +93,10 @@
     "2026-06-23: WMS delivery-order export and OCR upload guard verified locally in real Chrome. Backend delivery export now reuses listDeliveryOrders filters for tenant/supplier/contract/subProject/date, inbound order/material filters are SQLite-safe, and the Inbound page has a 导出送货单 button. Browser test creates a delivery order through the real API, verifies delivery list read-back, downloads 送货单.xlsx from the UI, and uploads a PNG via the OCR file chooser to assert failure handling. verify passed, focused Chrome 1/1 passed, full real Chrome 30/30 passed, code-review-graph risk 0.50 with static gaps covered by backend service tests and Chrome e2e. Claude CLI audit was attempted twice but hung/no output and was interrupted; Yellow external-tool issue only. Pending commit/push.",
     "2026-06-23: WMS delivery-order export/OCR upload guard implementation pushed at bbb943a to origin public-main and main."
   ],
-  "current_phase": "S60_ci_green_verified_product_green_yellow",
-  "current_task": "Commit and push the CI Green status marker. Product Green remains Yellow until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
-  "last_verified_at": "2026-06-23T23:42:35Z",
-  "last_verified_command": "gh run watch 28064450215 --repo Namson666/zltgcgl --exit-status; gh run view 28064450215 --json status,conclusion,jobs. GitHub Actions run success: Build and test 1m0s, Real browser smoke 5m12s, head 1808638.",
+  "current_phase": "S61_smoke_route_matrix_coverage_gate_verified_pending_push",
+  "current_task": "Commit and push route matrix coverage gate; then inspect GitHub Actions before claiming remote CI for S61.",
+  "last_verified_at": "2026-06-24T00:02:28Z",
+  "last_verified_command": "node scripts/check-smoke-route-matrix.mjs; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S61-smoke-route-matrix-coverage-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00. Results: route matrix 31 enterprise + 16 developer, verify backend 61 + frontend 38 + builds, real Chrome 36/36, code-review-graph risk 0.00 / 0 gaps, Claude PASS.",
   "history": [
     {
       "date": "2026-06-23T15:59:33Z",
