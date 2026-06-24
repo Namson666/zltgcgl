@@ -4,11 +4,11 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S63 CI mobile check-in smoke fix verified, pending push
-- Current task: GitHub Actions run `28065901508` 的 Build/Test 已绿，但 Real browser smoke 35/36，首个用例因默认小程序打卡未带 tenantId 返回 409；已改为当前企业 selected-tenant 打卡路径，focused Chrome、`bash scripts/verify.sh`、全量真实 Chrome 36/36、code-review-graph、Claude audit 均通过，等待提交/推送和远端 CI。库存预警仍不恢复、不纳入验收矩阵
+- Current phase: S63 remote CI Green verified, Product Green Yellow
+- Current task: GitHub Actions run `28066560015` 已通过：Build/Test 1m3s success，Real browser smoke 5m14s success，head `59e6211`；等待提交/推送 CI Green 状态标记。库存预警仍不恢复、不纳入验收矩阵
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖、小程序同手机号多企业冲突保护、冲突后选择企业打卡 appId 校验闭环、管理员手机号预绑定和企业自有 appId 直达验收；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、劳资工资发放生命周期、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/企业端公告首页可见/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总、开发者首页数据看板真实汇总、公开注册企业登录闭环均已通过真实 Chrome
-- In progress: S63 远端 CI 小程序打卡 smoke 稳定性修复；Product Green 仍保持 Yellow，因为真实生产 HTTPS/DNS/证书和第三方人脸网关凭证还没做外部生产 smoke
-- Next action: 提交并推送 S63；检查 GitHub Actions 远端 verify/browser-smoke 是否继续 Green；下一轮进入生产外部 smoke 或继续业务重构切片
+- In progress: S63 状态标记：远端 CI 已绿，Product Green 仍保持 Yellow，因为真实生产 HTTPS/DNS/证书和第三方人脸网关凭证还没做外部生产 smoke
+- Next action: 提交并推送 CI Green 状态标记；下一轮进入生产外部 smoke 或继续业务重构切片
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：生产 DNS/反代/证书未接入真实域名验证、真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
 - Do not repeat: 不要恢复库存预警；不要把 Build Green 当 Product Green
 - Must read:
@@ -22,7 +22,7 @@
   8. .ai/session/HANDOFF.md
 - Must read spec:
   1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
-- Last verified command: focused `cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep "enterprise user can login and open core enabled modules" --project=chrome` passed；`bash scripts/verify.sh` passed backend 61 + frontend 38 + builds + route matrix check；full `bash scripts/browser-smoke.sh` passed real Chrome 36/36；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.50；Claude CLI worker `.ai/workers/20260624T002520Z-audit_worker.result.md` returned PASS
+- Last verified command: GitHub Actions run `28066560015` passed on `public-main` head `59e6211`; Build/Test 1m3s success；Real browser smoke 5m14s success；smoke evidence upload success
 - S53 verified command: Ruby YAML parse passed；`bash scripts/verify.sh` passed backend 61 + frontend 38 + builds；full `bash scripts/browser-smoke.sh` passed real Chrome 36/36；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps；Claude CLI worker `.ai/workers/20260623T221751Z-audit_worker.result.md` returned PASS
 - Claude worker evidence: latest `.ai/workers/20260623T221751Z-audit_worker.result.md` returned PASS for S53 GitHub Actions CI gate.
 - S54 verified command: `npx npm@10.8.2 install --package-lock-only` refreshed backend lockfile；clean temp `npx npm@10.8.2 ci` passed；`bash scripts/verify.sh` passed backend 61 + frontend 38 + builds；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps；Claude CLI worker `.ai/workers/20260623T222302Z-audit_worker.result.md` returned PASS
@@ -39,6 +39,7 @@
 - S61 verified command: `node scripts/check-smoke-route-matrix.mjs` passed 31 enterprise routes + 16 developer routes；`bash scripts/verify.sh` passed backend 61 + frontend 38 + builds + route matrix check；full `bash scripts/browser-smoke.sh` passed real Chrome 36/36；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps；Claude CLI worker `.ai/workers/20260624T000001Z-audit_worker.result.md` returned PASS
 - S62 verified command: GitHub Actions run `28065717480` failed Build/Test on WMS date-specific order number assertions (`20260623` vs runner `20260624`); fixed by freezing Vitest system time in `backend/src/modules/wms/service.test.ts`; focused WMS service test passed 17/17；`bash scripts/verify.sh` passed backend 61 + frontend 38 + builds + route matrix check；code-review-graph risk 0.40；pending push/remote CI rerun
 - S63 verified command: GitHub Actions run `28065901508` passed Build/Test but Real browser smoke failed 35/36 on mobile check-in 409; fixed the personnel/face/abnormal/trusted-location smoke to send current enterprise tenantId via documented selected-tenant default mini-program path while keeping the dedicated no-tenantId multi-tenant conflict test intact; focused Chrome passed；`bash scripts/verify.sh` passed；full real Chrome 36/36 passed；code-review-graph risk 0.50；Claude audit PASS；pending push/remote CI rerun
+- S63 CI Green verified command: GitHub Actions run `28066560015` passed on `public-main` head `59e6211`; Build/Test 1m3s success；Real browser smoke 5m14s success；smoke evidence upload success
 - Claude worker evidence: latest `.ai/workers/20260623T223550Z-audit_worker.result.md` returned PASS for S55 CI test DB initialization fix.
 - Claude worker evidence: latest `.ai/workers/20260623T220545Z-audit_worker.result.md` returned PASS for S52 production external smoke gate.
 - Claude worker evidence: latest `.ai/workers/20260623T214941Z-audit_worker.result.md` returned PASS for S51 production readiness self-check.

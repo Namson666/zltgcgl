@@ -1,5 +1,5 @@
 {
-  "status": "ci_mobile_checkin_smoke_fix_verified_pending_push",
+  "status": "ci_green_verified_product_green_yellow",
   "build_green": "verified",
   "test_green": "verified",
   "ci_green": "verified",
@@ -8,6 +8,17 @@
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "github_actions_ci_green_s63",
+      "command": "gh run watch 28066560015 --repo Namson666/zltgcgl --exit-status; gh run view 28066560015 --repo Namson666/zltgcgl --json status,conclusion,headSha,jobs",
+      "status": "verified_remote_ci_success",
+      "result": "S63 is remote CI Green on public-main head 59e6211: GitHub Actions run 28066560015 completed successfully. Build/Test passed in 1m3s, including production-smoke syntax/missing-target checks and scripts/verify.sh. Real browser smoke passed in 5m14s and uploaded smoke evidence. Product Green remains not_yet_full_production_green until real production HTTPS/DNS/cert and real third-party face gateway credentials/configuration are verified.",
+      "evidence_files": [
+        ".github/workflows/ci.yml",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html"
+      ]
+    },
     {
       "type": "ci_mobile_checkin_smoke_fix",
       "command": "gh run watch 28065901508 --repo Namson666/zltgcgl --exit-status; cd frontend && npx playwright test tests/smoke/browser-smoke.spec.ts --grep \"enterprise user can login and open core enabled modules\" --project=chrome; bash scripts/verify.sh; bash scripts/browser-smoke.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S63-ci-mobile-checkin-smoke-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",

@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "ci_mobile_checkin_smoke_fix_verified_pending_push",
+  "stage": "ci_green_verified_product_green_yellow",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -52,9 +52,9 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-24T00:25:20Z",
-  "current_phase": "S63_ci_mobile_checkin_smoke_fix_verified_pending_push",
-  "current_task": "Commit and push mobile check-in smoke selected-tenant fix; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
+  "updated_at": "2026-06-24T00:36:00Z",
+  "current_phase": "S63_remote_ci_green_verified_product_green_yellow",
+  "current_task": "Push CI Green status marker; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
   "last_completed": "S51 production readiness self-check verified and pushed at 24db3cc: developer-only readiness API/UI, missing migration table warning, portal/mini-program/module/face gateway checks, verify.sh, full Chrome 36/36, code-review-graph, and Claude audit passed.",
-  "next_action": "Push S63 and inspect GitHub Actions. Product Green still requires running scripts/production-smoke.mjs against real production URL/DNS/cert and third-party face gateway credentials."
+  "next_action": "Push this CI Green status marker and inspect GitHub Actions. Product Green still requires running scripts/production-smoke.mjs against real production URL/DNS/cert and third-party face gateway credentials."
 }
