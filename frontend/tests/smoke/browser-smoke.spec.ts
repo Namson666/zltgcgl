@@ -305,6 +305,15 @@ test.describe('browser smoke: authenticated core navigation', () => {
 
     await expect(page).toHaveURL(/\/dashboard/);
     await expect(page.getByText('数据看板').first()).toBeVisible();
+    const enterpriseToken = await page.evaluate(() => localStorage.getItem('zlt_token') || localStorage.getItem('token'));
+    expect(enterpriseToken).toBeTruthy();
+    const meResponse = await page.request.get('/api/auth/me', {
+      headers: { Authorization: `Bearer ${enterpriseToken}` },
+    });
+    expect(meResponse.status()).toBe(200);
+    const meBody = await readJson(meResponse);
+    const enterpriseTenantId = meBody?.data?.user?.tenantId || meBody?.data?.tenantId;
+    expect(enterpriseTenantId).toBeTruthy();
 
     const menuTargets = [
       { text: '合同管理', path: '/contracts', url: /\/contracts/ },
@@ -512,6 +521,8 @@ test.describe('browser smoke: authenticated core navigation', () => {
 	          const response = await page.request.post('/api/mobile/check-in', {
 	            multipart: {
 	              appId: 'wx_dev_default_checkin',
+	              // Mirrors the default mini-program "selected tenant" path after a company is chosen.
+	              tenantId: enterpriseTenantId,
 	              phone,
 	              checkDate,
 	              latitude: '22.5431',
@@ -523,7 +534,8 @@ test.describe('browser smoke: authenticated core navigation', () => {
 	              photo: { name: 'checkin-face.svg', mimeType: 'image/svg+xml', buffer: faceBuffer },
 	            },
 	          });
-	          expect(response.status()).toBe(201);
+	          const body = await readJson(response);
+	          expect(response.status(), JSON.stringify(body)).toBe(201);
 	        };
 
 	        await postCheckIn('2026-06-22', '南山区');
