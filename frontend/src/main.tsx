@@ -34,7 +34,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Toaster
         position="top-right"           /* 消息显示位置：右上角 */
         gutter={12}                    /* 消息间距 */
-        containerStyle={{ top: 80 }}   /* 容器顶部偏移，避免遮挡导航栏 */
+        containerStyle={{
+          top: 80,                     /* 容器顶部偏移，避免遮挡导航栏 */
+          pointerEvents: 'none',       /* 提示层不拦截页面按钮点击 */
+        }}
         toastOptions={{
           duration: 3000,              /* 默认显示时长：3秒 */
           style: {
@@ -43,6 +46,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             borderRadius: 'var(--radius-lg)', /* 8px 圆角 */
             fontSize: '14px',          /* 字体大小 */
             boxShadow: 'var(--shadow-lg)', /* 阴影效果 */
+            /* 如果未来增加“撤销/查看”等可点击 toast，需要对该自定义内容单独恢复 pointer-events */
+            pointerEvents: 'none',     /* 单条提示也不拦截点击 */
           },
           /* 成功消息样式 */
           success: {

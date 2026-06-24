@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "s66_delivery_evidence_matrix_verified_pending_push",
+    "working_tree": "s67_toast_pointer_events_fix_verified_pending_remote_ci",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "s64_production_smoke_workflow_pushed_ci_green",
-    "pushed_commit": "b93a3a8 chore: add production smoke workflow",
-    "last_pushed_commit": "b93a3a8"
+    "push_status": "s67_toast_pointer_events_fix_pending_push",
+    "pushed_commit": "96264ea chore: add delivery evidence matrix gate",
+    "last_pushed_commit": "96264ea"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "s64_production_smoke_workflow_pushed_ci_green",
+    "push_status": "s67_toast_pointer_events_fix_pending_push",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "b93a3a8 chore: add production smoke workflow"
+    "pushed_commit": "96264ea chore: add delivery evidence matrix gate"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -34,12 +34,13 @@
     "backend/.env exists locally and is ignored, not listed as tracked in initial candidate scan",
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
-  "status": "ci_green_verified_product_green_yellow",
-  "updated_at": "2026-06-24T01:26:27Z",
-  "push_status": "s64_production_smoke_workflow_pushed_ci_green",
-  "last_pushed_commit": "b93a3a8",
-  "current_commit": "b93a3a8 chore: add production smoke workflow",
+  "status": "s67_toast_pointer_fix_verified_pending_remote_ci_product_green_yellow",
+  "updated_at": "2026-06-24T01:46:50Z",
+  "push_status": "s67_toast_pointer_events_fix_pending_push",
+  "last_pushed_commit": "96264ea",
+  "current_commit": "96264ea chore: add delivery evidence matrix gate",
   "notes": [
+    "2026-06-24: S67 toast pointer-events browser smoke fix verified pending push. GitHub Actions run 28068864872 failed Real browser smoke 35/36 because the success toast 库存记录已导出 intercepted the next real click on 导出已出库. Fixed the product interaction in frontend/src/main.tsx by setting react-hot-toast container and toast style pointerEvents: none, preserving visible role=status feedback while preventing transient toasts from eating user clicks. Local full real Chrome browser-smoke passed 36/36; bash scripts/verify.sh passed backend 61 + frontend 38 + builds + route matrix + production smoke guard + delivery evidence matrix; code-review-graph risk 0.40 with no affected flows for this toast fix; Claude audit PASS at .ai/workers/20260624T014916Z-audit_worker.result.md. Product Green remains Yellow until real production HTTPS/DNS/cert, real face gateway credentials, and user acceptance are externally verified.",
     "2026-06-24: S66 delivery evidence matrix verified pending push. Added .ai/DELIVERY_EVIDENCE_MATRIX.json and scripts/check-delivery-evidence-matrix.mjs, wired into scripts/verify.sh, so the user requirement list, evidence files, external Yellow Product Green gaps, User Green gap, and inventory-alert removal invariant are machine-checked. Verification: node scripts/check-delivery-evidence-matrix.mjs passed 12 requirements + 2 invariants; bash scripts/verify.sh passed backend 61 + frontend 38 + builds + route matrix + production smoke guard + delivery evidence matrix; code-review-graph risk 0.60 with CLI guard helper static gaps covered by runtime verify/subprocess evidence. Product Green remains Yellow until real production HTTPS/DNS/cert, independent portal host, real face gateway credentials, and user acceptance are externally verified.",
     "2026-06-24: S65 production smoke non-production host guard verified pending push. Latest pushed production smoke workflow commit b93a3a8 passed GitHub Actions run 28067443611: Build/Test succeeded in 1m4s and Real browser smoke succeeded in 5m26s with smoke evidence upload. This round rejects localhost/private IPv4/IPv6/.local/.localhost/staging/dev/test hosts by default in scripts/production-smoke.mjs, emits allowNonProductionHosts in production smoke JSON evidence, and wires scripts/check-production-smoke-guard.mjs into scripts/verify.sh. Verification: node scripts/check-production-smoke-guard.mjs passed, bash scripts/verify.sh passed backend 61 + frontend 38 + builds + route matrix + production smoke guard, code-review-graph risk 0.60 with static test gaps covered by runtime guard, Claude audit PASS at .ai/workers/20260624T011052Z-audit_worker.result.md. Product Green remains Yellow until the production smoke workflow or scripts/production-smoke.mjs is run against real production HTTPS/DNS/cert and real face gateway credentials.",
     "2026-06-24: S64 production smoke workflow/runbook pushed and CI Green. Commit b93a3a8 passed GitHub Actions run 28067443611: Build/Test succeeded in 1m4s and Real browser smoke succeeded in 5m26s with smoke evidence upload. Product Green remains Yellow until the production smoke workflow or scripts/production-smoke.mjs is run against real production HTTPS/DNS/cert and real face gateway credentials.",

@@ -1,13 +1,25 @@
 {
-  "status": "ci_green_verified_product_green_yellow",
+  "status": "s67_toast_pointer_fix_verified_pending_remote_ci_product_green_yellow",
   "build_green": "verified",
   "test_green": "verified",
-  "ci_green": "verified",
+  "ci_green": "pending_remote_ci_rerun_for_s67",
   "runtime_smoke_green": "verified",
   "browser_regression_green": "verified_route_matrix_coverage_gate_supplier_workteam_admin_crud_labor_deep_exports_labor_report_type_export_labor_report_all_frontend_types_labor_legacy_output_value_api_chain_face_provider_diagnostic_production_readiness_inventory_alert_removed_wms_main_flow_wms_material_catalog_wms_inbound_import_export_wms_delivery_ocr_export_wms_return_import_export_wms_outbound_export_delete_wms_transfer_export_delete_wms_inventory_ledger_export_contract_progress_receipt_contract_pnl_detail_finance_voucher_invoice_receipt_import_export_category_recycle_lifecycle_department_reimbursement_review_finance_dashboard_real_summary_developer_ui_module_portal_logo_upload_developer_announcements_lifecycle_enterprise_announcements_dashboard_mini_program_routing_conflict_mini_program_selected_tenant_checkin_mini_program_phone_prebinding_mini_program_phone_prebinding_toggle_mini_program_phone_prebinding_toggle_safety_developer_system_config_api_keys_developer_plans_lifecycle_developer_integration_security_observability_developer_payments_invoices_storage_enterprise_subscription_lifecycle_developer_tenant_crud_users_recycle_bin_enterprise_main_dashboard_real_summary_developer_main_dashboard_real_summary_public_register_tenant_code_login_labor_payment_lifecycle",
   "product_green": "not_yet_full_production_green",
   "user_green": "not_verified",
   "evidence": [
+    {
+      "type": "ci_browser_smoke_toast_pointer_events_fix",
+      "command": "bash scripts/browser-smoke.sh --grep \"enterprise user can export wms inventory and work team ledger with net quantities\"; bash scripts/verify.sh; code-review-graph build --skip-flows && code-review-graph detect-changes; python3 scripts/run_claude_worker.py --role audit_worker --prompt-file .ai/workers/S67-toast-pointer-events-audit.prompt.md --model sonnet --effort low --max-budget-usd 4.00",
+      "status": "verified_claude_pass_pending_remote_ci",
+      "result": "S67 fixes GitHub Actions run 28068864872 Real browser smoke failure where the success toast 库存记录已导出 intercepted the next real click on 导出已出库. The product-level fix makes the global react-hot-toast container and individual toast style pointer-events: none, preserving visible role=status feedback while preventing transient toasts from eating user clicks. The local browser-smoke command ran the full suite and passed 36/36 in real Chrome; verify.sh passed backend 61 + frontend 38 + builds + route matrix + production smoke guard + delivery evidence matrix; code-review-graph risk 0.40 with no affected flows for this toast fix; Claude audit PASS at .ai/workers/20260624T014916Z-audit_worker.result.md. Product Green remains Yellow until real production HTTPS/DNS/cert, real face gateway credentials, and user acceptance are externally verified.",
+      "evidence_files": [
+        "frontend/src/main.tsx",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html",
+        ".ai/workers/20260624T014916Z-audit_worker.result.md"
+      ]
+    },
     {
       "type": "delivery_evidence_matrix",
       "command": "node scripts/check-delivery-evidence-matrix.mjs; bash scripts/verify.sh; code-review-graph build --skip-flows && code-review-graph detect-changes",

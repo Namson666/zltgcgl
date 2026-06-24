@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "task_id": "zltgcgl-refactor-prep",
   "mode": "Enhanced",
-  "stage": "ci_green_verified_product_green_yellow",
+  "stage": "s67_toast_pointer_fix_verified_pending_remote_ci_product_green_yellow",
   "governance_mode": "EnforcedDelivery",
   "required_skills": [
     "superpowers-pro-startup",
@@ -52,9 +52,9 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-24T01:26:27Z",
-  "current_phase": "S66_delivery_evidence_matrix_product_green_yellow",
-  "current_task": "Keep a machine-checked delivery evidence matrix for all user requirements; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
+  "updated_at": "2026-06-24T01:46:50Z",
+  "current_phase": "S67_toast_pointer_fix_pending_remote_ci_product_green_yellow",
+  "current_task": "Push the toast pointer-events product fix and wait for remote GitHub Actions CI; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
   "last_completed": "S51 production readiness self-check verified and pushed at 24db3cc: developer-only readiness API/UI, missing migration table warning, portal/mini-program/module/face gateway checks, verify.sh, full Chrome 36/36, code-review-graph, and Claude audit passed.",
-  "next_action": "Commit and push the delivery evidence matrix, then run Production Smoke with real production URL, portal host, developer token, and third-party face gateway credentials. Product Green still requires a Green production smoke artifact and user acceptance."
+  "next_action": "Commit and push S67, wait for GitHub Actions Build/Test and Real browser smoke to pass, then run Production Smoke with real production URL, portal host, developer token, and third-party face gateway credentials. Product Green still requires a Green production smoke artifact and user acceptance."
 }
