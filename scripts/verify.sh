@@ -39,4 +39,7 @@ echo "== Frontend build =="
 echo "== Smoke route matrix coverage =="
 node "$ROOT_DIR/scripts/check-smoke-route-matrix.mjs"
 
+echo "== Production smoke guard =="
+node "$ROOT_DIR/scripts/check-production-smoke-guard.mjs"
+
 echo "== Verify complete =="

@@ -52,9 +52,9 @@
     "Claude CLI worker audit or test evidence",
     "browser smoke for module visibility when feasible"
   ],
-  "updated_at": "2026-06-24T00:46:37Z",
-  "current_phase": "S64_production_smoke_workflow_prepared_product_green_yellow",
-  "current_task": "Prepare a manual GitHub Actions production smoke workflow and runbook; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
+  "updated_at": "2026-06-24T01:01:48Z",
+  "current_phase": "S65_production_smoke_non_production_host_guard_product_green_yellow",
+  "current_task": "Reject obvious non-production hosts in production smoke by default; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
   "last_completed": "S51 production readiness self-check verified and pushed at 24db3cc: developer-only readiness API/UI, missing migration table warning, portal/mini-program/module/face gateway checks, verify.sh, full Chrome 36/36, code-review-graph, and Claude audit passed.",
-  "next_action": "Commit and push the production smoke workflow/runbook, then run it with real production URL, portal host, developer token, and third-party face gateway credentials. Product Green still requires a Green production smoke artifact."
+  "next_action": "Commit and push the production smoke host guard, then run Production Smoke with real production URL, portal host, developer token, and third-party face gateway credentials. Product Green still requires a Green production smoke artifact."
 }

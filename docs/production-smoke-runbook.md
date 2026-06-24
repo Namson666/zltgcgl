@@ -38,6 +38,10 @@ Required for final Product Green:
 
 Do not turn `expect_portal_ready` or `expect_face_gateway_ready` off for a final acceptance run. Turning either off intentionally downgrades the run to Yellow evidence only.
 
+The smoke script rejects obvious non-production hosts by default, including `localhost`, private IP ranges, `.local`, and `dev`/`staging`/`test` host labels. For an explicit staging or local rehearsal only, set `PRODUCTION_SMOKE_ALLOW_NON_PRODUCTION_HOSTS=1`; never set it for final Product Green.
+
+The JSON artifact includes `allowNonProductionHosts`; final Product Green requires it to be `false`. The `production_portal_host` value must exactly match the real production DNS/CNAME host for the independent login page.
+
 Required repository/environment secret for protected readiness:
 
 - `PRODUCTION_DEVELOPER_TOKEN`: a real developer/admin bearer token with access to `/api/developer/readiness`.
@@ -52,6 +56,7 @@ Product Green can only be claimed when:
 
 - the production workflow or local command exits `0`;
 - the artifact JSON is saved under `docs/smoke-evidence/` or attached to the GitHub workflow run;
-- the run used the real production DNS/TLS endpoints, not localhost/staging unless the acceptance scope is explicitly staging;
+- the run used the real production DNS/TLS endpoints, not localhost/staging/test hosts;
+- `allowNonProductionHosts` in the JSON artifact is `false`;
 - the protected readiness check proves `face_gateway` is `ready`;
 - the latest CI build/test and real browser smoke are also Green.

@@ -1,0 +1,101 @@
+Single-deliverable audit task — TaskCreate unnecessary. The Write tool needs explicit permission; since the harness blocks it, I'll deliver the audit verdict directly in this response — that's what the user (the orchestrator that spawned this worker) needs.
+
+---
+
+# S65 — Production Smoke Non-Production Host Guard Audit
+
+## Verdict: **PASS**
+
+## 1. `validateProductionHostname` coverage — PASS
+
+Implemented at `scripts/production-smoke.mjs:41-74`. All 15 hostile-target branches are exercised by `scripts/check-production-smoke-guard.mjs`:
+
+| Branch | Test |
+|---|---|
+| `localhost` exact | `https://localhost` → expectExit2 (line 51) |
+| `::1` exact | `https://[::1]` → expectExit2 (line 57) |
+| `::` unspecified | `https://[::]` → expectExit2 (line 63) |
+| `fc/fd` ULA | `https://[fd00::1]` → expectExit2 (line 69) |
+| `fe80` link-local | `https://[fe80::1]` → expectExit2 (line 75) |
+| `.local` suffix | `https://tenant.local` → expectExit2 (line 81) |
+| first-label `staging` | `https://staging.example.com` → expectExit2 (line 87) |
+| first-label `dev` | `https://dev.example.com` → expectExit2 (line 93) |
+| first-label `test` | `https://test.example.com` → expectExit2 (line 99) |
+| `127/8` | `https://127.0.0.1` → expectExit2 (line 105) |
+| `10/8` | `https://10.0.0.5` → expectExit2 (line 111) |
+| `172.16/12` | `https://172.20.0.5` → expectExit2 (line 117) |
+| `192.168/16` | `https://192.168.1.10` → expectExit2 (line 123) |
+| `169.254/16` | `https://169.254.1.10` → expectExit2 (line 129) |
+| `0.0.0.0` | `https://0.0.0.0` → expectExit2 (line 135) |
+| Portal host channel | `PRODUCTION_PORTAL_HOST=tenant.localhost` → expectExit2 (line 141) |
+
+Plus missing-URL and http-without-override are covered first (lines 38-48) to confirm the host guard is layered correctly behind the existing HTTPS guard.
+
+## 2. Explicit staging/local rehearsal — PASS
+
+`check-production-smoke-guard.mjs:149-162` invokes the real script with `PRODUCTION_SMOKE_ALLOW_NON_PRODUCTION_HOSTS=1 PRODUCTION_BASE_URL=https://staging.example.com`, asserts status ≠ 2, and asserts the artifact JSON contains `"allowNonProductionHosts": true`. Override path works and is self-disclosing.
+
+## 3. Real production paths / HTTPS / portal / redaction — PASS
+
+- **HTTPS guard layered before host guard**: `http://staging.example.com PRODUCTION_SMOKE_ALLOW_NON_PRODUCTION_HOSTS=1` still exits 2 with "must use https://". Independent layers.
+- **Portal host**: `PRODUCTION_PORTAL_HOST` runs through the same `validateProductionHostname` (line 138). Real DNS/CNAME values still pass.
+- **Secret redaction**: `SECRET_VALUES`, `redact()`, and the developer-readiness secret-leak check (line 186) all untouched. New error message contains only hostname + env-var name, never secrets.
+- **No new fetch paths, no writes**: still 5 GETs (`/login`, `/api/health`, `/api/v1/health`, `/api/auth/portal-config`, `/api/developer/readiness`).
+
+## 4. `check-production-smoke-guard.mjs` + `verify.sh` wiring — PASS
+
+- New file: 165 lines, uses `spawnSync` with 5-second timeout to invoke the real `scripts/production-smoke.mjs` in a child process. Right shape — exercises real exit behavior, not mocked units.
+- Wired in at `scripts/verify.sh:42-43` between route matrix and "Verify complete".
+- Local run exits 0 with "Production smoke guard check passed."
+
+## 5. Runbook accuracy — PASS
+
+`docs/production-smoke-runbook.md` line 41 states the default rejection policy correctly; line 43 documents the `allowNonProductionHosts` artifact field. The Product Green rule (lines 56-64) tightens "not localhost/staging unless the acceptance scope is explicitly staging" → "not localhost/staging/test hosts" and adds the `allowNonProductionHosts === false` gate. Implementation and docs are aligned.
+
+## 6. No forbidden recovery — PASS
+
+- `grep` for `库存预警|inventory alert|inventoryAlert|inventory_alert|alertThreshold` against the changed files: **zero matches**.
+- `scripts/check-smoke-route-matrix.mjs` residue gate still wired in `verify.sh` and still blocks `alertThreshold|/wms/alerts|InventoryAlert` — S65 did not bypass it.
+- No external write operations (no POST/PUT/DELETE/PATCH).
+- No Product Green mis-claim path: `allowNonProductionHosts` flag is now mandatory evidence in the artifact JSON.
+
+## Blocking issues
+
+**None.**
+
+## Yellow follow-ups (non-blocking)
+
+1. `.localhost` suffix branch is only transitively covered by the `tenant.local` test. Recommend adding `https://api.dev.localhost` to `check-production-smoke-guard.mjs` for explicit suffix-branch coverage.
+2. Inner-label check only matches `staging`/`stage`/`test`/`testing`; `tenant.dev.example.com` would pass. Probably intentional (over-matching carries false-positive cost) but worth flagging if the user wants belt-and-braces.
+3. `.github/workflows/production-smoke.yml` does not pass `PRODUCTION_SMOKE_ALLOW_NON_PRODUCTION_HOSTS` through (so CI cannot fake a Green) — this is a feature, not a bug, but the runbook could note that staging rehearsal from GitHub UI requires local invocation.
+4. New error message interpolates `hostname` into the failure text; `redact()` only handles configured secrets, so a hostile hostname containing the token would still partially leak. Not reachable today (hostname comes from URL parsing, not user input) but worth tracking.
+
+## Commit / push recommendation
+
+**Yes — can be committed and pushed.**
+
+Strict safety improvement: tightens the external gate, preserves the explicit-staging escape hatch with self-disclosure, all local gates pass. `verify.sh` adds a new positive check rather than weakening any existing one.
+
+Suggested commit message:
+```
+chore: reject non-production hosts in production smoke by default
+
+scripts/production-smoke.mjs adds validateProductionHostname to
+normalizeBaseUrl and PRODUCTION_PORTAL_HOST so localhost, private
+IPv4/IPv6 ranges, .local, and dev/staging/test host labels exit
+2 by default. Explicit staging/local rehearsal remains possible via
+PRODUCTION_SMOKE_ALLOW_NON_PRODUCTION_HOSTS=1 and the artifact JSON
+now self-discloses allowNonProductionHosts so final Product Green
+runs can be verified to not have used the override.
+
+scripts/check-production-smoke-guard.mjs is a new verify-sh check
+that exercises 16 invocation-validation branches via subprocess
+invocations of the real script and is wired into scripts/verify.sh.
+docs/production-smoke-runbook.md and README.md reflect the new
+Product Green rule and the tightening of the "real production
+DNS/TLS endpoints" requirement to exclude localhost/staging/test.
+```
+
+---
+
+**Note on delivery**: The harness blocked the Write tool call to `.ai/workers/20260624T011052Z-audit_worker.result.md` (the standard audit_worker artifact path). Verdict delivered inline above; if you want the file persisted, approve the Write permission on retry and I will save the same content.

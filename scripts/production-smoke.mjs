@@ -11,6 +11,7 @@ const API_BASE_URL = process.env.PRODUCTION_API_BASE_URL || REQUIRED_BASE_URL;
 const DEVELOPER_TOKEN = process.env.PRODUCTION_DEVELOPER_TOKEN || '';
 const PORTAL_HOST = process.env.PRODUCTION_PORTAL_HOST || '';
 const ALLOW_HTTP = process.env.ALLOW_INSECURE_PRODUCTION_HTTP === '1';
+const ALLOW_NON_PRODUCTION_HOSTS = process.env.PRODUCTION_SMOKE_ALLOW_NON_PRODUCTION_HOSTS === '1';
 const EXPECT_FACE_GATEWAY_READY = process.env.EXPECT_FACE_GATEWAY_READY === '1';
 const EXPECT_PORTAL_READY = process.env.EXPECT_PORTAL_READY === '1';
 const SECRET_VALUES = [
@@ -33,7 +34,43 @@ function normalizeBaseUrl(raw, name) {
   if (parsed.protocol !== 'https:' && !ALLOW_HTTP) {
     throw new Error(`${name} must use https:// for production smoke. Set ALLOW_INSECURE_PRODUCTION_HTTP=1 only for local/staging dry runs.`);
   }
+  validateProductionHostname(parsed.hostname, name);
   return parsed;
+}
+
+function validateProductionHostname(hostname, name) {
+  if (ALLOW_NON_PRODUCTION_HOSTS) return;
+
+  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  const labels = normalized.split('.');
+  const firstLabel = labels[0];
+  const privateIpv4Patterns = [
+    /^10\./,
+    /^127\./,
+    /^169\.254\./,
+    /^172\.(1[6-9]|2\d|3[0-1])\./,
+    /^192\.168\./,
+    /^0\.0\.0\.0$/,
+  ];
+  const privateIpv6Patterns = [
+    /^::$/,
+    /^fc[0-9a-f]{2}:/,
+    /^fd[0-9a-f]{2}:/,
+    /^fe80:/,
+  ];
+  const isNonProduction =
+    normalized === 'localhost' ||
+    normalized === '::1' ||
+    normalized.endsWith('.localhost') ||
+    normalized.endsWith('.local') ||
+    privateIpv4Patterns.some((pattern) => pattern.test(normalized)) ||
+    privateIpv6Patterns.some((pattern) => pattern.test(normalized)) ||
+    ['dev', 'development', 'local', 'staging', 'stage', 'test', 'testing'].includes(firstLabel) ||
+    labels.some((label) => ['dev', 'development', 'local', 'staging', 'stage', 'test', 'testing'].includes(label));
+
+  if (isNonProduction) {
+    throw new Error(`${name} host "${hostname}" looks like a non-production target. Set PRODUCTION_SMOKE_ALLOW_NON_PRODUCTION_HOSTS=1 only for explicit staging/local dry runs; final Product Green requires the real production DNS/TLS host.`);
+  }
 }
 
 function joinUrl(base, path) {
@@ -98,6 +135,7 @@ let apiBase;
 try {
   frontendBase = normalizeBaseUrl(REQUIRED_BASE_URL, 'PRODUCTION_BASE_URL');
   apiBase = normalizeBaseUrl(API_BASE_URL, 'PRODUCTION_API_BASE_URL');
+  if (PORTAL_HOST) validateProductionHostname(PORTAL_HOST, 'PRODUCTION_PORTAL_HOST');
 } catch (error) {
   console.error(redact(error.message));
   process.exit(2);
@@ -176,6 +214,7 @@ console.log(JSON.stringify({
   generatedAt: new Date().toISOString(),
   frontendBaseUrl: frontendBase.origin,
   apiBaseUrl: apiBase.origin,
+  allowNonProductionHosts: ALLOW_NON_PRODUCTION_HOSTS,
   results,
 }, null, 2));
 

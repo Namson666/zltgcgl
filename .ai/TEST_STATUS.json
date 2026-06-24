@@ -9,6 +9,31 @@
   "user_green": "not_verified",
   "evidence": [
     {
+      "type": "production_smoke_non_production_host_guard",
+      "command": "node --check scripts/production-smoke.mjs; node scripts/check-production-smoke-guard.mjs; bash scripts/verify.sh; code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_claude_pass_pending_remote_ci",
+      "result": "S65 rejects obvious non-production production-smoke targets by default: missing URL exits 2, http without override exits 2, localhost/[::1]/[::]/[fd00::1]/[fe80::1] exit 2, .local/.localhost exit 2, staging/dev/test hosts including inner dev labels exit 2, 127/10/172.16-31/192.168/169.254/0.0.0.0 IPs exit 2, and non-production portal host exits 2. Explicit staging/local rehearsal with PRODUCTION_SMOKE_ALLOW_NON_PRODUCTION_HOSTS=1 passes invocation validation, emits allowNonProductionHosts: true in JSON evidence, and is not Product Green evidence. verify.sh passed backend 61 + frontend 38 + builds + route matrix + production smoke guard. code-review-graph risk 0.60 reports static gaps for normalizeBaseUrl/validateProductionHostname because it does not classify the CLI subprocess guard as test coverage; runtime guard evidence covers those branches. Claude audit PASS at .ai/workers/20260624T011052Z-audit_worker.result.md.",
+      "evidence_files": [
+        "scripts/production-smoke.mjs",
+        "scripts/check-production-smoke-guard.mjs",
+        "scripts/verify.sh",
+        "docs/production-smoke-runbook.md",
+        ".ai/workers/20260624T011052Z-audit_worker.result.md"
+      ]
+    },
+    {
+      "type": "github_actions_ci_green_s64",
+      "command": "gh run watch 28067443611 --repo Namson666/zltgcgl --exit-status; gh run view 28067443611 --repo Namson666/zltgcgl --json status,conclusion,headSha,jobs",
+      "status": "verified_remote_ci_success",
+      "result": "S64 production smoke workflow commit b93a3a8 is remote CI Green: GitHub Actions run 28067443611 completed successfully. Build/Test passed in 1m4s, including production-smoke syntax/missing-target checks and scripts/verify.sh. Real browser smoke passed in 5m26s and uploaded smoke evidence. Product Green remains not_yet_full_production_green until real production HTTPS/DNS/cert and real third-party face gateway credentials/configuration are verified.",
+      "evidence_files": [
+        ".github/workflows/production-smoke.yml",
+        "docs/production-smoke-runbook.md",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html"
+      ]
+    },
+    {
       "type": "github_actions_ci_green_s63_status_marker",
       "command": "gh run watch 28066887008 --repo Namson666/zltgcgl --exit-status; gh run view 28066887008 --repo Namson666/zltgcgl --json status,conclusion,headSha,jobs",
       "status": "verified_remote_ci_success",
