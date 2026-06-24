@@ -1,0 +1,150 @@
+diff --git a/.ai/PROJECT_STATUS.json b/.ai/PROJECT_STATUS.json
+index 2ae793c..1f723a1 100644
+--- a/.ai/PROJECT_STATUS.json
++++ b/.ai/PROJECT_STATUS.json
+@@ -7,7 +7,7 @@
+   },
+   "git": {
+     "branch": "public-main",
+-    "working_tree": "s65_production_smoke_host_guard_verified_pending_push",
++    "working_tree": "s66_delivery_evidence_matrix_verified_pending_push",
+     "current_remotes": {
+       "origin": "git@github.com:Namson666/zltgcgl.git",
+       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
+@@ -35,11 +35,12 @@
+     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
+   ],
+   "status": "ci_green_verified_product_green_yellow",
+-  "updated_at": "2026-06-24T01:01:48Z",
++  "updated_at": "2026-06-24T01:26:27Z",
+   "push_status": "s64_production_smoke_workflow_pushed_ci_green",
+   "last_pushed_commit": "b93a3a8",
+   "current_commit": "b93a3a8 chore: add production smoke workflow",
+   "notes": [
++    "2026-06-24: S66 delivery evidence matrix verified pending push. Added .ai/DELIVERY_EVIDENCE_MATRIX.json and scripts/check-delivery-evidence-matrix.mjs, wired into scripts/verify.sh, so the user requirement list, evidence files, external Yellow Product Green gaps, User Green gap, and inventory-alert removal invariant are machine-checked. Verification: node scripts/check-delivery-evidence-matrix.mjs passed 12 requirements + 2 invariants; bash scripts/verify.sh passed backend 61 + frontend 38 + builds + route matrix + production smoke guard + delivery evidence matrix; code-review-graph risk 0.60 with CLI guard helper static gaps covered by runtime verify/subprocess evidence. Product Green remains Yellow until real production HTTPS/DNS/cert, independent portal host, real face gateway credentials, and user acceptance are externally verified.",
+     "2026-06-24: S65 production smoke non-production host guard verified pending push. Latest pushed production smoke workflow commit b93a3a8 passed GitHub Actions run 28067443611: Build/Test succeeded in 1m4s and Real browser smoke succeeded in 5m26s with smoke evidence upload. This round rejects localhost/private IPv4/IPv6/.local/.localhost/staging/dev/test hosts by default in scripts/production-smoke.mjs, emits allowNonProductionHosts in production smoke JSON evidence, and wires scripts/check-production-smoke-guard.mjs into scripts/verify.sh. Verification: node scripts/check-production-smoke-guard.mjs passed, bash scripts/verify.sh passed backend 61 + frontend 38 + builds + route matrix + production smoke guard, code-review-graph risk 0.60 with static test gaps covered by runtime guard, Claude audit PASS at .ai/workers/20260624T011052Z-audit_worker.result.md. Product Green remains Yellow until the production smoke workflow or scripts/production-smoke.mjs is run against real production HTTPS/DNS/cert and real face gateway credentials.",
+     "2026-06-24: S64 production smoke workflow/runbook pushed and CI Green. Commit b93a3a8 passed GitHub Actions run 28067443611: Build/Test succeeded in 1m4s and Real browser smoke succeeded in 5m26s with smoke evidence upload. Product Green remains Yellow until the production smoke workflow or scripts/production-smoke.mjs is run against real production HTTPS/DNS/cert and real face gateway credentials.",
+     "2026-06-24: S63 remote CI Green verified. GitHub Actions run 28066560015 on public-main head 59e6211 completed successfully: Build/Test succeeded in 1m3s and Real browser smoke succeeded in 5m14s with smoke evidence upload. Product Green remains Yellow until production HTTPS/DNS/cert and real face gateway credentials are externally verified.",
+diff --git a/.ai/REQUIRED_ACTION_CONTRACT.json b/.ai/REQUIRED_ACTION_CONTRACT.json
+index 092d616..b9303b6 100644
+--- a/.ai/REQUIRED_ACTION_CONTRACT.json
++++ b/.ai/REQUIRED_ACTION_CONTRACT.json
+@@ -52,9 +52,9 @@
+     "Claude CLI worker audit or test evidence",
+     "browser smoke for module visibility when feasible"
+   ],
+-  "updated_at": "2026-06-24T01:01:48Z",
+-  "current_phase": "S65_production_smoke_non_production_host_guard_product_green_yellow",
+-  "current_task": "Reject obvious non-production hosts in production smoke by default; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
++  "updated_at": "2026-06-24T01:26:27Z",
++  "current_phase": "S66_delivery_evidence_matrix_product_green_yellow",
++  "current_task": "Keep a machine-checked delivery evidence matrix for all user requirements; do not claim Product Green until external production smoke is run against real HTTPS/DNS/cert and real face gateway credentials.",
+   "last_completed": "S51 production readiness self-check verified and pushed at 24db3cc: developer-only readiness API/UI, missing migration table warning, portal/mini-program/module/face gateway checks, verify.sh, full Chrome 36/36, code-review-graph, and Claude audit passed.",
+-  "next_action": "Commit and push the production smoke host guard, then run Production Smoke with real production URL, portal host, developer token, and third-party face gateway credentials. Product Green still requires a Green production smoke artifact."
++  "next_action": "Commit and push the delivery evidence matrix, then run Production Smoke with real production URL, portal host, developer token, and third-party face gateway credentials. Product Green still requires a Green production smoke artifact and user acceptance."
+ }
+diff --git a/.ai/TEST_STATUS.json b/.ai/TEST_STATUS.json
+index 87f0a38..f122798 100644
+--- a/.ai/TEST_STATUS.json
++++ b/.ai/TEST_STATUS.json
+@@ -8,6 +8,18 @@
+   "product_green": "not_yet_full_production_green",
+   "user_green": "not_verified",
+   "evidence": [
++    {
++      "type": "delivery_evidence_matrix",
++      "command": "node scripts/check-delivery-evidence-matrix.mjs; bash scripts/verify.sh; code-review-graph build --skip-flows && code-review-graph detect-changes",
++      "status": "verified_pending_claude_audit_and_remote_ci",
++      "result": "S66 adds .ai/DELIVERY_EVIDENCE_MATRIX.json and scripts/check-delivery-evidence-matrix.mjs so user requirements, evidence files, external Yellow gaps, inventory-alert removal, and no-fake-Product-Green are machine-checked. Local matrix check passed 12 requirements + 2 invariants. verify.sh passed backend 61 + frontend 38 + builds + route matrix + production smoke guard + delivery evidence matrix. code-review-graph risk 0.60 reports static gaps from CLI guard scripts and production-smoke helpers that are covered by runtime verify/subprocess evidence. Product Green remains external_yellow until real Production Smoke and User Green remain not_verified.",
++      "evidence_files": [
++        ".ai/DELIVERY_EVIDENCE_MATRIX.json",
++        "scripts/check-delivery-evidence-matrix.mjs",
++        "scripts/verify.sh",
++        "README.md"
++      ]
++    },
+     {
+       "type": "production_smoke_non_production_host_guard",
+       "command": "node --check scripts/production-smoke.mjs; node scripts/check-production-smoke-guard.mjs; bash scripts/verify.sh; code-review-graph build --skip-flows && code-review-graph detect-changes",
+diff --git a/.ai/session/HANDOFF.md b/.ai/session/HANDOFF.md
+index 8815f7e..98a6dba 100644
+--- a/.ai/session/HANDOFF.md
++++ b/.ai/session/HANDOFF.md
+@@ -2,15 +2,15 @@
+ 
+ - Project: /Users/Namson/Documents/工程管理系统/资料通工程管理系统
+ - Requested repository: git@github.com:Namson666/zltgcgl.git
+-- Current phase: S65 production smoke non-production host guard, Product Green Yellow
++- Current phase: S66 delivery evidence matrix, Product Green Yellow
+ - Current mode: Enforced Delivery, Enhanced
+ - Code changes allowed: yes
+ - Commit allowed: yes
+-- Push allowed: S64 production smoke workflow pushed at b93a3a8 to public-main and main; GitHub Actions run 28067443611 passed
++- Push allowed: S65 production smoke host guard pushed at e77473f to public-main and main; GitHub Actions run 28068409065 passed
+ - Last completed: mini-program/personnel face/mobile check-in/anomaly/trusted-location V1 plus hardening is implemented and verified; default mini-program same-phone multi-tenant conflict returns 409 without writing records, selected-tenant check-in after conflict requires a valid enabled appId and writes only to the selected tenant/personnel, developer-managed phone prebinding routes default app check-in directly to the bound tenant/personnel, tenant-owned appId routes directly to target tenant/personnel with photo-backed check-in; trusted locations are visible/deletable, face/check-in photos are previewable/openable, developer/tenant mini-program config has real Chrome coverage, the face recognition provider now has a configurable HTTP/cloud/tencent/baidu/aliyun gateway contract with safe downgrade and path traversal defense, backend/frontend npm audit are clear at moderate threshold, full route real Chrome matrix covers enabled enterprise routes plus developer routes with screenshots, supplier/work-team CRUD has real Chrome create/edit/delete/search coverage, labor salary/payment/report exports now download real files, labor personnel/attendance/salary/risk has real Chrome deep CRUD/upload/download/state-change coverage, labor payment lifecycle is protected, module entitlement + independent portal login smoke passes in real Chrome, roles/users/departments now have real Chrome deep CRUD/state-change coverage, WMS main chain has real Chrome coverage for inbound/outbound/return/transfer/ledger plus PDF downloads, WMS material catalog has real Chrome create/edit/delete/export plus API read-back coverage, WMS inbound Excel import/export/delete-preview has real Chrome template download/upload import/export/cascade-delete coverage, WMS delivery-order export/OCR upload guard has real Chrome API create/list read-back + UI download + real file chooser failure coverage, WMS return Excel import/export/delete-preview has real Chrome template download/upload import/export/cascade-delete coverage and active-only list/export soft-delete fix, WMS outbound create/export/delete-preview has real Chrome UI create/PDF/export/cascade-delete coverage and active-only export soft-delete fix, WMS transfer create/export/delete-preview has real Chrome UI create/PDF/export/cascade-delete coverage plus department-scoped persistence/rollback fix, WMS inventory/ledger export net-quantity flow has real Chrome coverage for inventory summary download, outbound inventory download, work-team ledger download, active inventory 7 and ledger net 3 after inbound 10 / outbound 4 / return 1, finance invoice/receipt/P&L/import/export has real Chrome CRUD/upload/download coverage, finance category + recycle-bin lifecycle has real Chrome coverage for category CRUD, contract soft-delete, recycle-bin search, restore, re-delete, and permanent delete, project department reimbursement review has real Chrome submit/upload/approve/reject/delete plus backend tenant-scope coverage, developer announcements plus enterprise announcement dashboard visibility, system config/API keys/platform plans/AI-OCR/integrations-security-monitoring-logs/payments-invoices-storage lifecycle, enterprise subscription lifecycle, enterprise main dashboard real-summary, developer main dashboard real-summary, and public register tenant-code login all have real Chrome coverage. Per latest user instruction, inventory alert / 库存预警 is out of WMS product scope and must not be restored or added to future acceptance matrices.
+-- Next action: commit and push production smoke non-production host guard; then run external production smoke when real production URL, developer token, and face gateway credentials are available
++- Next action: commit and push delivery evidence matrix; then run external production smoke when real production URL, developer token, and face gateway credentials are available
+ - Blockers: no Phase 4 functional blocker; Yellow follow-ups remain production DNS/reverse-proxy/certificate validation, real third-party face gateway credentials/configuration, and deep all-module CRUD/upload/download regression beyond current slices
+-- Latest verified command: GitHub Actions run `28067443611` passed on `public-main` head `b93a3a8`; Build/Test 1m4s success; Real browser smoke 5m26s success; smoke evidence upload success.
++- Latest verified command: GitHub Actions run `28068409065` passed on `public-main` head `e77473f`; Build/Test 58s success; Real browser smoke 5m25s success; smoke evidence upload success.
+ - S53 verified command: Ruby YAML parse passed; final `bash scripts/verify.sh` backend 61 + frontend 38 + builds; full `bash scripts/browser-smoke.sh` real Chrome 36/36; `code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps. Claude CLI worker `.ai/workers/20260623T221751Z-audit_worker.result.md` returned PASS.
+ - S54 verified command: remote CI run 28061042978 failed at backend npm ci; local `npx npm@10.8.2 ci` reproduced; `npx npm@10.8.2 install --package-lock-only` refreshed backend lockfile; clean temp `npx npm@10.8.2 ci` passed; `bash scripts/verify.sh` backend 61 + frontend 38 + builds passed; code-review-graph risk 0.00 / 0 gaps; Claude CLI worker `.ai/workers/20260623T222302Z-audit_worker.result.md` returned PASS.
+ - S55 verified command: remote CI run 28061459724 failed in verify.sh due missing backend/test.db schema; `bash scripts/verify.sh` explicitly initialized a Backend test database and passed backend 61 + frontend 38 + builds; full `bash scripts/browser-smoke.sh` passed 36/36 after DB init refactor; code-review-graph risk 0.00 / 0 gaps; Claude CLI worker `.ai/workers/20260623T223550Z-audit_worker.result.md` returned PASS. S55 was pushed at 5c0a328, but remote CI run `28061918118` proved the init target was wrong for Prisma.
+@@ -23,6 +23,6 @@
+ - S62 verified command: GitHub Actions run `28065717480` failed Build/Test on WMS order-number date assertions because the runner date was 2026-06-24 while the test expected 20260623. `backend/src/modules/wms/service.test.ts` now freezes Vitest system time to 2026-06-23T00:00:00.000Z before each test and restores real timers after each test. Focused WMS service test passed 17/17; verify passed backend 61 + frontend 38 + builds + route matrix check; code-review-graph risk 0.40.
+ - S63 verified command: GitHub Actions run `28065901508` passed Build/Test but failed Real browser smoke 35/36 because the personnel/face/abnormal/trusted-location smoke used default mini-program check-in without tenantId and received 409. The smoke now reads current enterprise tenantId from `/api/auth/me` with Authorization and sends it as the documented default-mini-program selected-tenant path; the separate no-tenantId multi-tenant conflict test remains intact. Focused Chrome passed; verify passed backend 61 + frontend 38 + builds + route matrix check; full real Chrome browser-smoke passed 36/36; code-review-graph risk 0.50; Claude audit `.ai/workers/20260624T002520Z-audit_worker.result.md` returned PASS.
+ - S63 CI Green verified command: GitHub Actions run `28066560015` passed on `public-main` head `59e6211`; Build/Test 1m3s success; Real browser smoke 5m14s success; smoke evidence upload success.
+-- S65 current task: production smoke non-production host guard. Product Green remains Yellow/not_yet_full_production_green until production HTTPS/DNS/cert and real third-party face gateway credentials are verified.
++- S66 current task: delivery evidence matrix. Product Green remains Yellow/not_yet_full_production_green until production HTTPS/DNS/cert and real third-party face gateway credentials are verified; User Green remains not_verified until user acceptance.
+ - Latest completed slice: S52 production external smoke gate verified and pushed at 7a9cb09. S53 CI workflow pushed at b164ec1. S54 npm10 backend lockfile fix pushed at fbae841. S55 deterministic test DB init pushed at 5c0a328. S56 Prisma SQLite path fix pushed at c4445f2 and remote Build/Test passed. S57 browser-smoke tmpdir fix pushed at 3e9ff47; S58 selector fix pushed at 3518328; S59 delete-toast selector fix pushed at 1808638; S60 status marker pushed at b72a38f and remote CI passed. S61 route matrix coverage gate pushed at ccb129e; S62 date determinism fix pushed at 7b3b556; S63 mobile check-in smoke fix pushed at 59e6211 and remote CI passed.
+ - Updated at: 2026-06-24T00:36:00Z
+diff --git a/README.md b/README.md
+index 4c93741..1ad073e 100644
+--- a/README.md
++++ b/README.md
+@@ -4,11 +4,11 @@
+ 
+ ### Resume Here / 最新接手点
+ - Current mode: Enforced Delivery
+-- Current phase: S65 production smoke non-production host guard, Product Green Yellow
+-- Current task: 最新 GitHub Actions run `28067443611` 已通过：Build/Test 1m4s success，Real browser smoke 5m26s success，head `b93a3a8`；本轮补强生产 smoke 非生产主机防误用 guard，避免 localhost/staging/test 被误当最终 Product Green。库存预警仍不恢复、不纳入验收矩阵
++- Current phase: S66 delivery evidence matrix, Product Green Yellow
++- Current task: 最新 GitHub Actions run `28068409065` 已通过：Build/Test 58s success，Real browser smoke 5m25s success，head `e77473f`；本轮新增机器校验的交付需求-证据矩阵。库存预警仍不恢复、不纳入验收矩阵
+ - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖、小程序同手机号多企业冲突保护、冲突后选择企业打卡 appId 校验闭环、管理员手机号预绑定和企业自有 appId 直达验收；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、劳资工资发放生命周期、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/企业端公告首页可见/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总、开发者首页数据看板真实汇总、公开注册企业登录闭环均已通过真实 Chrome
+-- In progress: S65 生产外部 smoke 防误用：CI/真实 Chrome 已绿，Product Green 仍保持 Yellow，因为真实生产 HTTPS/DNS/证书和第三方人脸网关凭证还没做外部生产 smoke
+-- Next action: 提交并推送生产 smoke 非生产主机 guard；有真实生产域名、开发者 Token、人脸网关凭证后运行 `Production Smoke` workflow 或 `scripts/production-smoke.mjs`
++- In progress: S66 交付需求-证据矩阵：CI/真实 Chrome 已绿，Product Green 仍保持 Yellow，因为真实生产 HTTPS/DNS/证书和第三方人脸网关凭证还没做外部生产 smoke
++- Next action: 提交并推送交付需求-证据矩阵；有真实生产域名、开发者 Token、人脸网关凭证后运行 `Production Smoke` workflow 或 `scripts/production-smoke.mjs`
+ - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：生产 DNS/反代/证书未接入真实域名验证、真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
+ - Do not repeat: 不要恢复库存预警；不要把 Build Green 当 Product Green
+ - Must read:
+@@ -22,7 +22,7 @@
+   8. .ai/session/HANDOFF.md
+ - Must read spec:
+   1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
+-- Last verified command: GitHub Actions run `28067443611` passed on `public-main` head `b93a3a8`; Build/Test 1m4s success；Real browser smoke 5m26s success；smoke evidence upload success
++- Last verified command: GitHub Actions run `28068409065` passed on `public-main` head `e77473f`; Build/Test 58s success；Real browser smoke 5m25s success；smoke evidence upload success
+ - S53 verified command: Ruby YAML parse passed；`bash scripts/verify.sh` passed backend 61 + frontend 38 + builds；full `bash scripts/browser-smoke.sh` passed real Chrome 36/36；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps；Claude CLI worker `.ai/workers/20260623T221751Z-audit_worker.result.md` returned PASS
+ - Claude worker evidence: latest `.ai/workers/20260623T221751Z-audit_worker.result.md` returned PASS for S53 GitHub Actions CI gate.
+ - S54 verified command: `npx npm@10.8.2 install --package-lock-only` refreshed backend lockfile；clean temp `npx npm@10.8.2 ci` passed；`bash scripts/verify.sh` passed backend 61 + frontend 38 + builds；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps；Claude CLI worker `.ai/workers/20260623T222302Z-audit_worker.result.md` returned PASS
+@@ -63,6 +63,8 @@ S64 adds `.github/workflows/production-smoke.yml` and `docs/production-smoke-run
+ 
+ S65 tightens `scripts/production-smoke.mjs` so obvious non-production hosts (`localhost`, private IP ranges, `.local`, `dev`/`staging`/`test` host labels) are rejected by default. `scripts/check-production-smoke-guard.mjs` is wired into `scripts/verify.sh`; explicit staging/local rehearsal requires `PRODUCTION_SMOKE_ALLOW_NON_PRODUCTION_HOSTS=1` and still cannot be final Product Green evidence.
+ 
++S66 adds `.ai/DELIVERY_EVIDENCE_MATRIX.json` plus `scripts/check-delivery-evidence-matrix.mjs`, wired into `scripts/verify.sh`, so each user requirement has explicit evidence and remaining external Yellow items are kept visible until real Production Smoke and user acceptance are done.
++
+ - Claude worker evidence: latest `.ai/workers/20260623T174909Z-audit_worker.result.md` returned PASS for S50 final face provider diagnostic diff after typing cleanup; earlier `.ai/workers/20260623T174648Z-audit_worker.result.md` returned PASS and suggested the frontend diagnostic type tightening that was fixed before final verify.
+ - Claude worker evidence: latest `.ai/workers/20260623T172942Z-audit_worker.result.md` returned PASS for S49 labor legacy subcontract output-value/progress-payment API chain after cleanup DELETE status assertions; `.ai/workers/20260623T172420Z-audit_worker.result.md` first PASS identified the cleanup assertion Yellow that was fixed.
+ - Claude worker evidence: latest `.ai/workers/20260623T170959Z-audit_worker.result.md` returned PASS for S48 labor report all frontend types Chrome coverage.
+diff --git a/scripts/verify.sh b/scripts/verify.sh
+index 259f280..7de6305 100755
+--- a/scripts/verify.sh
++++ b/scripts/verify.sh
+@@ -42,4 +42,7 @@ node "$ROOT_DIR/scripts/check-smoke-route-matrix.mjs"
+ echo "== Production smoke guard =="
+ node "$ROOT_DIR/scripts/check-production-smoke-guard.mjs"
+ 
++echo "== Delivery evidence matrix =="
++node "$ROOT_DIR/scripts/check-delivery-evidence-matrix.mjs"
++
+ echo "== Verify complete =="

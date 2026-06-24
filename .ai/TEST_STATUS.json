@@ -9,6 +9,18 @@
   "user_green": "not_verified",
   "evidence": [
     {
+      "type": "delivery_evidence_matrix",
+      "command": "node scripts/check-delivery-evidence-matrix.mjs; bash scripts/verify.sh; code-review-graph build --skip-flows && code-review-graph detect-changes",
+      "status": "verified_pending_claude_audit_and_remote_ci",
+      "result": "S66 adds .ai/DELIVERY_EVIDENCE_MATRIX.json and scripts/check-delivery-evidence-matrix.mjs so user requirements, evidence files, external Yellow gaps, inventory-alert removal, and no-fake-Product-Green are machine-checked. Local matrix check passed 12 requirements + 2 invariants. verify.sh passed backend 61 + frontend 38 + builds + route matrix + production smoke guard + delivery evidence matrix. code-review-graph risk 0.60 reports static gaps from CLI guard scripts and production-smoke helpers that are covered by runtime verify/subprocess evidence. Product Green remains external_yellow until real Production Smoke and User Green remain not_verified.",
+      "evidence_files": [
+        ".ai/DELIVERY_EVIDENCE_MATRIX.json",
+        "scripts/check-delivery-evidence-matrix.mjs",
+        "scripts/verify.sh",
+        "README.md"
+      ]
+    },
+    {
       "type": "production_smoke_non_production_host_guard",
       "command": "node --check scripts/production-smoke.mjs; node scripts/check-production-smoke-guard.mjs; bash scripts/verify.sh; code-review-graph build --skip-flows && code-review-graph detect-changes",
       "status": "verified_claude_pass_pending_remote_ci",

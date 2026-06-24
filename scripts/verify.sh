@@ -42,4 +42,7 @@ node "$ROOT_DIR/scripts/check-smoke-route-matrix.mjs"
 echo "== Production smoke guard =="
 node "$ROOT_DIR/scripts/check-production-smoke-guard.mjs"
 
+echo "== Delivery evidence matrix =="
+node "$ROOT_DIR/scripts/check-delivery-evidence-matrix.mjs"
+
 echo "== Verify complete =="
