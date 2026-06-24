@@ -7,25 +7,25 @@
   },
   "git": {
     "branch": "public-main",
-    "working_tree": "clean_s63_ci_green_status_marker_pending_push",
+    "working_tree": "s64_production_smoke_workflow_pending_verify",
     "current_remotes": {
       "origin": "git@github.com:Namson666/zltgcgl.git",
       "ziliaotong-backup": "git@github.com:Namson666/ziliaotong-backup.git",
       "laozi": "git@github.com:Namson666/laozi.git"
     },
     "requested_new_repository": "git@github.com:Namson666/zltgcgl.git",
-    "push_status": "s63_pushed_ci_green_status_marker_pending_push",
-    "pushed_commit": "59e6211 test: stabilize mobile checkin smoke tenant selection",
-    "last_pushed_commit": "59e6211"
+    "push_status": "s63_ci_green_status_marker_pushed_verified",
+    "pushed_commit": "4f64294 chore: mark s63 ci green",
+    "last_pushed_commit": "4f64294"
   },
   "github": {
     "requested_repo_exists": true,
     "requested_repo_private": false,
     "public_repo_approved_by_user": true,
     "requested_repo_has_refs": false,
-    "push_status": "s63_pushed_ci_green_status_marker_pending_push",
+    "push_status": "s63_ci_green_status_marker_pushed_verified",
     "pushed_url": "https://github.com/Namson666/zltgcgl",
-    "pushed_commit": "59e6211 test: stabilize mobile checkin smoke tenant selection"
+    "pushed_commit": "4f64294 chore: mark s63 ci green"
   },
   "safety_findings": [
     "backend/data.dev.db is tracked",
@@ -35,11 +35,12 @@
     "new GitHub repo Namson666/zltgcgl is public and user approved public repository"
   ],
   "status": "ci_green_verified_product_green_yellow",
-  "updated_at": "2026-06-24T00:36:00Z",
-  "push_status": "s63_pushed_ci_green_status_marker_pending_push",
-  "last_pushed_commit": "59e6211",
-  "current_commit": "59e6211 test: stabilize mobile checkin smoke tenant selection",
+  "updated_at": "2026-06-24T00:46:37Z",
+  "push_status": "s63_ci_green_status_marker_pushed_verified",
+  "last_pushed_commit": "4f64294",
+  "current_commit": "4f64294 chore: mark s63 ci green",
   "notes": [
+    "2026-06-24: S64 production smoke workflow/runbook pending verification. Latest pushed status-marker commit 4f64294 passed GitHub Actions run 28066887008: Build/Test succeeded in 58s and Real browser smoke succeeded in 5m16s with smoke evidence upload. Product Green remains Yellow until the production smoke workflow or scripts/production-smoke.mjs is run against real production HTTPS/DNS/cert and real face gateway credentials.",
     "2026-06-24: S63 remote CI Green verified. GitHub Actions run 28066560015 on public-main head 59e6211 completed successfully: Build/Test succeeded in 1m3s and Real browser smoke succeeded in 5m14s with smoke evidence upload. Product Green remains Yellow until production HTTPS/DNS/cert and real face gateway credentials are externally verified.",
     "2026-06-24: S63 CI mobile check-in smoke fix verified pending push. GitHub Actions run 28065901508 passed Build/Test but failed Real browser smoke 35/36 because the core enterprise smoke test called default mini-program check-in without tenantId and received 409. The dedicated multi-tenant conflict test already covers the no-tenantId conflict path; this personnel/face/abnormal/trusted-location path now extracts the current enterprise tenantId from /api/auth/me with Authorization and sends it as the documented default mini-program selected-tenant check-in path. The assertion now includes response body for future triage and a comment documents the selected-tenant behavior. Verification: focused real Chrome core smoke passed; bash scripts/verify.sh passed backend 61 + frontend 38 + builds + route matrix check; full local bash scripts/browser-smoke.sh passed real Chrome 36/36; code-review-graph risk 0.50 with postCheckIn helper covered by runtime smoke; Claude audit PASS at .ai/workers/20260624T002520Z-audit_worker.result.md. Push and remote CI rerun are required.",
     "2026-06-24: S62 CI date determinism fix verified pending push. GitHub Actions run 28065717480 failed in Build/Test because WMS service tests expected generated order numbers with 20260623 while the runner date was 20260624. Fixed backend/src/modules/wms/service.test.ts to use Vitest fake timers and set system time to 2026-06-23T00:00:00.000Z for deterministic order-number assertions, restoring real timers after each test. Verification: focused WMS service test passed 17/17; bash scripts/verify.sh passed backend 61 + frontend 38 + builds + route matrix check; code-review-graph risk 0.40 with script helper gaps covered by verify/Claude/browser-smoke evidence. Push and remote CI rerun are required before CI Green returns to verified for S62.",

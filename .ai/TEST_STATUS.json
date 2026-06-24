@@ -9,6 +9,17 @@
   "user_green": "not_verified",
   "evidence": [
     {
+      "type": "github_actions_ci_green_s63_status_marker",
+      "command": "gh run watch 28066887008 --repo Namson666/zltgcgl --exit-status; gh run view 28066887008 --repo Namson666/zltgcgl --json status,conclusion,headSha,jobs",
+      "status": "verified_remote_ci_success",
+      "result": "S63 status-marker commit 4f64294 is remote CI Green: GitHub Actions run 28066887008 completed successfully. Build/Test passed in 58s, including production-smoke syntax/missing-target checks and scripts/verify.sh. Real browser smoke passed in 5m16s and uploaded smoke evidence. Product Green remains not_yet_full_production_green until real production HTTPS/DNS/cert and real third-party face gateway credentials/configuration are verified.",
+      "evidence_files": [
+        ".github/workflows/ci.yml",
+        "docs/smoke-evidence/playwright-results.json",
+        "docs/smoke-evidence/playwright-report/index.html"
+      ]
+    },
+    {
       "type": "github_actions_ci_green_s63",
       "command": "gh run watch 28066560015 --repo Namson666/zltgcgl --exit-status; gh run view 28066560015 --repo Namson666/zltgcgl --json status,conclusion,headSha,jobs",
       "status": "verified_remote_ci_success",

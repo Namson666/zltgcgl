@@ -1,0 +1,199 @@
+# S64 审计报告：Production Smoke workflow + runbook + status handoff
+
+## 结论：PASS（带 4 项 Yellow follow-up，可提交推送）
+
+---
+
+## 1. tee 管道在 `set -o pipefail` 下的行为（关键问题）
+
+### 审计结论：安全
+
+`.github/workflows/production-smoke.yml:56-59`：
+
+```yaml
+run: |
+  set -o pipefail
+  mkdir -p docs/smoke-evidence
+  node scripts/production-smoke.mjs | tee docs/smoke-evidence/production-smoke-${{ github.run_id }}.json
+```
+
+逐项验证：
+
+| 场景 | node 退出码 | tee 退出码 | pipefail 下 step 退出码 | step 结果 |
+|------|------------|------------|----------------------|----------|
+| Red（缺 HTTPS、login 500、portal 不通） | 1 | 0 | **1** | ❌ 失败（正确） |
+| 无 PRODUCTION_BASE_URL | 2 | 0 | **2** | ❌ 失败（正确） |
+| Yellow（健康检查过、portal/face gateway 缺） | 3 | 0 | **3** | ❌ 失败（**正确**——Yellow 也必须让 CI 红） |
+| Green | 0 | 0 | 0 | ✅ 通过（正确） |
+
+关键点：
+
+- `set -o pipefail` 配 `tee` 已在 shell 标准行为中验证：bash 在 pipefail 模式下，pipeline 返回码 = 任意失败命令的最后一个非零退出码。`tee` 写文件本身只会在磁盘满/权限错时才失败，此时 `set -e` + `set -o pipefail` 会让 step 红。脚本本体失败时 step 必红。
+- 与 `.github/workflows/ci.yml:48-55`（已有 production-smoke refuses missing target step）保持一致——CI 主工作流也用相同手法校验缺失 URL → 退出 2，结构同源。
+- workflow 是 `workflow_dispatch` 手动触发，**不会在 push/PR 上跑**，所以 Yellow/Red 不会污染 CI Green。
+
+⚠️ Yellow 会被 workflow 视为失败——这是符合 Superpowers Pro 的"不把 Yellow 当 Green"的硬要求，但意味着 dispatch 触发者必须**预期每次 Yellow run 都是红 badge**。runbook 应当明确说这点（见第 4 项 follow-up）。
+
+---
+
+## 2. Secret 泄漏审查
+
+### 审计结论：无泄漏路径
+
+**注入方式**（`.github/workflows/production-smoke.yml:48-55`）：
+
+```yaml
+env:
+  PRODUCTION_DEVELOPER_TOKEN: ${{ secrets.PRODUCTION_DEVELOPER_TOKEN }}
+  FACE_RECOGNITION_HTTP_API_KEY: ${{ secrets.FACE_RECOGNITION_HTTP_API_KEY }}
+```
+
+只在 `env:` 里使用 `secrets.*` 上下文，没有 `run:` 字符串里 `${{ secrets.X }}` 注入——后者会把明文 echo 到 log 前会被 mask，但仍是不良实践。✅ 此处写法正确。
+
+**使用方式**（`scripts/production-smoke.mjs`）：
+
+- `PRODUCTION_DEVELOPER_TOKEN` 仅通过 `Authorization: Bearer ${DEVELOPER_TOKEN}` header 发送（line 151），不写入 stdout。
+- `FACE_RECOGNITION_HTTP_API_KEY` 仅在 `SECRET_VALUES` 数组中作为**回填 redaction** 用（line 16-19），从未发出 HTTP 请求——其唯一作用是当 `/api/developer/readiness` 误把环境变量值塞进响应时，**擦除**它（line 25, 156-157）。`grep` 确认 `FACE_RECOGNITION_HTTP_API_KEY` 变量在脚本里只出现在 SECRET_VALUES 构造、`redact()` 过滤、还有 dev-readiness 反泄漏断言 3 处。
+- `redact()` 使用 `String(text).split(secret).join('[REDACTED]')`，**仅对已设置且非空**的 secret 做替换（`.filter(Boolean)` 过滤空串）。空值不参与 split——这是正确的：空字符串 split 会产生 `[REDACTED]` 注入污染。
+- 脚本用 `console.log(JSON.stringify({...results...}))` 输出最终 JSON（line 174-180），**只在 dev-readiness 的 `pass` 分支的 `detail` 里**写了 `checks: body.data.checks.map(item => ({ key, status }))`——**只保留 key 和 status，不保留 message/detail**，因此不会把 dev-readiness 原始 JSON 中的 secret 字段带出来。
+
+**GitHub Actions 默认行为**：
+
+- `secrets.*` 在 `env:` 注入时，workflow log 自动 mask（`::add-mask::` 等价）。即便脚本意外 `console.log(process.env.PRODUCTION_DEVELOPER_TOKEN)`，UI 也会显示 `***`。
+- 唯一例外：把 secret 拼成 step name（如 `run: echo "$SECRET"`）会进 step 标题——脚本不这么做。
+- `tee docs/smoke-evidence/...json` 写入文件后通过 `actions/upload-artifact@v4` 上传——**artifact 是公开下载的**（如果仓库是 public：README L27 + `public_repo_approved_by_user: true` in PROJECT_STATUS 已经确认），但脚本 stdout 不含 secret（见上）。
+
+⚠️ **Yellow follow-up #1**：`actions/upload-artifact` 默认不把 artifact 标记为 internal/locked，public 仓库下任何有 read 权限的人能下载。脚本自身不写 secret，但若未来扩展 dev-readiness 校验加入了返回 message 字段，需要保证不传播。runbook 第 45 行已注明 "Optional redaction helper"——措辞妥当。
+
+---
+
+## 3. 输入与 secret 设计是否真正证明生产就绪
+
+### 审计结论：设计正确，但有一个关键缺口
+
+`workflow_dispatch` inputs：
+
+| input | required | default | 证明什么 |
+|-------|----------|---------|---------|
+| `production_base_url` | ✅ true | 无 | 真实 https 生产前端域名 |
+| `production_api_base_url` | false | 回退到 base_url | API 域名（同源/不同源） |
+| `production_portal_host` | false | 空 | 独立登录域名 |
+| `expect_portal_ready` | ✅ true | **true** | portal 不通/未配置时必须 fail 而非 Yellow |
+| `expect_face_gateway_ready` | ✅ true | **true** | face_gateway 不 ready 时必须 fail 而非 Yellow |
+
+**关键诚实性设计**：
+
+- 两个 `expect_*_ready` 都 default = true，且 required——dispatch 触发者**不能把它们关掉来"骗 Green"**。这正是 "Product Green 仍必须等真实生产…全部通过" 的体现。
+- 没有 `production_skip` / `allow_insecure_http` / `dry_run` 之类的逃生通道。
+- `expect_face_gateway_ready` 直接把"真实第三方人脸识别网关凭证"硬绑死：missing URL → 2（硬失败），missing portal host + expect=true → 1（Red），face_gateway not ready + expect=true → 1（Red）。
+
+⚠️ **Yellow follow-up #2**：当 `production_base_url` 误填 staging URL 时，脚本仍接受并跑完所有 check（因为是 https + 通了 health）——目前没有"拒绝非生产域名"的二次校验。这是次要风险，dispatch 触发者靠 process discipline，不是技术 gate。可以在 normalizeBaseUrl 里加 known-staging host 黑名单，但属于二次硬化，不阻塞。
+
+⚠️ **Yellow follow-up #3**：`production_portal_host` 是 **optional**，且没 default 字符串——意味着 dispatch 触发者可能漏填。若漏填 + `expect_portal_ready=true`，脚本会 fail（正确行为）；但触发者看不到"必须填 portal host 才能进 Green"的前置提示。**runbook 应当显式说"为了 Product Green, portal host 必填"**——目前 runbook 第 35 行只写"Recommended inputs"，措辞偏弱。
+
+---
+
+## 4. runbook Product Green vs Yellow/Red 说明
+
+### 审计结论：结构清晰，措辞基本到位，有 1 处可加强
+
+`docs/production-smoke-runbook.md`：
+
+- ✅ 退出码 0/1/2/3 与 Green/Red/Invalid/Yellow 对应明确（第 17-22 行）
+- ✅ "Product Green rule" 段（第 47-55 行）列出 5 个条件：exit 0、artifact 已存、真实生产 DNS/TLS、face_gateway=ready、CI+Browser smoke 也绿
+- ✅ 与 README 同步：两文件都明确"A Yellow or Red production smoke must not be treated as Product Green"
+- ⚠️ **Yellow follow-up #4**：runbook 第 35-37 行把 `production_portal_host` 和两个 `expect_*_ready` 列为 "Recommended inputs"——措辞偏弱。结合 S64 的"独立登录域名是 Product Green 硬条件"这一事实，应当把 portal host 升级为 "Required for final Product Green"。
+
+另外 runbook 第 27 行 `After deployment` 是个操作时机，OK；但没有说"在 dispatch 触发时务必把两个 expect_*_ready 留 true"——这条用户纪律应当显式写出来。
+
+---
+
+## 5. README / `.ai/*` 状态诚实性
+
+### 审计结论：完全诚实
+
+| 文件 | 关键字段 | 实际值 | 是否诚实 |
+|------|---------|--------|---------|
+| `.ai/PROJECT_STATUS.json` | `status` | `ci_green_verified_product_green_yellow` | ✅ |
+| `.ai/PROJECT_STATUS.json` | `working_tree` | `s64_production_smoke_workflow_pending_verify` | ✅（与实际 diff 一致） |
+| `.ai/PROJECT_STATUS.json` | `push_status` | `s63_ci_green_status_marker_pushed_verified`（=4f64294） | ✅ |
+| `.ai/PROJECT_STATUS.json` L43 notes | 显式说 "Product Green remains Yellow until…real production HTTPS/DNS/cert and real face gateway credentials" | ✅ |
+| `.ai/REQUIRED_ACTION_CONTRACT.json` | `stage` | `ci_green_verified_product_green_yellow` | ✅ |
+| `.ai/REQUIRED_ACTION_CONTRACT.json` | `current_task` | 显式 "do not claim Product Green until…real face gateway credentials" | ✅ |
+| `.ai/REQUIRED_ACTION_CONTRACT.json` | `governance_mode` | `EnforcedDelivery` | ✅ |
+| `.ai/TEST_STATUS.json` | `product_green` | `not_yet_full_production_green` | ✅ |
+| `.ai/TEST_STATUS.json` | `user_green` | `not_verified` | ✅ |
+| `.ai/TEST_STATUS.json` | `ci_green` | `verified` | ✅（S63 跑 28066887008 通过） |
+| `.ai/session/HANDOFF.md` L5 | "S64 production smoke workflow prepared, Product Green Yellow" | ✅ |
+| `README.md` L7 | "Product Green 仍保持 Yellow" | ✅ |
+| `README.md` L11 | "Next action: 提交并推送生产 smoke 工作流" | ✅ |
+
+没有发现任何文件把 Yellow 假装成 Green，或把 S64 推升为 CI Green / Product Green。HANDOFF.md L27 维护的 pushed commit 列表也停在 S63（59e6211 / 4f64294），没有把 S64 提前塞进 pushed 列表——诚实。
+
+---
+
+## 6. 库存预警 / CI 破坏 / 外部写操作风险
+
+### 审计结论：全部干净
+
+- **库存预警恢复**：全仓 `grep -RIn "库存预警|inventory[-_ ]alert|alertThreshold|low[-_ ]stock"` 在源码/测试/配置里**零命中**。route matrix coverage gate（`scripts/check-smoke-route-matrix.mjs`）S61 已经把"库存预警 residue"作为 fail 条件；本轮 diff 不涉及 Layout、route matrix、smoke 矩阵，不会绕过该 gate。
+- **CI 破坏**：
+  - `production-smoke.yml` 只用 `workflow_dispatch`，**不挂在 `push` / `pull_request` 上**——`grep -A 6 "on:" .github/workflows/production-smoke.yml` 已确认。
+  - `ci.yml` 完全没改动（`git status` 无 ci.yml 修改）。
+  - 既有 `node --check scripts/production-smoke.mjs` 和 "Production smoke refuses missing target" 两个 CI step 保持原样通过。
+- **外部写操作**：`scripts/production-smoke.mjs` 全程只做 GET：/login、/api/health、/api/v1/health、/api/auth/portal-config、/api/developer/readiness——无 POST/PUT/DELETE/PATCH。即使拿到生产 developer token，也是只读开发者就绪端点，不会写数据。
+- **副作用范围**：
+  - `mkdir -p docs/smoke-evidence` 创建产物目录（无副作用）
+  - `tee` 写文件
+  - `actions/upload-artifact` 上传 JSON 报告
+  - 全部为只读探针 + 证据落盘，无数据库写、无 email 触发、无 webhook 调用。
+- **代码改动面**：本次 diff 只新增 4 个文件（workflow、runbook、2 个 worker prompt），修改 5 个 .ai/README 状态文件。**没有触碰 backend / frontend / scripts 业务代码**——风险面收得最窄。
+
+---
+
+## 阻塞问题列表
+
+**无**。
+
+流水线下：
+- ✅ tee 管道在 pipefail 下正确传递 1/2/3
+- ✅ secret 注入仅 env、redaction 完整、artifact 上传无明文
+- ✅ 输入/secret 设计把 face_gateway readiness 硬绑为 fail
+- ✅ runbook 区分 Green/Yellow/Red
+- ✅ README / .ai/* 全部保持 Product Green = Yellow
+- ✅ 无库存预警恢复、无 CI 改动、无外部写操作
+
+---
+
+## Yellow follow-ups（不阻塞提交，按优先级）
+
+1. **runbook 把 `production_portal_host` 措辞升级为"Required for final Product Green"**——目前是"Recommended"，与脚本里 `expect_portal_ready=true` 的硬约束不匹配。
+2. **runbook 显式写"dispatch 时务必把 expect_portal_ready / expect_face_gateway_ready 留 true，否则就是放弃 Product Green 纪律"**——这是触发者纪律。
+3. **生产域名二次校验**：`normalizeBaseUrl` 可以加 known-staging 黑名单（`localhost`、`127.0.0.1`、`staging.`、`dev.`、`*.local`），dispatch 误填 staging 时直接 fail 而非接受后误判 Green。属于二次硬化。
+4. **CI 中加一个 dispatch 触发后回查"expect_*_ready 是否仍为 true"的注释提示**——目前没有 PostToolUse 提示，容易被忘。
+
+这些都不影响"S64 不破坏现有诚实性"的事实。
+
+---
+
+## 是否可以提交推送
+
+**可以。**
+
+- 流水线下：CI Green 已 S63 验证（4f64294 → run 28066887008），无改动；S64 是新增手动 workflow + 文档 + 状态文件更新，**不污染 push-to-main 触发的 CI**
+- 工作流仅 `workflow_dispatch` 触发，不会因为 push 让 CI 跑这步
+- 状态字段一致诚实地把 Product Green 留在 Yellow
+- 库存预警未恢复
+
+建议提交时**不要**在 commit message 里写 "Product Green" 或 "production verified"——保持 "chore: add production smoke workflow and runbook" 之类的措辞，与状态字段保持一致。
+
+推送到 public-main 后应当：
+1. `gh run watch` 不需要（workflow_dispatch 不会自动跑）
+2. 后续在有真实生产域名时手动触发 workflow，再根据 `docs/smoke-evidence/production-smoke-*.json` 决定是否升级 Product Green
+
+---
+
+**审计版本**：S64 production-smoke-workflow + runbook + status handoff  
+**审计时间**：2026-06-24T00:49Z  
+**审计者**：audit_worker (Sonnet 4.6)  
+**预算**：$0.5647 / $4.00 消耗

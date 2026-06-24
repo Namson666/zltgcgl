@@ -4,11 +4,11 @@
 
 ### Resume Here / 最新接手点
 - Current mode: Enforced Delivery
-- Current phase: S63 remote CI Green verified, Product Green Yellow
-- Current task: GitHub Actions run `28066560015` 已通过：Build/Test 1m3s success，Real browser smoke 5m14s success，head `59e6211`；等待提交/推送 CI Green 状态标记。库存预警仍不恢复、不纳入验收矩阵
+- Current phase: S64 production smoke workflow prepared, Product Green Yellow
+- Current task: 最新 GitHub Actions run `28066887008` 已通过：Build/Test 58s success，Real browser smoke 5m16s success，head `4f64294`；本轮新增手动触发的生产外部 smoke 工作流和运行手册。库存预警仍不恢复、不纳入验收矩阵
 - Last completed: 合同三 tab 及承包/采购/分包合同上传下载删除链路已通过真实 Chrome；本阶段新增开发者默认小程序、企业自有小程序配置、人员人脸上传、移动打卡、县份异常、批量处理异常、添加个人信任打卡地；强化项补齐信任地列表/删除、打卡照片入口、人脸照片预览、开发者/企业小程序配置真实 Chrome 覆盖、小程序同手机号多企业冲突保护、冲突后选择企业打卡 appId 校验闭环、管理员手机号预绑定和企业自有 appId 直达验收；本轮新增生产可接入的人脸识别 HTTP/cloud/tencent/baidu/aliyun provider 契约、安全降级、路径穿越防护、环境变量示例和前端 provider 选择；供应商/班组 CRUD、劳资导出修复、劳资人员/考勤/工资/风控深测、劳资工资发放生命周期、模块开通/独立登录、基础后台角色/用户/项目部 CRUD、物资主链路、物资档案、入库/送货单/OCR、退库、出库、调拨、库存/台账导出、财务备用金/费用凭证、财务发票/收款/盈亏/导入导出、财务类别设置与回收站生命周期、项目部报账审核/驳回、开发者公告/企业端公告首页可见/系统配置/API Key/套餐/AI-OCR/集成安全监控日志/支付发票存储/企业订阅/企业管理 CRUD 用户回收站生命周期、企业首页数据看板真实汇总、开发者首页数据看板真实汇总、公开注册企业登录闭环均已通过真实 Chrome
-- In progress: S63 状态标记：远端 CI 已绿，Product Green 仍保持 Yellow，因为真实生产 HTTPS/DNS/证书和第三方人脸网关凭证还没做外部生产 smoke
-- Next action: 提交并推送 CI Green 状态标记；下一轮进入生产外部 smoke 或继续业务重构切片
+- In progress: S64 生产外部 smoke 验收入口：CI/真实 Chrome 已绿，Product Green 仍保持 Yellow，因为真实生产 HTTPS/DNS/证书和第三方人脸网关凭证还没做外部生产 smoke
+- Next action: 提交并推送生产 smoke 工作流；有真实生产域名、开发者 Token、人脸网关凭证后运行 `Production Smoke` workflow 或 `scripts/production-smoke.mjs`
 - Blockers: 无 Phase 4 功能阻塞；Product Green 仍有 Yellow 项：生产 DNS/反代/证书未接入真实域名验证、真实第三方人脸识别网关/密钥未在仓库中配置、全量所有模块穷举点击回归尚未扩展到每个历史页面
 - Do not repeat: 不要恢复库存预警；不要把 Build Green 当 Product Green
 - Must read:
@@ -22,7 +22,7 @@
   8. .ai/session/HANDOFF.md
 - Must read spec:
   1. docs/superpowers/specs/2026-06-22-refactor-architecture-contract-design.md
-- Last verified command: GitHub Actions run `28066560015` passed on `public-main` head `59e6211`; Build/Test 1m3s success；Real browser smoke 5m14s success；smoke evidence upload success
+- Last verified command: GitHub Actions run `28066887008` passed on `public-main` head `4f64294`; Build/Test 58s success；Real browser smoke 5m16s success；smoke evidence upload success
 - S53 verified command: Ruby YAML parse passed；`bash scripts/verify.sh` passed backend 61 + frontend 38 + builds；full `bash scripts/browser-smoke.sh` passed real Chrome 36/36；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps；Claude CLI worker `.ai/workers/20260623T221751Z-audit_worker.result.md` returned PASS
 - Claude worker evidence: latest `.ai/workers/20260623T221751Z-audit_worker.result.md` returned PASS for S53 GitHub Actions CI gate.
 - S54 verified command: `npx npm@10.8.2 install --package-lock-only` refreshed backend lockfile；clean temp `npx npm@10.8.2 ci` passed；`bash scripts/verify.sh` passed backend 61 + frontend 38 + builds；`code-review-graph build --skip-flows && code-review-graph detect-changes` risk 0.00 / 0 gaps；Claude CLI worker `.ai/workers/20260623T222302Z-audit_worker.result.md` returned PASS
@@ -58,6 +58,8 @@ node scripts/production-smoke.mjs
 ```
 
 It checks `/login`, `/api/health`, `/api/v1/health`, optional independent-login portal config, and optional developer-only `/api/developer/readiness`. Missing portal/token/face-gateway inputs return Yellow; HTTPS is required by default. This script is evidence for Product Green only when run against the real production DNS/reverse proxy/certificates and real face gateway credentials.
+
+S64 adds `.github/workflows/production-smoke.yml` and `docs/production-smoke-runbook.md` so this external gate can be run as a manual GitHub Actions workflow and upload a JSON evidence artifact. A Yellow or Red production smoke must not be treated as Product Green.
 
 - Claude worker evidence: latest `.ai/workers/20260623T174909Z-audit_worker.result.md` returned PASS for S50 final face provider diagnostic diff after typing cleanup; earlier `.ai/workers/20260623T174648Z-audit_worker.result.md` returned PASS and suggested the frontend diagnostic type tightening that was fixed before final verify.
 - Claude worker evidence: latest `.ai/workers/20260623T172942Z-audit_worker.result.md` returned PASS for S49 labor legacy subcontract output-value/progress-payment API chain after cleanup DELETE status assertions; `.ai/workers/20260623T172420Z-audit_worker.result.md` first PASS identified the cleanup assertion Yellow that was fixed.

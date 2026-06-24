@@ -1,0 +1,67 @@
+name: Production Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      production_base_url:
+        description: "Production frontend base URL, e.g. https://app.example.com"
+        required: true
+        type: string
+      production_api_base_url:
+        description: "Production API base URL; leave blank to reuse production_base_url"
+        required: false
+        type: string
+      production_portal_host:
+        description: "Independent tenant login host to verify"
+        required: false
+        type: string
+      expect_portal_ready:
+        description: "Fail instead of Yellow when production_portal_host is missing or not ready"
+        required: true
+        default: true
+        type: boolean
+      expect_face_gateway_ready:
+        description: "Fail unless the protected readiness check reports face_gateway=ready"
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  production-smoke:
+    name: Non-mutating production readiness smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate production smoke script
+        run: node --check scripts/production-smoke.mjs
+
+      - name: Run production smoke
+        env:
+          PRODUCTION_BASE_URL: ${{ inputs.production_base_url }}
+          PRODUCTION_API_BASE_URL: ${{ inputs.production_api_base_url || inputs.production_base_url }}
+          PRODUCTION_PORTAL_HOST: ${{ inputs.production_portal_host }}
+          EXPECT_PORTAL_READY: ${{ inputs.expect_portal_ready && '1' || '0' }}
+          EXPECT_FACE_GATEWAY_READY: ${{ inputs.expect_face_gateway_ready && '1' || '0' }}
+          PRODUCTION_DEVELOPER_TOKEN: ${{ secrets.PRODUCTION_DEVELOPER_TOKEN }}
+          FACE_RECOGNITION_HTTP_API_KEY: ${{ secrets.FACE_RECOGNITION_HTTP_API_KEY }}
+        run: |
+          set -o pipefail
+          mkdir -p docs/smoke-evidence
+          node scripts/production-smoke.mjs | tee docs/smoke-evidence/production-smoke-${{ github.run_id }}.json
+
+      - name: Upload production smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-smoke-evidence
+          path: docs/smoke-evidence/production-smoke-${{ github.run_id }}.json
+          if-no-files-found: error
